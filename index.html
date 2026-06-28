@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAPIAF — Cámara de Pilates y Afines de la C.A.B.A.</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180.png" />
+  <meta name="theme-color" content="#2E4238" />
+  <meta name="description" content="La primera cámara empresarial de estudios de Pilates de Buenos Aires. Más de 70 estudios trabajando juntos." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* CAPIAF brand palette */
+      --slate:    #3F5A4C;   /* Pino */
+      --slate-dk: #2E4238;   /* Pino oscuro */
+      --slate-lt: #5A7A68;   /* Pino claro */
+      --sage:     #6E9080;   /* Salvia */
+      --sage-lt:  #7FB3AE;   /* Agua */
+      --sage-bg:  #EDF3F0;   /* Salvia muy claro */
+      --white:    #FFFFFF;
+      --off:      #F3F0E9;   /* Lino */
+      --ink:      #232A26;   /* Tinta */
+      --mid:      #7A8A82;
+      --border:   #DDD8CE;
+      --radius: 24px;
+      --max: 1140px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Jost', 'Nunito', system-ui, sans-serif;
+      font-weight: 400;
+      color: var(--ink);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+
+    /* ── SVG ICONS ── */
+    .beneficio-svg {
+      width: 2.2rem; height: 2.2rem;
+      color: var(--sage);
+      display: block;
+    }
+    .pillar-svg {
+      width: 1.4rem; height: 1.4rem;
+      color: var(--sage);
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .beneficio-icon { display: block; margin-bottom: 1rem; }
+    .pillar-icon { display: flex; align-items: flex-start; }
+
+    /* ── REVEAL ── */
+    .reveal { opacity:0; transform:translateY(28px); transition:opacity .7s ease,transform .7s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+    .reveal-delay-1 { transition-delay:.10s; }
+    .reveal-delay-2 { transition-delay:.20s; }
+    .reveal-delay-3 { transition-delay:.30s; }
+    .reveal-delay-4 { transition-delay:.40s; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 72px;
+      background: transparent;
+      transition: background .4s ease, box-shadow .4s ease;
+    }
+    nav.scrolled {
+      background: rgba(46, 66, 56, 0.97); /* Pino oscuro */
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 1px 0 rgba(255,255,255,.07);
+    }
+
+    /* Logo area */
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      text-decoration: none;
+    }
+    .nav-logo-wrap {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+    .nav-brand:hover .nav-logo-wrap {
+      background: rgba(255,255,255,0.18);
+    }
+    .nav-brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+    .nav-brand-name {
+      font-family: 'Jost', sans-serif;
+      font-weight: 600;
+      font-size: 1.05rem;
+      letter-spacing: 0.12em;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+    .nav-brand-sub {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.58rem;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+
+    /* Links */
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: rgba(255,255,255,0.72);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+
+    /* CTA pill */
+    .nav-cta {
+      background: var(--sage) !important;
+      color: var(--white) !important;
+      padding: 0.5rem 1.3rem !important;
+      border-radius: 50px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.06em !important;
+      transition: background .2s, transform .15s !important;
+    }
+    .nav-cta:hover {
+      background: var(--sage-lt) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Hamburger */
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 6px;
+    }
+    .nav-hamburger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--white);
+      border-radius: 2px;
+      transition: all .3s;
+    }
+
+    /* ── MOBILE MENU ── */
+    .mobile-menu { display:none; position:fixed; inset:0; background:rgba(46,66,56,0.99); z-index:190; flex-direction:column; align-items:center; justify-content:center; gap:2rem; }
+    .mobile-menu.open { display:flex; }
+    .mobile-menu a { font-family:'Playfair Display',serif; font-size:1.9rem; font-weight:400; color:rgba(255,255,255,.85); text-decoration:none; transition:color .2s; }
+    .mobile-menu a:hover { color:var(--sage-lt); }
+    .mobile-close { position:absolute; top:1.5rem; right:2rem; font-size:2rem; color:var(--white); cursor:pointer; background:none; border:none; }
+
+    /* ── HERO ── */
+    #hero { position:relative; min-height:100svh; display:flex; align-items:center; overflow:hidden; background:var(--slate-dk); }
+    .hero-glow { position:absolute; inset:0; pointer-events:none; background: radial-gradient(ellipse 90% 70% at 70% 50%, rgba(122,158,142,.22) 0%, transparent 55%), radial-gradient(ellipse 60% 60% at 15% 80%, rgba(61,100,145,.4) 0%, transparent 60%); animation:breathe 9s ease-in-out infinite alternate; }
+    @keyframes breathe { 0%{transform:scale(1) translateX(0) translateY(0);} 100%{transform:scale(1.05) translateX(-1%) translateY(1%);} }
+    .hero-circles { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .hero-circles span { position:absolute; border-radius:50%; border:1px solid rgba(255,255,255,.06); animation:floatCircle linear infinite; }
+    .hero-circles span:nth-child(1){width:320px;height:320px;top:-80px;left:-100px;animation-duration:28s;}
+    .hero-circles span:nth-child(2){width:180px;height:180px;top:40%;left:30%;animation-duration:22s;animation-delay:-8s;}
+    .hero-circles span:nth-child(3){width:500px;height:500px;bottom:-160px;right:-120px;animation-duration:35s;animation-delay:-14s;}
+    @keyframes floatCircle { 0%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-18px) rotate(180deg);} 100%{transform:translateY(0) rotate(360deg);} }
+    .hero-photo { position:absolute; top:0; right:0; width:50%; height:100%; overflow:hidden; }
+    .hero-photo::before { content:''; position:absolute; inset:0; z-index:1; background:linear-gradient(to right,var(--slate-dk) 0%,rgba(30,52,80,.5) 35%,transparent 70%); }
+    .hero-photo::after { content:''; position:absolute; top:0; left:-1px; bottom:0; width:160px; z-index:2; background:linear-gradient(to right,var(--slate-dk) 0%,transparent 100%); border-radius:0 60% 60% 0 / 0 50% 50% 0; }
+    .hero-photo img { width:100%; height:100%; object-fit:cover; object-position:center 25%; animation:slowZoom 20s ease-in-out infinite alternate; }
+    @keyframes slowZoom { 0%{transform:scale(1.04) translateY(0);} 100%{transform:scale(1.1) translateY(-2%);} }
+    .hero-content { position:relative; z-index:3; max-width:var(--max); margin:0 auto; width:100%; padding:10rem 2.5rem 7rem; }
+    .hero-eyebrow { display:inline-flex; align-items:center; gap:.75rem; font-size:.7rem; letter-spacing:.22em; text-transform:uppercase; color:var(--sage-lt); font-weight:600; margin-bottom:2rem; }
+    .hero-eyebrow::before { content:''; display:block; width:28px; height:2px; background:var(--sage); border-radius:2px; }
+    .hero-title { font-family:'Playfair Display',serif; font-weight:600; font-size:clamp(3rem,6.5vw,6rem); line-height:1.05; color:var(--white); max-width:13ch; letter-spacing:-.01em; }
+    .hero-title em { font-style:italic; font-weight:400; color:var(--sage-lt); }
+    .hero-sub { margin-top:1.8rem; font-size:1.05rem; color:rgba(255,255,255,.6); max-width:44ch; line-height:1.8; font-weight:300; }
+    .hero-actions { margin-top:2.8rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center; }
+    .btn-primary { display:inline-flex; align-items:center; gap:.55rem; font-family:'Jost','Nunito',sans-serif; font-size:.88rem; font-weight:600; color:var(--white); background:var(--sage); padding:.9rem 2rem; border-radius:50px; text-decoration:none; transition:background .25s,transform .2s; box-shadow:0 4px 20px rgba(122,158,142,.4); }
+    .btn-primary:hover { background:var(--sage-lt); transform:translateY(-2px); }
+    .btn-ghost-white { font-size:.88rem; font-weight:600; color:rgba(255,255,255,.65); text-decoration:none; transition:color .2s; display:flex; align-items:center; gap:.4rem; }
+    .btn-ghost-white:hover { color:var(--sage-lt); }
+    .hero-stats { margin-top:4.5rem; display:flex; gap:3rem; flex-wrap:wrap; padding-top:2.5rem; border-top:1px solid rgba(255,255,255,.1); }
+    .stat { display:flex; flex-direction:column; gap:.2rem; }
+    .stat-num { font-family:'Playfair Display',serif; font-size:2.6rem; font-weight:400; color:var(--white); line-height:1; }
+    .stat-num span { color:var(--sage-lt); }
+    .stat-lbl { font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.38); font-weight:600; }
+
+    /* ── WAVES ── */
+    .wave-divider { display:block; width:100%; overflow:hidden; line-height:0; }
+    .wave-divider svg { display:block; width:100%; }
+
+    /* ── SECTION BASE ── */
+    .section-wrap { padding:clamp(4rem,9vw,7rem) 2.5rem; }
+    .section-inner { max-width:var(--max); margin:0 auto; }
+    .eyebrow { display:inline-flex; align-items:center; gap:.65rem; font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; color:var(--sage); font-weight:700; margin-bottom:.9rem; }
+    .eyebrow::before { content:''; display:block; width:20px; height:2px; background:var(--sage); border-radius:2px; }
+    .section-title { font-family:'Playfair Display',serif; font-weight:600; font-size:clamp(2rem,4vw,3.2rem); line-height:1.15; color:var(--slate-dk); max-width:22ch; }
+    .section-title em { font-style:italic; color:var(--sage); font-weight:400; }
+
+    /* ── QUIÉNES SOMOS ── */
+    .quienes-layout { display:grid; grid-template-columns:1fr 1fr; gap:5rem; margin-top:3.5rem; align-items:center; }
+    .quienes-img-wrap { position:relative; border-radius:40% 60% 55% 45% / 45% 40% 60% 55%; overflow:hidden; aspect-ratio:4/5; animation:morphShape 12s ease-in-out infinite alternate; }
+    @keyframes morphShape { 0%{border-radius:40% 60% 55% 45% / 45% 40% 60% 55%;} 50%{border-radius:55% 45% 40% 60% / 60% 55% 45% 40%;} 100%{border-radius:45% 55% 60% 40% / 55% 60% 40% 45%;} }
+    .quienes-img-wrap img { width:100%; height:100%; object-fit:cover; object-position:center 20%; }
+    .quienes-badge { position:absolute; bottom:1.5rem; right:-.5rem; background:var(--slate-dk); color:var(--white); padding:1.2rem 1.5rem; border-radius:var(--radius); text-align:center; box-shadow:0 8px 32px rgba(28,52,80,.25); }
+    .quienes-badge-num { font-family:'Playfair Display',serif; font-size:2rem; font-weight:400; color:var(--sage-lt); line-height:1; display:block; }
+    .quienes-badge-lbl { font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.45); margin-top:.2rem; display:block; max-width:10ch; }
+    .quienes-body p { font-size:1rem; line-height:1.85; color:#4A4A4A; margin-bottom:1.1rem; }
+    .pillars { margin-top:2.2rem; display:flex; flex-direction:column; gap:1rem; }
+    .pillar { display:flex; align-items:flex-start; gap:1rem; padding:1.2rem 1.4rem; background:var(--sage-bg); border-radius:var(--radius); transition:transform .25s; }
+    .pillar:hover { transform:translateX(5px); }
+    .pillar-icon { font-size:1.2rem; flex-shrink:0; }
+    .pillar-text h4 { font-family:'Playfair Display',serif; font-size:1rem; font-weight:600; color:var(--slate-dk); margin-bottom:.2rem; }
+    .pillar-text p { font-size:.82rem; color:var(--mid); line-height:1.55; }
+
+    /* ── BENEFICIOS ── */
+    .beneficios-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3.5rem; }
+    .beneficio { background:var(--white); border-radius:var(--radius); padding:2.2rem 1.8rem; transition:transform .3s,box-shadow .3s; position:relative; overflow:hidden; }
+    .beneficio::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--sage) 0%,var(--sage-lt) 100%); border-radius:var(--radius) var(--radius) 0 0; transform:scaleX(0); transform-origin:left; transition:transform .4s ease; }
+    .beneficio:hover { transform:translateY(-6px); box-shadow:0 16px 48px rgba(44,74,110,.1); }
+    .beneficio:hover::before { transform:scaleX(1); }
+    .beneficio-icon { font-size:2rem; margin-bottom:1rem; display:block; }
+    .beneficio h3 { font-family:'Playfair Display',serif; font-size:1.15rem; font-weight:600; color:var(--slate-dk); margin-bottom:.6rem; }
+    .beneficio p { font-size:.85rem; color:var(--mid); line-height:1.7; }
+
+    /* ── FOTO BANNER ── */
+    .photo-banner { position:relative; min-height:420px; overflow:hidden; display:flex; align-items:center; }
+    .photo-banner img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 35%; animation:slowZoom 18s ease-in-out infinite alternate; }
+    .photo-banner-overlay { position:absolute; inset:0; background:linear-gradient(135deg,rgba(30,52,80,.88) 0%,rgba(44,74,110,.65) 50%,rgba(30,52,80,.4) 100%); }
+    .photo-banner-content { position:relative; z-index:2; max-width:var(--max); margin:0 auto; padding:5rem 2.5rem; width:100%; }
+    .photo-banner-content blockquote { font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(1.5rem,3vw,2.5rem); font-weight:400; color:var(--white); max-width:24ch; line-height:1.3; }
+    .photo-banner-content cite { display:block; margin-top:1.2rem; font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--sage-lt); font-style:normal; }
+
+    /* ── TESTIMONIOS ── */
+    .testimonios-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3.5rem; }
+    .testimonio { background:var(--white); padding:2rem 1.8rem; border-radius:var(--radius); transition:transform .25s,box-shadow .25s; position:relative; }
+    .testimonio::before { content:'"'; position:absolute; top:1rem; right:1.5rem; font-family:'Playfair Display',serif; font-size:5rem; font-weight:400; color:var(--sage-bg); line-height:1; pointer-events:none; }
+    .testimonio:hover { transform:translateY(-5px); box-shadow:0 14px 40px rgba(44,74,110,.1); }
+    .testimonio p { font-family:'Playfair Display',serif; font-style:italic; font-size:1rem; color:var(--ink); line-height:1.7; margin-bottom:1.5rem; position:relative; z-index:1; }
+    .testimonio-autor { font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--sage); font-weight:700; }
+
+    /* ── ASOCIARSE ── */
+    #asociarse .section-title { color:var(--white); max-width:none; }
+    #asociarse .eyebrow { color:var(--sage-lt); }
+    #asociarse .eyebrow::before { background:var(--sage-lt); }
+    .pasos-layout { display:grid; grid-template-columns:1fr 1fr; gap:5rem; margin-top:3.5rem; align-items:center; }
+    .pasos-list { display:flex; flex-direction:column; gap:1.5rem; }
+    .paso { display:flex; gap:1.5rem; align-items:flex-start; padding:1.8rem 2rem; background:rgba(255,255,255,.05); border-radius:var(--radius); border:1px solid rgba(255,255,255,.08); transition:background .3s,transform .25s; }
+    .paso:hover { background:rgba(122,158,142,.12); transform:translateX(5px); }
+    .paso-num { width:42px; height:42px; border-radius:50%; flex-shrink:0; background:var(--sage); color:var(--white); display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:600; }
+    .paso-body h3 { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:600; color:var(--white); margin-bottom:.3rem; }
+    .paso-body p { font-size:.87rem; color:rgba(255,255,255,.55); line-height:1.65; }
+    .pasos-cta { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:calc(var(--radius)*1.5); padding:3rem 2.5rem; text-align:center; }
+    .pasos-cta h3 { font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:600; color:var(--white); margin-bottom:.8rem; line-height:1.2; }
+    .pasos-cta h3 em { font-style:italic; color:var(--sage-lt); }
+    .pasos-cta p { font-size:.9rem; color:rgba(255,255,255,.5); margin-bottom:2.2rem; line-height:1.7; }
+    .btn-wa { display:inline-flex; align-items:center; justify-content:center; gap:.65rem; font-family:'Jost','Nunito',sans-serif; font-size:.88rem; font-weight:600; color:var(--white); background:var(--sage); padding:1rem 2.2rem; border-radius:50px; text-decoration:none; transition:background .25s,transform .2s; width:100%; box-shadow:0 4px 20px rgba(122,158,142,.3); }
+    .btn-wa:hover { background:var(--sage-lt); transform:translateY(-2px); }
+
+    /* ── SOCIOS ── */
+    .socios-header { display:flex; align-items:flex-end; justify-content:space-between; gap:2rem; margin-bottom:2.5rem; flex-wrap:wrap; }
+    .socios-header p { font-size:.95rem; color:var(--mid); max-width:44ch; line-height:1.75; }
+    .socios-filter { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:2rem; }
+    .filter-btn { font-family:'Jost','Nunito',sans-serif; font-size:.75rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--mid); background:var(--off); border:1px solid var(--border); padding:.45rem 1.2rem; border-radius:50px; cursor:pointer; transition:all .2s; }
+    .filter-btn:hover, .filter-btn.active { background:var(--slate-dk); color:var(--white); border-color:var(--slate-dk); }
+
+    /* Logo grid — real images */
+    .socios-logos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .socio-logo-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      aspect-ratio: 3/2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.2rem;
+      transition: all .3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .socio-logo-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--sage-bg);
+      opacity: 0;
+      transition: opacity .3s;
+      border-radius: var(--radius);
+    }
+    .socio-logo-card:hover {
+      border-color: var(--sage);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(122,158,142,.18);
+    }
+    .socio-logo-card:hover::before { opacity: 1; }
+
+    .socio-logo-card img {
+      position: relative;
+      z-index: 1;
+      max-width: 100%;
+      max-height: 90px;
+      object-fit: contain;
+      filter: grayscale(20%);
+      transition: filter .3s, transform .3s;
+    }
+    .socio-logo-card:hover img {
+      filter: grayscale(0%);
+      transform: scale(1.05);
+    }
+
+    /* Placeholder for studios without logo */
+    .socio-placeholder {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; gap: .5rem;
+    }
+    .socio-initial {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--off); display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600;
+      color: var(--slate); transition: all .3s;
+      box-shadow: 0 2px 8px rgba(44,74,110,.1);
+    }
+    .socio-logo-card:hover .socio-initial { background: var(--sage); color: var(--white); }
+    .socio-name { font-size: .7rem; font-weight: 600; color: var(--mid); text-align: center; line-height: 1.3; transition: color .3s; }
+    .socio-logo-card:hover .socio-name { color: var(--slate-dk); }
+
+    .socios-cta-bar { margin-top:2.5rem; padding:2rem 2.5rem; background:var(--sage-bg); border-radius:var(--radius); display:flex; align-items:center; justify-content:space-between; gap:2rem; flex-wrap:wrap; }
+    .socios-cta-bar p { font-family:'Playfair Display',serif; font-style:italic; font-size:1.1rem; color:var(--slate-dk); max-width:38ch; }
+    .btn-slate { display:inline-flex; align-items:center; gap:.55rem; font-family:'Jost','Nunito',sans-serif; font-size:.88rem; font-weight:600; color:var(--white); background:var(--slate-dk); padding:.9rem 1.8rem; border-radius:50px; text-decoration:none; transition:background .2s,transform .2s; white-space:nowrap; }
+    .btn-slate:hover { background:var(--slate-lt); transform:translateY(-2px); }
+
+    /* ── CONTACTO ── */
+    .contacto-grid { display:grid; grid-template-columns:1fr 1fr; gap:5rem; margin-top:3.5rem; align-items:start; }
+    .contacto-lead p { font-size:1rem; color:#555; line-height:1.8; margin-bottom:2.2rem; }
+    .igj-chip { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem 1rem; background:var(--sage-bg); border:1px solid var(--sage); border-radius:50px; margin-bottom:1.5rem; }
+    .igj-chip span { font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--sage); font-weight:700; }
+    .channels { display:flex; flex-direction:column; gap:.9rem; }
+    .channel { display:flex; align-items:center; gap:1rem; padding:1.2rem 1.4rem; background:var(--white); border-radius:var(--radius); border:1px solid var(--border); text-decoration:none; transition:all .25s; }
+    .channel:hover { border-color:var(--sage); box-shadow:0 6px 24px rgba(122,158,142,.15); transform:translateX(5px); }
+    .channel-icon { width:42px; height:42px; border-radius:50%; background:var(--sage-bg); color:var(--sage); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .channel-label { font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; color:var(--sage); font-weight:700; display:block; }
+    .channel-value { font-size:.9rem; color:var(--ink); margin-top:.1rem; }
+    .contacto-info { padding:2.5rem; background:var(--slate-dk); border-radius:calc(var(--radius)*1.5); color:var(--white); }
+    .contacto-info h3 { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:600; color:var(--white); margin-bottom:.8rem; }
+    .contacto-info h3 em { font-style:italic; color:var(--sage-lt); }
+    .contacto-info p { font-size:.88rem; color:rgba(255,255,255,.5); line-height:1.8; margin-bottom:.5rem; }
+    .contacto-info hr { border:none; border-top:1px solid rgba(255,255,255,.08); margin:1.5rem 0; }
+
+    /* ── FOOTER ── */
+    footer { background:var(--slate-dk); padding:1.8rem 2.5rem; border-top:1px solid rgba(255,255,255,.06); }
+    .footer-inner { max-width:var(--max); margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+    .footer-inner p { font-size:.72rem; color:rgba(255,255,255,.22); }
+    .footer-links { display:flex; gap:1.5rem; }
+    .footer-links a { font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.28); text-decoration:none; font-weight:600; transition:color .2s; }
+    .footer-links a:hover { color:var(--sage-lt); }
+
+
+    /* ── FLOATING WHATSAPP ── */
+    .wa-float {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      background: #25D366;
+      color: #fff;
+      padding: 0.85rem 1.4rem 0.85rem 1.1rem;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 6px 24px rgba(37,211,102,0.45);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, padding 0.3s ease;
+      overflow: hidden;
+      max-width: 56px; /* collapsed — icon only */
+    }
+    .wa-float:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 32px rgba(37,211,102,0.55);
+      max-width: 200px; /* expand on hover */
+      padding: 0.85rem 1.4rem 0.85rem 1.1rem;
+    }
+    .wa-float-label {
+      font-family: 'Jost', 'Nunito', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.2s ease 0.05s, transform 0.2s ease 0.05s;
+      letter-spacing: 0.02em;
+    }
+    .wa-float:hover .wa-float-label {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    /* Pulse animation to draw attention */
+    .wa-float::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50px;
+      background: rgba(255,255,255,0.15);
+      animation: waPulse 3s ease-in-out infinite;
+    }
+    @keyframes waPulse {
+      0%, 100% { transform: scale(1); opacity: 0; }
+      50% { transform: scale(1.12); opacity: 1; }
+    }
+    @media (max-width: 640px) {
+      .wa-float {
+        bottom: 1.2rem;
+        right: 1.2rem;
+        padding: 0.9rem;
+        border-radius: 50%;
+        max-width: none;
+      }
+      .wa-float-label { display: none; }
+      .wa-float::before { border-radius: 50%; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width:900px) {
+      .quienes-layout,.pasos-layout,.contacto-grid { grid-template-columns:1fr; gap:3rem; }
+      .beneficios-grid,.testimonios-grid { grid-template-columns:1fr 1fr; }
+      .hero-photo { display:none; }
+    }
+    @media (max-width:640px) {
+      .nav-links { display:none; }
+      .nav-hamburger { display:flex; }
+      nav,footer { padding-left:1.25rem; padding-right:1.25rem; }
+      .section-wrap { padding:3.5rem 1.25rem; }
+      .hero-content { padding:8rem 1.25rem 4rem; }
+      .beneficios-grid,.testimonios-grid { grid-template-columns:1fr; }
+      .socios-logos-grid { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); }
+      .socios-cta-bar { flex-direction:column; }
+      .footer-inner { flex-direction:column; align-items:flex-start; }
+      .photo-banner-content { padding:3.5rem 1.25rem; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { animation:none!important; transition:none!important; }
+      .reveal { opacity:1; transform:none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Menú de navegación">
+  <button class="mobile-close" id="mobileClose" aria-label="Cerrar menú">✕</button>
+  <a href="#quienes"    class="mobile-link">Quiénes somos</a>
+  <a href="#beneficios" class="mobile-link">Beneficios</a>
+  <a href="#testimonios" class="mobile-link">Miembros</a>
+  <a href="#socios"     class="mobile-link">Estudios</a>
+  <a href="#contacto"   class="mobile-link">Contacto</a>
+  <a href="#asociarse"  class="mobile-link" style="color:var(--sage-lt)">Asociate →</a>
+</div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="#" class="nav-brand" aria-label="CAPIAF — inicio">
+    <div class="nav-logo-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="26" height="26" aria-hidden="true">
+        <g transform="rotate(-14 60 60)">
+          <path d="M76.9 23.75 A 40 40 0 1 1 43.1 23.75" transform="rotate(90 60 60)" fill="none" stroke="#E7EDE6" stroke-width="7" stroke-linecap="round"/>
+          <path d="M48 85 C 47 69 50 59 56 55 C 66 49 67 42 59 42" fill="none" stroke="#9CCAC4" stroke-width="6" stroke-linecap="round"/>
+          <circle cx="60" cy="20" r="4.6" transform="rotate(90 60 60)" fill="#E7EDE6"/>
+        </g>
+      </svg>
+    </div>
+    <div class="nav-brand-text">
+      <span class="nav-brand-name">CAPIAF</span>
+      <span class="nav-brand-sub">Cámara de Pilates · C.A.B.A.</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#quienes">Quiénes somos</a></li>
+    <li><a href="#beneficios">Beneficios</a></li>
+    <li><a href="#socios">Estudios</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+    <li><a href="#asociarse" class="nav-cta">Asociate</a></li>
+  </ul>
+  <div class="nav-hamburger" id="hamburger" role="button" tabindex="0" aria-label="Abrir menú">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero" aria-label="Inicio">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="hero-circles" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div class="hero-photo" aria-hidden="true">
+    <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1400&q=90&auto=format&fit=crop" alt="" loading="eager" />
+  </div>
+  <div class="hero-content">
+    <p class="hero-eyebrow reveal">Buenos Aires · Fundada en 2020</p>
+    <h1 class="hero-title reveal reveal-delay-1">La voz del Pilates en <em>Buenos Aires.</em></h1>
+    <p class="hero-sub reveal reveal-delay-2">Somos la primera cámara empresarial de estudios de Pilates de la Ciudad. Más de 70 estudios trabajando juntos para jerarquizar la actividad y crear beneficios reales.</p>
+    <div class="hero-actions reveal reveal-delay-3">
+      <a href="#asociarse" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Asociá tu estudio
+      </a>
+      <a href="#quienes" class="btn-ghost-white">Conocé la Cámara <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+    </div>
+    <div class="hero-stats reveal reveal-delay-4">
+      <div class="stat"><span class="stat-num"><span>+</span>70</span><span class="stat-lbl">Estudios asociados</span></div>
+      <div class="stat"><span class="stat-num"><span>+</span>400</span><span class="stat-lbl">Estudios en la Ciudad</span></div>
+      <div class="stat"><span class="stat-num">2020</span><span class="stat-lbl">Año de fundación</span></div>
+      <div class="stat"><span class="stat-num">IGJ</span><span class="stat-lbl">Personería jurídica</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="wave-divider" aria-hidden="true"><svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0 C360,72 1080,72 1440,0 L1440,72 L0,72 Z" fill="#ffffff"/></svg></div>
+
+<!-- QUIÉNES SOMOS -->
+<section id="quienes" class="section-wrap" style="background:var(--white)">
+  <div class="section-inner">
+    <p class="eyebrow reveal">Quiénes somos</p>
+    <h2 class="section-title reveal reveal-delay-1">Una comunidad que trabaja <em>en conjunto</em></h2>
+    <div class="quienes-layout">
+      <div class="quienes-img-wrap reveal reveal-delay-1">
+        <img src="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=900&q=90&auto=format&fit=crop" alt="Instructora guiando una clase de Pilates en reformer" loading="lazy" />
+        <div class="quienes-badge">
+          <span class="quienes-badge-num">2022</span>
+          <span class="quienes-badge-lbl">Resolución IGJ N° 0001393</span>
+        </div>
+      </div>
+      <div class="quienes-body reveal reveal-delay-2">
+        <p>La Cámara de Pilates y Afines de la Ciudad Autónoma de Buenos Aires (CAPIAF) nació durante la pandemia de 2020, cuando propietarios de estudios comenzaron a reunirse para enfrentar juntos los desafíos de nuestra actividad.</p>
+        <p>Hoy somos más de 70 estudios con personería jurídica reconocida. Trabajamos organizados para representar al sector, generar beneficios concretos y construir una comunidad real de profesionales del Pilates en Buenos Aires.</p>
+        <div class="pillars">
+          <div class="pillar"><div class="pillar-icon"><svg class="pillar-svg" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+  <path d="M6 28h24M6 12h24M18 8l-12 4h24L18 8zM12 12v16M18 12v16M24 12v16"/>
+</svg></div><div class="pillar-text"><h4>Representación institucional</h4><p>Interlocutores formales ante el GCBA, organismos de salud y entidades del deporte.</p></div></div>
+          <div class="pillar"><div class="pillar-icon"><svg class="pillar-svg" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+  <path d="M4 20l8-8 4 4 8-8 8 8"/>
+  <path d="M9 26c0 0 3-4 9-4s9 4 9 4"/>
+  <circle cx="18" cy="14" r="2"/>
+</svg></div><div class="pillar-text"><h4>Comunidad real de pares</h4><p>Propietarios compartiendo experiencias, problemáticas y soluciones concretas.</p></div></div>
+          <div class="pillar"><div class="pillar-icon"><svg class="pillar-svg" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+  <circle cx="18" cy="18" r="14"/>
+  <circle cx="18" cy="18" r="8"/>
+  <circle cx="18" cy="18" r="3"/>
+</svg></div><div class="pillar-text"><h4>Autonomía preservada</h4><p>Pertenecer no significa resignar independencia. Cada estudio sigue siendo dueño de su rumbo.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wave-divider" aria-hidden="true" style="background:white"><svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,72 C360,0 1080,0 1440,72 L1440,72 L0,72 Z" fill="#F8F7F5"/></svg></div>
+
+<!-- BENEFICIOS -->
+<section id="beneficios" class="section-wrap" style="background:var(--off)">
+  <div class="section-inner">
+    <p class="eyebrow reveal">Por qué asociarse</p>
+    <h2 class="section-title reveal reveal-delay-1">Beneficios <em>concretos</em> para tu estudio</h2>
+    <div class="beneficios-grid">
+      <div class="beneficio reveal reveal-delay-1"><span class="beneficio-icon"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <circle cx="24" cy="24" r="18"/>
+  <path d="M24 12v4M24 32v4M18 20c0-2.2 2.7-4 6-4s6 1.8 6 4-2.7 4-6 4-6 1.8-6 4 2.7 4 6 4 6-1.8 6-4"/>
+</svg></span><h3>Descuentos y proveedores</h3><p>Acceso a tarifas preferenciales en equipamiento, seguros e insumos. El poder de negociación de 70 estudios trabajando para cada uno.</p></div>
+      <div class="beneficio reveal reveal-delay-2"><span class="beneficio-icon"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <path d="M24 38C24 38 10 32 10 20V13l14-5 14 5v7c0 12-14 18-14 18z"/>
+  <path d="M24 18v10M19 22l5-4 5 4"/>
+</svg></span><h3>Capacitaciones compartidas</h3><p>Formación profesional a costos accesibles para propietarios y equipo docente. Cursos que solos serían imposibles de conseguir.</p></div>
+      <div class="beneficio reveal reveal-delay-3"><span class="beneficio-icon"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <rect x="12" y="10" width="24" height="30" rx="3"/>
+  <path d="M18 10v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/>
+  <path d="M18 22h12M18 28h8"/>
+</svg></span><h3>Habilitaciones y asesoramiento</h3><p>Orientación práctica para navegar los requisitos del GCBA y tramitar la habilitación de tu estudio sin perderte en el camino.</p></div>
+      <div class="beneficio reveal reveal-delay-1"><span class="beneficio-icon"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <circle cx="24" cy="24" r="14"/>
+  <path d="M10 24h28M24 10c-4 4-6 8.7-6 14s2 10 6 14M24 10c4 4 6 8.7 6 14s-2 10-6 14"/>
+</svg></span><h3>Networking sectorial</h3><p>Reuniones periódicas con colegas del mismo rubro. Contactos, ideas y oportunidades que solo surgen dentro de una comunidad organizada.</p></div>
+      <div class="beneficio reveal reveal-delay-2"><span class="beneficio-icon"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <path d="M24 14c-5 0-9 4-9 9v2c0 5 4 9 9 9"/>
+  <path d="M24 14c5 0 11 3 11 10.5S29 35 24 35"/>
+  <path d="M15 31l-3 5M15 17l-3-5"/>
+  <circle cx="24" cy="24" r="3"/>
+</svg></span><h3>Visibilidad en la Cámara</h3><p>Tu estudio aparece en el directorio oficial de CAPIAF, con presencia en todos los canales de comunicación de la institución.</p></div>
+      <div class="beneficio reveal reveal-delay-3"><span class="beneficio-icon"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <circle cx="24" cy="30" r="10"/>
+  <path d="M17 22l-5-12h24l-5 12"/>
+  <path d="M24 25v6M21 28h6"/>
+</svg></span><h3>Respaldo institucional</h3><p>Pertenecer a una entidad con personería jurídica transmite seriedad y confianza a tus alumnos y proveedores.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOTO BANNER -->
+<div class="photo-banner">
+  <img src="https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=1600&q=90&auto=format&fit=crop" alt="Clase de Pilates en grupo" loading="lazy" />
+  <div class="photo-banner-overlay"></div>
+  <div class="photo-banner-content">
+    <blockquote class="reveal">"Si queremos que nuestro país sea un referente del Pilates a nivel mundial, tenemos que involucrarnos para jerarquizar nuestra actividad."</blockquote>
+    <cite class="reveal reveal-delay-1">Natalia Marchetti — Miembro CAPIAF</cite>
+  </div>
+</div>
+
+<!-- TESTIMONIOS -->
+<section id="testimonios" class="section-wrap" style="background:var(--sage-bg)">
+  <div class="section-inner">
+    <p class="eyebrow reveal">Lo dicen nuestros miembros</p>
+    <h2 class="section-title reveal reveal-delay-1">Voces de quienes <em>ya forman parte</em></h2>
+    <div class="testimonios-grid">
+      <div class="testimonio reveal reveal-delay-1"><p>"Comenzamos a reunirnos en 2020 durante la pandemia, y hoy somos más de 70 estudios trabajando en conjunto para mejorar nuestra actividad."</p><span class="testimonio-autor">Alejandro Faiferman</span></div>
+      <div class="testimonio reveal reveal-delay-2"><p>"Formar parte de una cámara empresarial nos brinda seriedad y pertenencia sin que esto nos haga perder autonomía sobre nuestro emprendimiento."</p><span class="testimonio-autor">Marcelo Pérez</span></div>
+      <div class="testimonio reveal reveal-delay-3"><p>"Compartir experiencias con emprendedores del mismo sector nos permite crecer a nivel empresario y personal. La Cámara nos hace sentir respaldados."</p><span class="testimonio-autor">Miembro CAPIAF</span></div>
+      <div class="testimonio reveal reveal-delay-1"><p>"Tenemos una visión compartida de lo que debe ser el Pilates en Argentina, y la mejor manera de llevarla a cabo es mediante acciones colectivas."</p><span class="testimonio-autor">Leticia Pompei</span></div>
+      <div class="testimonio reveal reveal-delay-2"><p>"Estamos logrando beneficios para nuestros asociados, con descuentos y capacitaciones que de otra forma serían imposibles de obtener."</p><span class="testimonio-autor">Myriam Quintana</span></div>
+      <div class="testimonio reveal reveal-delay-3"><p>"La Cámara nos abrió la cabeza. Entendimos que no somos competencia entre nosotros: somos el ecosistema del Pilates en Buenos Aires."</p><span class="testimonio-autor">Natalia Cavadini</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="wave-divider" aria-hidden="true" style="background:var(--sage-bg)"><svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0 C480,72 960,72 1440,0 L1440,72 L0,72 Z" fill="#1E3450"/></svg></div>
+
+<!-- CÓMO ASOCIARSE -->
+<section id="asociarse" class="section-wrap" style="background:var(--slate-dk)">
+  <div class="section-inner">
+    <p class="eyebrow reveal">Cómo asociarse</p>
+    <h2 class="section-title reveal reveal-delay-1">Tres pasos para <em>ser parte</em></h2>
+    <div class="pasos-layout">
+      <div class="pasos-list reveal reveal-delay-1">
+        <div class="paso"><div class="paso-num">1</div><div class="paso-body"><h3>Contactanos</h3><p>Escribinos por WhatsApp o email. Contanos sobre tu estudio y te informamos cómo funciona la Cámara. Sin compromiso.</p></div></div>
+        <div class="paso"><div class="paso-num">2</div><div class="paso-body"><h3>Participá de una reunión</h3><p>Te invitamos a una de nuestras reuniones periódicas para conocer a los miembros y ver la dinámica en persona.</p></div></div>
+        <div class="paso"><div class="paso-num">3</div><div class="paso-body"><h3>Formalizá tu adhesión</h3><p>Si decidís sumarte, completás el proceso de incorporación y accedés a todos los beneficios desde el primer día.</p></div></div>
+      </div>
+      <div class="pasos-cta reveal reveal-delay-2">
+        <h3>¿Tu estudio todavía no forma <em>parte</em>?</h3>
+        <p>En Buenos Aires hay más de 400 estudios de Pilates. Solo 70 están organizados. Cada estudio que se suma fortalece a todos.</p>
+        <a href="https://wa.me/5491153588840" target="_blank" rel="noopener" class="btn-wa">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.103 1.504 5.833L.057 23.077l5.34-1.399A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.814 9.814 0 01-4.966-1.344l-.356-.211-3.692.968.985-3.6-.232-.37A9.818 9.818 0 012.182 12c0-5.421 4.397-9.818 9.818-9.818S21.818 6.579 21.818 12 17.421 21.818 12 21.818z"/></svg>
+          Escribinos por WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wave-divider" aria-hidden="true" style="background:var(--slate-dk)"><svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,72 C480,0 960,0 1440,72 L1440,72 L0,72 Z" fill="white"/></svg></div>
+
+<!-- SOCIOS -->
+<section id="socios" class="section-wrap" style="background:var(--white)">
+  <div class="section-inner">
+    <div class="socios-header reveal">
+      <div>
+        <p class="eyebrow">Estudios asociados</p>
+        <h2 class="section-title">Nuestros <em>miembros</em></h2>
+      </div>
+      <p>Estos son los estudios que ya forman parte de CAPIAF. Una comunidad en crecimiento que trabaja unida por el Pilates en Buenos Aires.</p>
+    </div>
+
+    <div class="socios-filter reveal reveal-delay-1" role="group" aria-label="Filtrar estudios">
+      <button class="filter-btn active" data-filter="all">Todos</button>
+      <button class="filter-btn" data-filter="A-F">A – F</button>
+      <button class="filter-btn" data-filter="G-L">G – L</button>
+      <button class="filter-btn" data-filter="M-R">M – R</button>
+      <button class="filter-btn" data-filter="S-Z">S – Z</button>
+    </div>
+
+        <!-- LOGOS DE ESTUDIOS ASOCIADOS — 40 estudios con logo real -->
+    <div class="socios-logos-grid reveal reveal-delay-2" id="sociosGrid">
+
+      <!-- A -->
+      <div class="socio-logo-card" data-name="Âme Pilates" data-letter="A">
+        <img src="logos/ame.jpg" alt="Âme Pilates + Body Ballet" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Ayres de Barracas" data-letter="A">
+        <img src="logos/ayres.png" alt="Ayres de Barracas" loading="lazy" />
+      </div>
+
+            <div class="socio-logo-card" data-name="Aprile Pilates" data-letter="A">
+        <img src="logos/aprile.png" alt="Aprile Pilates" loading="lazy" />
+      </div>
+      <!-- B -->
+      <div class="socio-logo-card" data-name="BAE Pilates" data-letter="B">
+        <img src="logos/baepilates.jpg" alt="BAE Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Bive Estudio Pilates" data-letter="B">
+        <img src="logos/bive.jpg" alt="Bive Estudio Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="BoE Pilates" data-letter="B">
+        <img src="logos/boe.png" alt="BoE Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Body Life Pilates" data-letter="B">
+        <img src="logos/bodylife.jpg" alt="Body Life Pilates" loading="lazy" />
+      </div>
+
+      <!-- C -->
+      <div class="socio-logo-card" data-name="Centro Pilates BA" data-letter="C">
+        <img src="logos/centropilates.jpg" alt="Centro Pilates BA" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Club Palermo Pilates" data-letter="C">
+        <img src="logos/clubpalermo.png" alt="Club Palermo Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Concepto Pilates" data-letter="C">
+        <img src="logos/concepto.jpg" alt="Concepto Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Corporal Bienestar Físico" data-letter="C">
+        <img src="logos/corporal.png" alt="Corporal Centro de Bienestar Físico" loading="lazy" />
+      </div>
+
+      <!-- D -->
+      <div class="socio-logo-card" data-name="Danez Pilates Funcional" data-letter="D">
+        <img src="logos/danez.jpg" alt="Danez Pilates Funcional" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Del Buono Pilates" data-letter="D">
+        <img src="logos/delbuono.jpg" alt="Del Buono Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Dhara Pilates" data-letter="D">
+        <img src="logos/dhara.png" alt="Dhara Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="DipFusion Pilates Lab" data-letter="D">
+        <img src="logos/dipfusion.jpg" alt="DipFusion Pilates Lab" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Dominio Pilates" data-letter="D">
+        <img src="logos/dominio.jpg" alt="Dominio Pilates Reformer" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Dynamov Pilates" data-letter="D">
+        <img src="logos/dynamov.jpg" alt="Dynamov Pilates" loading="lazy" />
+      </div>
+
+      <!-- E -->
+      <div class="socio-logo-card" data-name="El Atelier Pilates" data-letter="E">
+        <img src="logos/elatelier.jpg" alt="El Atelier Pilates Estudio" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Energía Vital Pilates" data-letter="E">
+        <img src="logos/energiavital.png" alt="Energía Vital Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Espacio Balance" data-letter="E">
+        <img src="logos/espaciobalance.jpg" alt="Espacio Balance" loading="lazy" />
+      </div>
+
+      <div class="socio-logo-card" data-name="F&S Pilates Studio" data-letter="F">
+        <img src="logos/fspilates.jpg" alt="F&S Pilates Studio" loading="lazy" />
+      </div>
+      <!-- G -->
+      <div class="socio-logo-card" data-name="GlossFit" data-letter="G">
+        <img src="logos/glossfit.png" alt="GlossFit Entrenamiento y Estética" loading="lazy" />
+      </div>
+
+      <!-- H -->
+      <div class="socio-logo-card" data-name="Health Studio Pilates" data-letter="H">
+        <img src="logos/healthstudio.png" alt="Health Studio Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Holística Yoga & Pilates" data-letter="H">
+        <img src="logos/holistica.jpg" alt="Holística Yoga & Pilates Studio" loading="lazy" />
+      </div>
+
+      <!-- I -->
+      <div class="socio-logo-card" data-name="Iluminar Pilates" data-letter="I">
+        <img src="logos/iluminar.jpg" alt="Iluminar Pilates & Estética" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Índigo Pilates" data-letter="I">
+        <img src="logos/indigo.png" alt="Índigo Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Inspiración Pilates" data-letter="I">
+        <img src="logos/inspiracion.webp" alt="Inspiración Pilates" loading="lazy" />
+      </div>
+
+      <!-- M -->
+      <div class="socio-logo-card" data-name="Mixtura Pilates" data-letter="M">
+        <img src="logos/mixtura.png" alt="Mixtura Jimena Di Giacomo" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Move Pilates Devoto" data-letter="M">
+        <img src="logos/movepilates.png" alt="Move Pilates Devoto" loading="lazy" />
+      </div>
+
+      <!-- N -->
+      <div class="socio-logo-card" data-name="Naapura Cuerpo Equilibrio" data-letter="N">
+        <img src="logos/naapura.png" alt="Naapura Cuerpo Equilibrio" loading="lazy" />
+      </div>
+
+      <!-- P -->
+      <div class="socio-logo-card" data-name="Palace Pilates" data-letter="P">
+        <img src="logos/palace.jpg" alt="Palace Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Palermo Pilates" data-letter="P">
+        <img src="logos/palermopilates.png" alt="Palermo Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Pilates Bren" data-letter="P">
+        <img src="logos/pilatesbren.jpg" alt="Pilates Bren Estudio de Pilates" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Pillpi Espacio Corporal" data-letter="P">
+        <img src="logos/pillpi.png" alt="Pillpi Espacio Corporal" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Pinké Pilates" data-letter="P">
+        <img src="logos/pinke.png" alt="Pinké Pilates & Estética" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Pura Vida Yoga & Pilates" data-letter="P">
+        <img src="logos/puravida.jpg" alt="Pura Vida Yoga & Pilates" loading="lazy" />
+      </div>
+
+      <!-- R -->
+      <div class="socio-logo-card" data-name="Raisa Pilates" data-letter="R">
+        <img src="logos/raisa.png" alt="Raisa Pilates" loading="lazy" />
+      </div>
+
+      <!-- S -->
+      <div class="socio-logo-card" data-name="Studio Recoleta Pilates" data-letter="S">
+        <img src="logos/studiorecoleta.png" alt="Studio Recoleta Pilates" loading="lazy" />
+      </div>
+
+      <!-- T -->
+      <div class="socio-logo-card" data-name="Tempo Libero" data-letter="T">
+        <img src="logos/tempolibero.webp" alt="Tempo Libero Pilates & Fitness Studio" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Teseo Pilates Funcional" data-letter="T">
+        <img src="logos/teseo.jpg" alt="Teseo Pilates Funcional" loading="lazy" />
+      </div>
+      <div class="socio-logo-card" data-name="Tu Espacio Pilates" data-letter="T">
+        <img src="logos/tuespacio.jpg" alt="Tu Espacio Pilates y Estética" loading="lazy" />
+      </div>
+
+      <div class="socio-logo-card" data-name="Toulouse" data-letter="T">
+        <img src="logos/toulouse.jpg" alt="Toulouse" loading="lazy" />
+      </div>
+
+    </div>
+
+
+      <!-- Estudios en proceso de actualización de logo -->
+      <div class="socio-logo-card" data-name="Activo Pilates" data-letter="A">
+        <div class="socio-placeholder">
+          <div class="socio-initial">A</div>
+          <span class="socio-name">Activo Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Angel Pilates" data-letter="A">
+        <div class="socio-placeholder">
+          <div class="socio-initial">A</div>
+          <span class="socio-name">Angel Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Ayla Pilates" data-letter="A">
+        <div class="socio-placeholder">
+          <div class="socio-initial">A</div>
+          <span class="socio-name">Ayla Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Bienestar en Movimiento" data-letter="B">
+        <div class="socio-placeholder">
+          <div class="socio-initial">B</div>
+          <span class="socio-name">Bienestar en Movimiento</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Bienestar Equilibrio Pilates" data-letter="B">
+        <div class="socio-placeholder">
+          <div class="socio-initial">B</div>
+          <span class="socio-name">Bienestar Equilibrio Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Bodyandlife" data-letter="B">
+        <div class="socio-placeholder">
+          <div class="socio-initial">B</div>
+          <span class="socio-name">Bodyandlife</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Contrologia Pilates Studio" data-letter="C">
+        <div class="socio-placeholder">
+          <div class="socio-initial">C</div>
+          <span class="socio-name">Contrologia Pilates Studio</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Corporalmente Método Pilates" data-letter="C">
+        <div class="socio-placeholder">
+          <div class="socio-initial">C</div>
+          <span class="socio-name">Corporalmente Método Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="CORPUSPILATES" data-letter="C">
+        <div class="socio-placeholder">
+          <div class="socio-initial">C</div>
+          <span class="socio-name">CORPUSPILATES</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="CuerpoEspiral" data-letter="C">
+        <div class="socio-placeholder">
+          <div class="socio-initial">C</div>
+          <span class="socio-name">CuerpoEspiral</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="DelaTorre SPA" data-letter="D">
+        <div class="socio-placeholder">
+          <div class="socio-initial">D</div>
+          <span class="socio-name">DelaTorre SPA</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Estudio Core BA Pilates" data-letter="E">
+        <div class="socio-placeholder">
+          <div class="socio-initial">E</div>
+          <span class="socio-name">Estudio Core BA Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Fabiana Tallarico Pilates" data-letter="F">
+        <div class="socio-placeholder">
+          <div class="socio-initial">F</div>
+          <span class="socio-name">Fabiana Tallarico Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="FLYING" data-letter="F">
+        <div class="socio-placeholder">
+          <div class="socio-initial">F</div>
+          <span class="socio-name">FLYING</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Gaia Pilates" data-letter="G">
+        <div class="socio-placeholder">
+          <div class="socio-initial">G</div>
+          <span class="socio-name">Gaia Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="GENKI Pilates" data-letter="G">
+        <div class="socio-placeholder">
+          <div class="socio-initial">G</div>
+          <span class="socio-name">GENKI Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="GP Pilates" data-letter="G">
+        <div class="socio-placeholder">
+          <div class="socio-initial">G</div>
+          <span class="socio-name">GP Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Ludemma" data-letter="L">
+        <div class="socio-placeholder">
+          <div class="socio-initial">L</div>
+          <span class="socio-name">Ludemma</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Malvon Pilates" data-letter="M">
+        <div class="socio-placeholder">
+          <div class="socio-initial">M</div>
+          <span class="socio-name">Malvon Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Muevete Guapa" data-letter="M">
+        <div class="socio-placeholder">
+          <div class="socio-initial">M</div>
+          <span class="socio-name">Muevete Guapa</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Munay Pilates" data-letter="M">
+        <div class="socio-placeholder">
+          <div class="socio-initial">M</div>
+          <span class="socio-name">Munay Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Mundo Pilates Belgrano" data-letter="M">
+        <div class="socio-placeholder">
+          <div class="socio-initial">M</div>
+          <span class="socio-name">Mundo Pilates Belgrano</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Oxzen" data-letter="O">
+        <div class="socio-placeholder">
+          <div class="socio-initial">O</div>
+          <span class="socio-name">Oxzen</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Pilates B.E" data-letter="P">
+        <div class="socio-placeholder">
+          <div class="socio-initial">P</div>
+          <span class="socio-name">Pilates B.E</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Pilates Blue" data-letter="P">
+        <div class="socio-placeholder">
+          <div class="socio-initial">P</div>
+          <span class="socio-name">Pilates Blue</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Pilates Home" data-letter="P">
+        <div class="socio-placeholder">
+          <div class="socio-initial">P</div>
+          <span class="socio-name">Pilates Home</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Pilates Studio Barracas" data-letter="P">
+        <div class="socio-placeholder">
+          <div class="socio-initial">P</div>
+          <span class="socio-name">Pilates Studio Barracas</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Pilates Urquiza" data-letter="P">
+        <div class="socio-placeholder">
+          <div class="socio-initial">P</div>
+          <span class="socio-name">Pilates Urquiza</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Plena Pilates" data-letter="P">
+        <div class="socio-placeholder">
+          <div class="socio-initial">P</div>
+          <span class="socio-name">Plena Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Romanza BA" data-letter="R">
+        <div class="socio-placeholder">
+          <div class="socio-initial">R</div>
+          <span class="socio-name">Romanza BA</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="San Telmo Pilates" data-letter="S">
+        <div class="socio-placeholder">
+          <div class="socio-initial">S</div>
+          <span class="socio-name">San Telmo Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Solsalud Pilates" data-letter="S">
+        <div class="socio-placeholder">
+          <div class="socio-initial">S</div>
+          <span class="socio-name">Solsalud Pilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Studio DC" data-letter="S">
+        <div class="socio-placeholder">
+          <div class="socio-initial">S</div>
+          <span class="socio-name">Studio DC</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Sunflowers" data-letter="S">
+        <div class="socio-placeholder">
+          <div class="socio-initial">S</div>
+          <span class="socio-name">Sunflowers</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="T'Dua" data-letter="T">
+        <div class="socio-placeholder">
+          <div class="socio-initial">T</div>
+          <span class="socio-name">T'Dua</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Tan Tiem" data-letter="T">
+        <div class="socio-placeholder">
+          <div class="socio-initial">T</div>
+          <span class="socio-name">Tan Tiem</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Thiadapilates" data-letter="T">
+        <div class="socio-placeholder">
+          <div class="socio-initial">T</div>
+          <span class="socio-name">Thiadapilates</span>
+        </div>
+      </div>
+      <div class="socio-logo-card" data-name="Victoria Studio Pilates & Yoga" data-letter="V">
+        <div class="socio-placeholder">
+          <div class="socio-initial">V</div>
+          <span class="socio-name">Victoria Studio Pilates & Yoga</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="socios-cta-bar reveal">
+      <p>"Cada estudio que se suma fortalece a toda la comunidad."</p>
+      <a href="#asociarse" class="btn-slate">Sumá tu estudio →</a>
+    </div>
+  </div>
+</section>
+
+<div class="wave-divider" aria-hidden="true" style="background:white"><svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0 C360,72 1080,72 1440,0 L1440,72 L0,72 Z" fill="var(--off)"/></svg></div>
+
+<!-- CONTACTO -->
+<section id="contacto" class="section-wrap" style="background:var(--off)">
+  <div class="section-inner">
+    <p class="eyebrow reveal">Contacto</p>
+    <h2 class="section-title reveal reveal-delay-1">Estamos para <em>escucharte</em></h2>
+    <div class="contacto-grid">
+      <div class="contacto-lead reveal reveal-delay-1">
+        <div class="igj-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--sage)" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>Asociación Civil — IGJ N° 0001393/2022</span>
+        </div>
+        <p>Si tenés preguntas, querés explorar la adhesión o simplemente conectar con nosotros, elegí el canal que prefieras. Respondemos a la brevedad.</p>
+        <div class="channels">
+          <a href="https://wa.me/5491153588840" target="_blank" rel="noopener" class="channel">
+            <div class="channel-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.103 1.504 5.833L.057 23.077l5.34-1.399A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.814 9.814 0 01-4.966-1.344l-.356-.211-3.692.968.985-3.6-.232-.37A9.818 9.818 0 012.182 12c0-5.421 4.397-9.818 9.818-9.818S21.818 6.579 21.818 12 17.421 21.818 12 21.818z"/></svg></div>
+            <div><span class="channel-label">WhatsApp</span><div class="channel-value">Escribinos directo — la forma más rápida</div></div>
+          </a>
+          <a href="https://www.instagram.com/camarapilates/" target="_blank" rel="noopener" class="channel">
+            <div class="channel-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></div>
+            <div><span class="channel-label">Instagram</span><div class="channel-value">@camarapilates — seguinos para novedades</div></div>
+          </a>
+          <a href="mailto:camaradepilatescaba@gmail.com" class="channel">
+            <div class="channel-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+            <div><span class="channel-label">Email</span><div class="channel-value">camaradepilatescaba@gmail.com</div></div>
+          </a>
+        </div>
+      </div>
+      <div class="contacto-info reveal reveal-delay-2">
+        <h3>Cámara de Pilates<br><em>y Afines</em></h3>
+        <hr/>
+        <p>Ciudad Autónoma de Buenos Aires</p>
+        <p>Asociación Civil sin fines de lucro</p>
+        <p>Resolución I.G.J. N° 0001393/2022</p>
+        <hr/>
+        <p style="font-size:.82rem;color:rgba(255,255,255,.3)">Trabajamos para que el Pilates porteño tenga la representación y el reconocimiento que se merece.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <p>© 2025 CAPIAF — Todos los derechos reservados</p>
+    <div class="footer-links">
+      <a href="https://www.instagram.com/camarapilates/" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://wa.me/5491153588840" target="_blank" rel="noopener">WhatsApp</a>
+      <a href="mailto:camaradepilatescaba@gmail.com">Email</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* NAV */
+  const nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', window.scrollY > 50); }, { passive: true });
+
+  /* MOBILE MENU */
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileClose = document.getElementById('mobileClose');
+  hamburger.addEventListener('click', () => { mobileMenu.classList.add('open'); document.body.style.overflow='hidden'; });
+  const closeMenu = () => { mobileMenu.classList.remove('open'); document.body.style.overflow=''; };
+  mobileClose.addEventListener('click', closeMenu);
+  document.querySelectorAll('.mobile-link').forEach(l => l.addEventListener('click', closeMenu));
+
+  /* SCROLL REVEAL */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  /* FILTER — shows/hides cards by first letter range */
+  function getRange(letter) {
+    if (letter <= 'F') return 'A-F';
+    if (letter <= 'L') return 'G-L';
+    if (letter <= 'R') return 'M-R';
+    return 'S-Z';
+  }
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+      document.querySelectorAll('.socio-logo-card').forEach(card => {
+        const letter = (card.dataset.letter || 'A').toUpperCase();
+        card.style.display = (filter === 'all' || getRange(letter) === filter) ? '' : 'none';
+      });
+    });
+  });
+</script>
+
+
+  <!-- FLOATING WHATSAPP BUTTON -->
+  <a
+    href="https://wa.me/5491153588840"
+    target="_blank"
+    rel="noopener"
+    class="wa-float"
+    aria-label="Contactanos por WhatsApp"
+    title="Contactanos por WhatsApp"
+  >
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.103 1.504 5.833L.057 23.077l5.34-1.399A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.814 9.814 0 01-4.966-1.344l-.356-.211-3.692.968.985-3.6-.232-.37A9.818 9.818 0 012.182 12c0-5.421 4.397-9.818 9.818-9.818S21.818 6.579 21.818 12 17.421 21.818 12 21.818z"/>
+    </svg>
+    <span class="wa-float-label">Escribinos</span>
+  </a>
+
+</body>
+</html>
