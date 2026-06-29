@@ -460,6 +460,49 @@
       .wa-float::before { border-radius: 50%; }
     }
 
+
+    /* Hero brand logo */
+    .hero-logo-brand {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .hero-logo-brand img {
+      height: 36px;
+      width: auto;
+      opacity: 0.75;
+      filter: brightness(0) invert(1);
+    }
+
+    /* IGJ badge standalone below image */
+    .quienes-badge-standalone {
+      background: var(--slate-dk);
+      color: var(--white);
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      text-align: center;
+      display: inline-flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      margin-top: 1rem;
+      align-self: flex-start;
+    }
+    .quienes-badge-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 400;
+      color: var(--sage-lt);
+      line-height: 1;
+      display: block;
+    }
+    .quienes-badge-lbl {
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      display: block;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width:900px) {
       .quienes-layout,.pasos-layout,.contacto-grid { grid-template-columns:1fr; gap:3rem; }
@@ -482,6 +525,32 @@
       *,*::before,*::after { animation:none!important; transition:none!important; }
       .reveal { opacity:1; transform:none; }
     }
+
+    /* ── MOBILE FIXES ── */
+    @media (max-width: 640px) {
+      /* Logo CAPIAF: show small version above eyebrow on mobile */
+      .hero-logo-brand {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        padding-top: 0;
+        border-top: none;
+        order: -1; /* move before everything in flex */
+      }
+      .hero-logo-brand img {
+        height: 28px;
+      }
+      .hero-content {
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* WhatsApp float: move higher so it doesn't cover buttons */
+      .wa-float {
+        bottom: 5rem;
+        right: 1.2rem;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -550,6 +619,12 @@
       <div class="stat"><span class="stat-num">2020</span><span class="stat-lbl">Año de fundación</span></div>
       <div class="stat"><span class="stat-num">IGJ</span><span class="stat-lbl">Personería jurídica</span></div>
     </div>
+
+    <!-- Logo CAPIAF en hero -->
+    <div class="hero-logo-brand reveal reveal-delay-4">
+      <img src="capiaf-horizontal.png" alt="CAPIAF — Cámara de Pilates y Afines de la Ciudad Autónoma de Buenos Aires" />
+    </div>
+
   </div>
 </section>
 
@@ -563,10 +638,11 @@
     <div class="quienes-layout">
       <div class="quienes-img-wrap reveal reveal-delay-1">
         <img src="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=900&q=90&auto=format&fit=crop" alt="Instructora guiando una clase de Pilates en reformer" loading="lazy" />
-        <div class="quienes-badge">
-          <span class="quienes-badge-num">2022</span>
-          <span class="quienes-badge-lbl">Resolución IGJ N° 0001393</span>
-        </div>
+      </div>
+      <!-- Badge moved below image for mobile clarity -->
+      <div class="quienes-badge-standalone">
+        <span class="quienes-badge-num">2022</span>
+        <span class="quienes-badge-lbl">Resolución IGJ N° 0001393</span>
       </div>
       <div class="quienes-body reveal reveal-delay-2">
         <p>La Cámara de Pilates y Afines de la Ciudad Autónoma de Buenos Aires (CAPIAF) nació durante la pandemia de 2020, cuando propietarios de estudios comenzaron a reunirse para enfrentar juntos los desafíos de nuestra actividad.</p>
@@ -633,7 +709,7 @@
 
 <!-- FOTO BANNER -->
 <div class="photo-banner">
-  <img src="https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=1600&q=90&auto=format&fit=crop" alt="Clase de Pilates en grupo" loading="lazy" />
+  <img src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=1600&q=90&auto=format&fit=crop" alt="Clase de Pilates en grupo" loading="lazy" />
   <div class="photo-banner-overlay"></div>
   <div class="photo-banner-content">
     <blockquote class="reveal">"Si queremos que nuestro país sea un referente del Pilates a nivel mundial, tenemos que involucrarnos para jerarquizar nuestra actividad."</blockquote>
