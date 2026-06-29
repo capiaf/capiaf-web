@@ -462,18 +462,17 @@
 
 
 
-    /* IGJ badge standalone below image */
-    .quienes-badge-standalone {
+    /* IGJ badge inside image wrap */
+    .quienes-badge {
+      position: absolute;
+      bottom: 1.5rem;
+      right: -1rem;
       background: var(--slate-dk);
       color: var(--white);
-      padding: 1rem 1.5rem;
+      padding: 1.2rem 1.5rem;
       border-radius: var(--radius);
       text-align: center;
-      display: inline-flex;
-      flex-direction: column;
-      gap: 0.2rem;
-      margin-top: 1rem;
-      align-self: flex-start;
+      box-shadow: 0 8px 32px rgba(28,52,80,.2);
     }
     .quienes-badge-num {
       font-family: 'Playfair Display', serif;
@@ -527,23 +526,24 @@
     /* Hero watermark logo */
     .hero-watermark {
       position: absolute;
-      bottom: -2rem;
-      right: -2rem;
-      width: 320px;
-      opacity: 0.07;
+      top: 50%;
+      right: 3%;
+      transform: translateY(-50%);
+      height: 85%;
+      width: auto;
+      opacity: 0.09;
       pointer-events: none;
       z-index: 1;
     }
     .hero-watermark img {
-      width: 100%;
-      height: auto;
+      height: 100%;
+      width: auto;
     }
     @media (max-width: 640px) {
       .hero-watermark {
-        width: 200px;
-        bottom: 2rem;
-        right: -1rem;
-        opacity: 0.06;
+        height: 70%;
+        right: -5%;
+        opacity: 0.07;
       }
     }
 
@@ -599,7 +599,7 @@
   <div class="hero-content">
     <p class="hero-eyebrow reveal">Buenos Aires · Fundada en 2020</p>
     <h1 class="hero-title reveal reveal-delay-1">La voz del Pilates en <em>Buenos Aires.</em></h1>
-    <p class="hero-sub reveal reveal-delay-2">Somos la primera cámara empresarial de estudios de Pilates de la Ciudad. Más de 70 estudios trabajando juntos para jerarquizar la actividad y crear beneficios reales.</p>
+    <p class="hero-sub reveal reveal-delay-2">Somos la única Cámara Empresarial de Estudios de Pilates de la Ciudad. Más de 70 estudios trabajando juntos para jerarquizar la actividad y crear beneficios reales.</p>
     <div class="hero-actions reveal reveal-delay-3">
       <a href="#asociarse" class="btn-primary">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -702,7 +702,7 @@
   <div class="photo-banner-overlay"></div>
   <div class="photo-banner-content">
     <blockquote class="reveal">"Si queremos que nuestro país sea un referente del Pilates a nivel mundial, tenemos que involucrarnos para jerarquizar nuestra actividad."</blockquote>
-    <cite class="reveal reveal-delay-1">Natalia Marchetti — Miembro CAPIAF</cite>
+    <cite class="reveal reveal-delay-1">Marcelo Pérez — Miembro CAPIAF</cite>
   </div>
 </div>
 
@@ -713,8 +713,8 @@
     <h2 class="section-title reveal reveal-delay-1">Voces de quienes <em>ya forman parte</em></h2>
     <div class="testimonios-grid">
       <div class="testimonio reveal reveal-delay-1"><p>"Comenzamos a reunirnos en 2020 durante la pandemia, y hoy somos más de 70 estudios trabajando en conjunto para mejorar nuestra actividad."</p><span class="testimonio-autor">Alejandro Faiferman</span></div>
-      <div class="testimonio reveal reveal-delay-2"><p>"Formar parte de una cámara empresarial nos brinda seriedad y pertenencia sin que esto nos haga perder autonomía sobre nuestro emprendimiento."</p><span class="testimonio-autor">Marcelo Pérez</span></div>
-      <div class="testimonio reveal reveal-delay-3"><p>"Compartir experiencias con emprendedores del mismo sector nos permite crecer a nivel empresario y personal. La Cámara nos hace sentir respaldados."</p><span class="testimonio-autor">Miembro CAPIAF</span></div>
+      <div class="testimonio reveal reveal-delay-2"><p>"Formar parte de una cámara empresarial nos brinda seriedad y pertenencia sin que esto nos haga perder autonomía sobre nuestro emprendimiento."</p><span class="testimonio-autor">Natalia Marchetti</span></div>
+      <div class="testimonio reveal reveal-delay-3"><p>"Compartir experiencias con emprendedores del mismo sector nos permite crecer a nivel empresario y personal. La Cámara nos hace sentir respaldados."</p><span class="testimonio-autor">Giselle Sosa</span></div>
       <div class="testimonio reveal reveal-delay-1"><p>"Tenemos una visión compartida de lo que debe ser el Pilates en Argentina, y la mejor manera de llevarla a cabo es mediante acciones colectivas."</p><span class="testimonio-autor">Leticia Pompei</span></div>
       <div class="testimonio reveal reveal-delay-2"><p>"Estamos logrando beneficios para nuestros asociados, con descuentos y capacitaciones que de otra forma serían imposibles de obtener."</p><span class="testimonio-autor">Myriam Quintana</span></div>
       <div class="testimonio reveal reveal-delay-3"><p>"La Cámara nos abrió la cabeza. Entendimos que no somos competencia entre nosotros: somos el ecosistema del Pilates en Buenos Aires."</p><span class="testimonio-autor">Natalia Cavadini</span></div>
@@ -1191,9 +1191,9 @@
             <div class="channel-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></div>
             <div><span class="channel-label">Instagram</span><div class="channel-value">@camarapilates — seguinos para novedades</div></div>
           </a>
-          <a href="mailto:camaradepilatescaba@gmail.com" class="channel">
+          <a href="mailto:info@pilates.org.ar" class="channel">
             <div class="channel-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
-            <div><span class="channel-label">Email</span><div class="channel-value">camaradepilatescaba@gmail.com</div></div>
+            <div><span class="channel-label">Email</span><div class="channel-value">info@pilates.org.ar</div></div>
           </a>
         </div>
       </div>
@@ -1217,7 +1217,7 @@
     <div class="footer-links">
       <a href="https://www.instagram.com/camarapilates/" target="_blank" rel="noopener">Instagram</a>
       <a href="https://wa.me/5491153588840" target="_blank" rel="noopener">WhatsApp</a>
-      <a href="mailto:camaradepilatescaba@gmail.com">Email</a>
+      <a href="mailto:info@pilates.org.ar">Email</a>
     </div>
   </div>
 </footer>
