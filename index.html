@@ -461,18 +461,6 @@
     }
 
 
-    /* Hero brand logo */
-    .hero-logo-brand {
-      margin-top: 3rem;
-      padding-top: 2rem;
-      border-top: 1px solid rgba(255,255,255,0.08);
-    }
-    .hero-logo-brand img {
-      height: 36px;
-      width: auto;
-      opacity: 0.75;
-      filter: brightness(0) invert(1);
-    }
 
     /* IGJ badge standalone below image */
     .quienes-badge-standalone {
@@ -528,26 +516,35 @@
 
     /* ── MOBILE FIXES ── */
     @media (max-width: 640px) {
-      /* Logo CAPIAF: show small version above eyebrow on mobile */
-      .hero-logo-brand {
-        margin-top: 0;
-        margin-bottom: 1.5rem;
-        padding-top: 0;
-        border-top: none;
-        order: -1; /* move before everything in flex */
-      }
-      .hero-logo-brand img {
-        height: 28px;
-      }
-      .hero-content {
-        display: flex;
-        flex-direction: column;
-      }
-
       /* WhatsApp float: move higher so it doesn't cover buttons */
       .wa-float {
         bottom: 5rem;
         right: 1.2rem;
+      }
+    }
+
+
+    /* Hero watermark logo */
+    .hero-watermark {
+      position: absolute;
+      bottom: -2rem;
+      right: -2rem;
+      width: 340px;
+      opacity: 0.045;
+      pointer-events: none;
+      z-index: 1;
+      filter: brightness(0) invert(1);
+    }
+    .hero-watermark img {
+      width: 100%;
+      height: auto;
+    }
+    @media (max-width: 640px) {
+      .hero-watermark {
+        width: 240px;
+        bottom: -1rem;
+        right: -1rem;
+        opacity: 0.04;
       }
     }
 
@@ -599,6 +596,10 @@
 <section id="hero" aria-label="Inicio">
   <div class="hero-glow" aria-hidden="true"></div>
   <div class="hero-circles" aria-hidden="true"><span></span><span></span><span></span></div>
+  <!-- Watermark logo -->
+  <div class="hero-watermark" aria-hidden="true">
+    <img src="capiaf-vertical.png" alt="" />
+  </div>
   <div class="hero-photo" aria-hidden="true">
     <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1400&q=90&auto=format&fit=crop" alt="" loading="eager" />
   </div>
@@ -618,11 +619,6 @@
       <div class="stat"><span class="stat-num"><span>+</span>400</span><span class="stat-lbl">Estudios en la Ciudad</span></div>
       <div class="stat"><span class="stat-num">2020</span><span class="stat-lbl">Año de fundación</span></div>
       <div class="stat"><span class="stat-num">IGJ</span><span class="stat-lbl">Personería jurídica</span></div>
-    </div>
-
-    <!-- Logo CAPIAF en hero -->
-    <div class="hero-logo-brand reveal reveal-delay-4">
-      <img src="capiaf-horizontal.png" alt="CAPIAF — Cámara de Pilates y Afines de la Ciudad Autónoma de Buenos Aires" />
     </div>
 
   </div>
@@ -709,7 +705,7 @@
 
 <!-- FOTO BANNER -->
 <div class="photo-banner">
-  <img src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=1600&q=90&auto=format&fit=crop" alt="Clase de Pilates en grupo" loading="lazy" />
+  <img src="https://images.unsplash.com/photo-1518310952931-b1de897abd40?w=1600&q=90&auto=format&fit=crop" alt="Clase de Pilates en grupo" loading="lazy" />
   <div class="photo-banner-overlay"></div>
   <div class="photo-banner-content">
     <blockquote class="reveal">"Si queremos que nuestro país sea un referente del Pilates a nivel mundial, tenemos que involucrarnos para jerarquizar nuestra actividad."</blockquote>
