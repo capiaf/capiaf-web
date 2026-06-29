@@ -396,45 +396,7 @@
     .footer-links a:hover { color:var(--sage-lt); }
 
 
-    /* ── FLOATING WHATSAPP ── */
-    .wa-float {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      z-index: 300;
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      background: #25D366;
-      color: #fff;
-      padding: 0.85rem 1.4rem 0.85rem 1.1rem;
-      border-radius: 50px;
-      text-decoration: none;
-      box-shadow: 0 6px 24px rgba(37,211,102,0.45);
-      transition: transform 0.25s ease, box-shadow 0.25s ease, padding 0.3s ease;
-      overflow: hidden;
-      max-width: 56px; /* collapsed — icon only */
-    }
-    .wa-float:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 32px rgba(37,211,102,0.55);
-      max-width: 200px; /* expand on hover */
-      padding: 0.85rem 1.4rem 0.85rem 1.1rem;
-    }
-    .wa-float-label {
-      font-family: 'Jost', 'Nunito', sans-serif;
-      font-size: 0.88rem;
-      font-weight: 700;
-      white-space: nowrap;
-      opacity: 0;
-      transform: translateX(-8px);
-      transition: opacity 0.2s ease 0.05s, transform 0.2s ease 0.05s;
-      letter-spacing: 0.02em;
-    }
-    .wa-float:hover .wa-float-label {
-      opacity: 1;
-      transform: translateX(0);
-    }
+    
     /* Pulse animation to draw attention */
     .wa-float::before {
       content: '';
@@ -547,6 +509,28 @@
       }
     }
 
+
+    /* ── FLOATING WHATSAPP ── */
+    .wa-float {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 300;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #25D366;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(37,211,102,0.4);
+    }
+    @media (max-width: 640px) {
+      .wa-float { bottom: 5rem; right: 1.2rem; width: 52px; height: 52px; }
+    }
+
   </style>
 </head>
 <body>
@@ -627,11 +611,10 @@
     <div class="quienes-layout">
       <div class="quienes-img-wrap reveal reveal-delay-1">
         <img src="foto-quienes.jpg" alt="Instructora guiando una clase de Pilates en reformer" loading="lazy" />
-      </div>
-      <!-- Badge moved below image for mobile clarity -->
-      <div class="quienes-badge-standalone">
-        <span class="quienes-badge-num">2022</span>
-        <span class="quienes-badge-lbl">Resolución IGJ N° 0001393</span>
+        <div class="quienes-badge">
+          <span class="quienes-badge-num">2022</span>
+          <span class="quienes-badge-lbl">Resolución IGJ N° 0001393</span>
+        </div>
       </div>
       <div class="quienes-body reveal reveal-delay-2">
         <p>La Cámara de Pilates y Afines de la Ciudad Autónoma de Buenos Aires (CAPIAF) nació durante la pandemia de 2020, cuando propietarios de estudios comenzaron a reunirse para enfrentar juntos los desafíos de nuestra actividad.</p>
@@ -1263,21 +1246,11 @@
   });
 </script>
 
-
-  <!-- FLOATING WHATSAPP BUTTON -->
-  <a
-    href="https://wa.me/5491153588840"
-    target="_blank"
-    rel="noopener"
-    class="wa-float"
-    aria-label="Contactanos por WhatsApp"
-    title="Contactanos por WhatsApp"
-  >
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+  <a href="https://wa.me/5491153588840" target="_blank" rel="noopener" class="wa-float" aria-label="Contactanos por WhatsApp">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
       <path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.103 1.504 5.833L.057 23.077l5.34-1.399A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.814 9.814 0 01-4.966-1.344l-.356-.211-3.692.968.985-3.6-.232-.37A9.818 9.818 0 012.182 12c0-5.421 4.397-9.818 9.818-9.818S21.818 6.579 21.818 12 17.421 21.818 12 21.818z"/>
     </svg>
-    <span class="wa-float-label">Escribinos</span>
   </a>
 
 </body>
