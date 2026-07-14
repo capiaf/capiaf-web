@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estudios CAPIAF — Mapa</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F3F0E9; }
+
+    #header {
+      background: #2E4238;
+      color: white;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    #header h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    #header p { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin-top: 0.2rem; }
+
+    #search-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50px;
+      padding: 0.4rem 1rem;
+    }
+    #search-box input {
+      background: none;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 0.82rem;
+      width: 200px;
+    }
+    #search-box input::placeholder { color: rgba(255,255,255,0.4); }
+
+    #map { height: calc(100vh - 70px); width: 100%; }
+
+    /* Custom marker */
+    .custom-marker {
+      background: #6E9080;
+      border: 2px solid #2E4238;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .custom-marker:hover { background: #2E4238; }
+
+    /* Popup */
+    .leaflet-popup-content-wrapper {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    .popup-content { padding: 0.2rem 0; min-width: 180px; }
+    .popup-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #2E4238;
+      margin-bottom: 0.3rem;
+    }
+    .popup-addr {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 0.2rem;
+    }
+    .popup-barrio {
+      display: inline-block;
+      font-size: 0.7rem;
+      background: #EEF4F1;
+      color: #6E9080;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 50px;
+      margin-top: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .counter {
+      background: #6E9080;
+      color: white;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.3rem 0.8rem;
+      border-radius: 50px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <h1>CAPIAF — Estudios Asociados</h1>
+    <p>Cámara de Pilates y Afines de la Ciudad Autónoma de Buenos Aires</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+    <div id="search-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Buscar estudio o barrio..." />
+    </div>
+    <div class="counter" id="counter">68 estudios</div>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// Map init — centered on CABA
+const map = L.map('map', {
+  center: [-34.613, -58.443],
+  zoom: 13,
+  zoomControl: true,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  maxZoom: 19,
+}).addTo(map);
+
+// Custom icon
+function makeIcon(color = '#6E9080') {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      background:${color};
+      border:2.5px solid #2E4238;
+      border-radius:50%;
+      width:14px;height:14px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.35);
+      transition:all .2s;
+    "></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -10],
+  });
+}
+
+// Studios data with pre-geocoded coordinates (Buenos Aires addresses)
+const estudios = [
+  { name: "Âme Pilates Body Ballet", addr: "Agüero 1595", barrio: "Barrio Norte", lat: -34.5899, lng: -58.4073 },
+  { name: "Aluminé Estudio De Pilates", addr: "Montiel 1793", barrio: "Villa del Parque", lat: -34.6048, lng: -58.4832 },
+  { name: "Aprile Pilates", addr: "", barrio: "", lat: null, lng: null },
+  { name: "Ayres De Barracas", addr: "Isabel la Católica 362", barrio: "Barracas", lat: -34.6457, lng: -58.3847 },
+  { name: "Bae Pilates", addr: "Av. Luis María Campos 311", barrio: "Palermo", lat: -34.5757, lng: -58.4395 },
+  { name: "Bg Estudio Integral", addr: "Aráoz 2739", barrio: "Palermo", lat: -34.5897, lng: -58.4215 },
+  { name: "Bienestar En Equilibrio", addr: "Julián Álvarez 1148", barrio: "Villa Crespo", lat: -34.5971, lng: -58.4368 },
+  { name: "Bienestar En Movimiento", addr: "Julián Álvarez 563", barrio: "Villa Crespo", lat: -34.5937, lng: -58.4362 },
+  { name: "Bive Pilates", addr: "Av. Rivadavia 10814", barrio: "Liniers", lat: -34.6363, lng: -58.5148 },
+  { name: "Body Life Pilates", addr: "", barrio: "CABA", lat: -34.613, lng: -58.443 },
+  { name: "Casa De Movimiento", addr: "Libertad 400", barrio: "San Nicolás", lat: -34.6069, lng: -58.3831 },
+  { name: "Casa Porasy", addr: "Almirante Seguí 343", barrio: "Palermo", lat: -34.5783, lng: -58.4279 },
+  { name: "Centropilates", addr: "Av. Santa Fe 3312", barrio: "Palermo", lat: -34.5873, lng: -58.4098 },
+  { name: "Cinesia Pilates", addr: "Espinosa 2024", barrio: "La Paternal", lat: -34.6001, lng: -58.4788 },
+  { name: "Club Palermo Pilates", addr: "Armenia 2294", barrio: "Palermo", lat: -34.5880, lng: -58.4241 },
+  { name: "Club Pilates", addr: "Sarmiento 4101", barrio: "Almagro", lat: -34.6052, lng: -58.4319 },
+  { name: "Concepto Pilates", addr: "Av. de los Incas 4790", barrio: "Parque Chas", lat: -34.5791, lng: -58.4689 },
+  { name: "Corporal Centro De Bienestar Físico", addr: "Julián Álvarez 2672", barrio: "Palermo", lat: -34.5946, lng: -58.4344 },
+  { name: "Corpuspilates", addr: "General Urquiza 1180", barrio: "San Cristóbal", lat: -34.6239, lng: -58.4048 },
+  { name: "Cuerpoespiral", addr: "Malabia 376", barrio: "Villa Crespo", lat: -34.5943, lng: -58.4407 },
+  { name: "Danez Pilates & Funcional", addr: "Cuenca 2118", barrio: "Villa Santa Rita", lat: -34.6136, lng: -58.4862 },
+  { name: "Delbuono Pilates", addr: "Superí 3100", barrio: "Coghlan", lat: -34.5621, lng: -58.4709 },
+  { name: "Dhara Pilates", addr: "Coronel Falcón 2212", barrio: "Flores", lat: -34.6284, lng: -58.4681 },
+  { name: "Dipfusion Pilates Lab", addr: "Virrey Avilés 3153", barrio: "Colegiales", lat: -34.5707, lng: -58.4499 },
+  { name: "Dominio Pilates", addr: "Crisólogo Larralde 3811", barrio: "Saavedra", lat: -34.5561, lng: -58.4811 },
+  { name: "Dyna-mov Pilates", addr: "Gurruchaga 403", barrio: "Villa Crespo", lat: -34.5961, lng: -58.4361 },
+  { name: "El Atelier Pilates", addr: "Mariano Acha 3168", barrio: "Villa Urquiza", lat: -34.5699, lng: -58.4890 },
+  { name: "Energia Vital Pilates", addr: "Palpa 2468", barrio: "Colegiales", lat: -34.5729, lng: -58.4547 },
+  { name: "Esencia Pilates", addr: "Formosa 279", barrio: "Parque Patricios", lat: -34.6378, lng: -58.4019 },
+  { name: "Espacio Balance", addr: "Moldes 1596", barrio: "Belgrano", lat: -34.5617, lng: -58.4503 },
+  { name: "Espacio Luz Yoga Y Pilates", addr: "", barrio: "Flores", lat: -34.6281, lng: -58.4634 },
+  { name: "Estudio Core Ba Pilates", addr: "Pasco 796", barrio: "Balvanera", lat: -34.6163, lng: -58.4019 },
+  { name: "Fabiana Tallarico Pilates", addr: "Guatemala 4375", barrio: "Palermo", lat: -34.5855, lng: -58.4244 },
+  { name: "Fuentes Cufré", addr: "Ramón Falcón 6500", barrio: "Liniers", lat: -34.6402, lng: -58.5138 },
+  { name: "Genki Pilates", addr: "Jerónimo Salguero 518", barrio: "Almagro", lat: -34.6080, lng: -58.4197 },
+  { name: "Ginkgo Pilates", addr: "Valle 207", barrio: "Flores", lat: -34.6274, lng: -58.4558 },
+  { name: "Gloss Fit", addr: "Aníbal Troilo 976", barrio: "Almagro", lat: -34.6195, lng: -58.4237 },
+  { name: "Health Studio Pilates", addr: "Av. Ángel Gallardo 717", barrio: "Villa Crespo", lat: -34.5990, lng: -58.4479 },
+  { name: "Holistica Yoga & Pilates", addr: "Virrey Liniers 71", barrio: "Almagro", lat: -34.6082, lng: -58.4155 },
+  { name: "Iluminar Pilates & Bienestar", addr: "Tonelero 7400", barrio: "Liniers", lat: -34.6391, lng: -58.5117 },
+  { name: "Indigo Pilates", addr: "Malvinas Argentinas 292", barrio: "Caballito", lat: -34.6193, lng: -58.4426 },
+  { name: "Inspiración Pilates", addr: "Tinogasta 5285", barrio: "Villa Devoto", lat: -34.6021, lng: -58.5103 },
+  { name: "Malvon Pilates", addr: "Av. Dorrego 2381", barrio: "Palermo Hollywood", lat: -34.5787, lng: -58.4371 },
+  { name: "Mixtura Pilates", addr: "Amberes 1071", barrio: "Caballito", lat: -34.6155, lng: -58.4442 },
+  { name: "Movepilates", addr: "Av. Francisco Beiró 4492", barrio: "Villa Devoto", lat: -34.5985, lng: -58.5105 },
+  { name: "Mundo Pilates", addr: "Mendoza 2743", barrio: "Belgrano", lat: -34.5634, lng: -58.4563 },
+  { name: "Munay Pilates", addr: "Guardia Vieja 3318", barrio: "Almagro", lat: -34.6077, lng: -58.4316 },
+  { name: "Naapura Cuerpo Y Equilibrio", addr: "Fraga 599", barrio: "Chacarita", lat: -34.5798, lng: -58.4579 },
+  { name: "Norma Novelino", addr: "Av. Varela 1153", barrio: "Flores", lat: -34.6312, lng: -58.4601 },
+  { name: "Nuri Fit Pilates", addr: "", barrio: "CABA", lat: -34.613, lng: -58.443 },
+  { name: "Palace Pilates", addr: "Cabello 3627", barrio: "Palermo", lat: -34.5784, lng: -58.4047 },
+  { name: "Palermo Pilates", addr: "Darregueyra 2387", barrio: "Palermo", lat: -34.5858, lng: -58.4312 },
+  { name: "Pilates Bren", addr: "Cullen 5209", barrio: "Villa Urquiza", lat: -34.5733, lng: -58.4922 },
+  { name: "Pilates Studio Barracas", addr: "Mario Bravo 272", barrio: "Barracas", lat: -34.6389, lng: -58.3907 },
+  { name: "Pilates Urquiza", addr: "Blanco Encalada 5202", barrio: "Villa Urquiza", lat: -34.5748, lng: -58.4952 },
+  { name: "Pillpi Espacio Corporal", addr: "Aizpurúa 2834", barrio: "Villa Urquiza", lat: -34.5722, lng: -58.4875 },
+  { name: "Piuké", addr: "Av. Boedo 1780", barrio: "Boedo", lat: -34.6278, lng: -58.4185 },
+  { name: "Plena Pilates", addr: "Paraguay 643", barrio: "Retiro", lat: -34.5952, lng: -58.3773 },
+  { name: "Pura Vida Yoga Y Pilates", addr: "Adolfo P. Carranza 2137", barrio: "Palermo", lat: -34.5864, lng: -58.4267 },
+  { name: "Raisa Pilates", addr: "Juan Ramírez de Velasco 1481", barrio: "Villa Crespo", lat: -34.5981, lng: -58.4409 },
+  { name: "Romanza.ba", addr: "Habana y J V González", barrio: "Villa Devoto", lat: -34.6006, lng: -58.5142 },
+  { name: "Studio Recoleta Pilates", addr: "Austria 2282", barrio: "Recoleta", lat: -34.5871, lng: -58.3987 },
+  { name: "Tan Tiem Pilates", addr: "Ituzaingó 701", barrio: "Barracas", lat: -34.6424, lng: -58.3883 },
+  { name: "Tempo Libero Pilates", addr: "Av. Quintana 326", barrio: "Barrio Norte", lat: -34.5881, lng: -58.3924 },
+  { name: "Teseo Pilates Funcional", addr: "Rodríguez Peña 335", barrio: "San Nicolás", lat: -34.6054, lng: -58.3877 },
+  { name: "Toulouse Pilates", addr: "Bonpland 2363", barrio: "Palermo Hollywood", lat: -34.5829, lng: -58.4363 },
+  { name: "Tu Espacio", addr: "San José de Calasanz 15", barrio: "Caballito", lat: -34.6151, lng: -58.4388 },
+  { name: "Wellness Atelier Pilates & Bienestar", addr: "Av. Rivadavia 5040", barrio: "Caballito", lat: -34.6182, lng: -58.4434 },
+];
+
+const markers = [];
+const markerLayer = L.layerGroup().addTo(map);
+
+estudios.forEach(e => {
+  if (!e.lat) return;
+  
+  const marker = L.marker([e.lat, e.lng], { icon: makeIcon() });
+  
+  const popup = `
+    <div class="popup-content">
+      <div class="popup-name">${e.name}</div>
+      ${e.addr ? `<div class="popup-addr">📍 ${e.addr}</div>` : ''}
+      ${e.barrio ? `<span class="popup-barrio">${e.barrio}</span>` : ''}
+    </div>`;
+  
+  marker.bindPopup(popup, { maxWidth: 240 });
+  marker.addTo(markerLayer);
+  markers.push({ marker, data: e });
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  let count = 0;
+  
+  markers.forEach(({ marker, data }) => {
+    const match = !q || 
+      data.name.toLowerCase().includes(q) || 
+      (data.barrio && data.barrio.toLowerCase().includes(q)) ||
+      (data.addr && data.addr.toLowerCase().includes(q));
+    
+    if (match) {
+      marker.addTo(markerLayer);
+      marker.setIcon(makeIcon(q ? '#2E4238' : '#6E9080'));
+      count++;
+    } else {
+      markerLayer.removeLayer(marker);
+    }
+  });
+  
+  document.getElementById('counter').textContent = `${count} estudio${count !== 1 ? 's' : ''}`;
+});
+</script>
+</body>
+</html>
