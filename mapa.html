@@ -77,6 +77,16 @@
       color: #666;
       margin-bottom: 0.2rem;
     }
+    .popup-fix {
+      display: block;
+      margin-top: 0.6rem;
+      font-size: 0.7rem;
+      color: #6E9080;
+      text-decoration: none;
+      border-top: 1px solid #f0f0f0;
+      padding-top: 0.5rem;
+    }
+    .popup-fix:hover { text-decoration: underline; }
     .popup-barrio {
       display: inline-block;
       font-size: 0.7rem;
@@ -231,11 +241,15 @@ estudios.forEach(e => {
   
   const marker = L.marker([e.lat, e.lng], { icon: makeIcon() });
   
+  const waMsg = encodeURIComponent(`Hola CAPIAF, la ubicación de ${e.name} en el mapa no es correcta. La dirección es ${e.addr}.`);
   const popup = `
     <div class="popup-content">
       <div class="popup-name">${e.name}</div>
       ${e.addr ? `<div class="popup-addr">📍 ${e.addr}</div>` : ''}
       ${e.barrio ? `<span class="popup-barrio">${e.barrio}</span>` : ''}
+      <a href="https://wa.me/5491153588840?text=${waMsg}" target="_blank" rel="noopener" class="popup-fix">
+        ¿Ubicación incorrecta? Avisanos
+      </a>
     </div>`;
   
   marker.bindPopup(popup, { maxWidth: 240 });
