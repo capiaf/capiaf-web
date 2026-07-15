@@ -590,11 +590,11 @@ async function saveDatos() {
     return showSaveMsg('datosOk', 'El nombre es obligatorio.', 'err');
   }
 
-  const { error } = await sb.from('estudios').update(datos).eq('id', estudioId);
+  const { data: upd, error } = await sb.from('estudios').update(datos).eq('id', estudioId).select();
   btn.disabled = false; btn.textContent = 'Guardar datos';
 
-  if (error) {
-    showSaveMsg('datosOk', 'Error al guardar.', 'err');
+  if (error || !upd || upd.length === 0) {
+    showSaveMsg('datosOk', error ? 'Error al guardar.' : 'No se pudo guardar: tu cuenta no tiene permiso sobre esta ficha. Avisá a CAPIAF.', 'err');
   } else {
     document.getElementById('dashTitle').textContent = datos.nombre;
     showSaveMsg('datosOk', '✅ Guardado', 'ok');
