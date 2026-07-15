@@ -222,8 +222,11 @@
     .modal-overlay.open { display: flex; }
     .modal-card { background: var(--white); border-radius: var(--radius); padding: 1.6rem; width: 100%; max-width: 560px; box-shadow: 0 10px 40px rgba(35,42,38,.25); }
     .modal-card h3 { font-family: 'Playfair Display', serif; color: var(--pino); font-size: 1.2rem; margin-bottom: 1rem; }
-    .modal-card select { width: 100%; padding: .65rem .9rem; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'Jost', sans-serif; font-size: .9rem; background: var(--white); color: var(--tinta, #232A26); margin-bottom: 1rem; outline: none; }
+    .form-grid select, .modal-card select { width: 100%; padding: .65rem .9rem; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'Jost', sans-serif; font-size: .9rem; background: var(--white); color: var(--tinta, #232A26); margin-bottom: 1rem; outline: none; }
     .modal-card select:focus { border-color: var(--salvia); }
+    .ficha-sede { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .45rem 0; border-bottom: 1px solid #EDE9E0; font-size: .8rem; color: var(--mid); }
+    .ficha-sede:last-child { border-bottom: none; }
+    .tag-multisede { background: #eef4f2; color: var(--salvia); }
     .modal-actions { display: flex; gap: .6rem; margin-top: .4rem; justify-content: flex-end; flex-wrap: wrap; }
     .btn-cancelar { background: none; border: 1px solid var(--border); color: var(--mid); border-radius: 50px; padding: .5rem 1.2rem; font-family: 'Jost', sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; }
     .pin-map { height: 260px; border-radius: 12px; border: 1.5px solid var(--border); margin: .6rem 0 1rem; display: none; }
@@ -345,6 +348,13 @@
       <div>
         <label>Teléfono / WhatsApp</label>
         <input type="text" id="fTelefono" placeholder="+54 11 1234-5678" />
+      </div>
+      <div>
+        <label>Tipo de estudio</label>
+        <select id="fTipo">
+          <option value="individual">Individual (una sede)</option>
+          <option value="multisede">Multisede</option>
+        </select>
       </div>
       <div>
         <label>Instagram</label>
@@ -609,6 +619,7 @@ async function loadEstudio() {
       document.querySelector('.logo-upload-icon').style.display = 'none';
     }
 
+    document.getElementById('fTipo').value = data.tipo || 'individual';
     if (data.lat && data.lng) {
       mostrarPin('principal', data.lat, data.lng, 17);
       setPinStatus('pinStatusPrincipal', '✅ Ubicación guardada', 'ok');
@@ -636,6 +647,7 @@ async function saveDatos() {
     numero:      document.getElementById('fNumero').value.trim(),
     piso:        document.getElementById('fPiso').value.trim(),
     barrio:      document.getElementById('fBarrio').value.trim(),
+    tipo:        document.getElementById('fTipo').value,
   };
   const coords = coordsDe('principal');
   if (coords.lat) { datos.lat = coords.lat; datos.lng = coords.lng; }
@@ -703,9 +715,16 @@ const pinMaps = {};  // { principal: {map, marker}, sede: {...} }
 const CABA = [-34.6037, -58.4416];
 
 function pinCampos(cual) {
-  return cual === 'principal'
-    ? { dir: 'fDireccion', num: 'fNumero', barrio: 'fBarrio', mapId: 'mapPrincipal', status: 'pinStatusPrincipal' }
-    : { dir: 'sedeDireccion', num: 'sedeNumero', barrio: 'sedeBarrio', mapId: 'mapSede', status: 'pinStatusSede' };
+  if (cual === 'principal') return { dir: 'fDireccion', num: 'fNumero', mapId: 'mapPrincipal', status: 'pinStatusPrincipal' };
+  if (cual === 'ficha')     return { dir: 'mDireccion', num: 'mNumero', mapId: 'mapFicha', status: 'pinStatusFicha' };
+  return { dir: 'sedeDireccion', num: 'sedeNumero', mapId: 'mapSede', status: 'pinStatusSede' };
+}
+
+async function geocodificar(dir, num) {
+  const q = encodeURIComponent(`${dir} ${num}, Ciudad Autónoma de Buenos Aires, Argentina`);
+  const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}`);
+  const res = await r.json();
+  return res && res.length ? { lat: parseFloat(res[0].lat), lng: parseFloat(res[0].lon) } : null;
 }
 
 function mostrarPin(cual, lat, lng, zoom) {
@@ -905,7 +924,7 @@ function renderAdmin() {
       </td>
       <td class="col-contacto"><div class="row-sub">${contacto || '—'}</div></td>
       <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div></td>
-      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}</td>
+      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}</td>
       <td><div class="row-actions">
         <button class="btn-editar" onclick="abrirFicha('${e.id}')">Editar</button>
         ${!e.aprobado
@@ -995,11 +1014,29 @@ async function aprobar(id, valor) {
           <option value="false">Inactivo</option>
         </select>
       </div>
+      <div><label>Tipo de estudio</label>
+        <select id="mTipo">
+          <option value="individual">Individual</option>
+          <option value="multisede">Multisede</option>
+        </select>
+      </div>
       <div class="full"><label>Descripción breve</label><input type="text" id="mDescripcion" /></div>
       <div><label>Calle</label><input type="text" id="mDireccion" /></div>
       <div><label>Número</label><input type="text" id="mNumero" /></div>
       <div><label>Piso / Depto</label><input type="text" id="mPiso" /></div>
       <div><label>Barrio</label><input type="text" id="mBarrio" /></div>
+      <div class="full">
+        <label>Ubicación en el mapa</label>
+        <p class="map-hint" id="fichaPinLabel">Tocá un botón de pin para ver o corregir la ubicación. Arrastrá el pin y guardalo.</p>
+        <button type="button" class="btn-ubicar" onclick="fichaUbicar('principal')">📍 Pin sede principal</button>
+        <span class="pin-status" id="pinStatusFicha"></span>
+        <div id="mapFicha" class="pin-map"></div>
+        <button type="button" class="btn-ubicar" id="btnGuardarPin" style="display:none" onclick="fichaGuardarPin()">Guardar pin</button>
+      </div>
+      <div class="full">
+        <label>Sedes adicionales</label>
+        <div id="fichaSedes"></div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-cancelar" onclick="cerrarFicha()">Cancelar</button>
@@ -1026,9 +1063,87 @@ function abrirFicha(id) {
   document.getElementById('mPiso').value        = e.piso || '';
   document.getElementById('mBarrio').value      = e.barrio || '';
   document.getElementById('mActivo').value      = e.activo === false ? 'false' : 'true';
+  document.getElementById('mTipo').value        = e.tipo || 'individual';
+
+  const sedesDiv = document.getElementById('fichaSedes');
+  sedesDiv.innerHTML = (e.sedes && e.sedes.length)
+    ? e.sedes.map(s => `
+        <div class="ficha-sede">
+          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}</span>
+          <button type="button" class="btn-editar" onclick="fichaUbicar('sede','${s.id}')">📍 Pin</button>
+        </div>`).join('')
+    : '<p class="map-hint" style="margin:0">Sin sedes adicionales.</p>';
+
+  fichaPinTarget = null;
+  document.getElementById('mapFicha').classList.remove('visible');
+  document.getElementById('btnGuardarPin').style.display = 'none';
+  setPinStatus('pinStatusFicha', '', '');
+  document.getElementById('fichaPinLabel').textContent = 'Tocá un botón de pin para ver o corregir la ubicación. Arrastrá el pin y guardalo.';
+
   const msg = document.getElementById('fichaMsg');
   msg.style.display = 'none'; msg.textContent = '';
   document.getElementById('fichaModal').classList.add('open');
+}
+
+let fichaPinTarget = null;
+
+async function fichaUbicar(tipo, sedeId) {
+  const e = allEstudios.find(x => x.id === fichaId);
+  if (!e) return;
+  fichaPinTarget = { tipo, sedeId: sedeId || null };
+  document.getElementById('btnGuardarPin').style.display = 'inline-block';
+
+  let dir, num, lat, lng, label;
+  if (tipo === 'principal') {
+    dir = document.getElementById('mDireccion').value.trim();
+    num = document.getElementById('mNumero').value.trim();
+    lat = e.lat; lng = e.lng; label = 'Sede principal';
+  } else {
+    const s = (e.sedes || []).find(x => x.id === sedeId);
+    if (!s) return;
+    dir = s.direccion || ''; num = s.numero || '';
+    lat = s.lat; lng = s.lng; label = s.nombre || 'Sede';
+  }
+  document.getElementById('fichaPinLabel').textContent = 'Editando pin de: ' + label;
+
+  if (lat && lng) {
+    mostrarPin('ficha', lat, lng, 17);
+    setPinStatus('pinStatusFicha', 'Pin guardado — arrastralo para corregirlo', 'ok');
+    return;
+  }
+  setPinStatus('pinStatusFicha', 'Buscando dirección...', '');
+  const g = await geocodificar(dir, num).catch(() => null);
+  if (g) {
+    mostrarPin('ficha', g.lat, g.lng, 17);
+    setPinStatus('pinStatusFicha', 'Ajustá el pin y tocá Guardar pin', 'ok');
+  } else {
+    mostrarPin('ficha', CABA[0], CABA[1], 12);
+    setPinStatus('pinStatusFicha', 'No se encontró la dirección: arrastrá el pin a mano', 'err');
+  }
+}
+
+async function fichaGuardarPin() {
+  if (!fichaPinTarget || !pinMaps['ficha']) return;
+  const p = pinMaps['ficha'].marker.getLatLng();
+  let ok = false;
+
+  if (fichaPinTarget.tipo === 'principal') {
+    const { data, error } = await sb.from('estudios').update({ lat: p.lat, lng: p.lng }).eq('id', fichaId).select();
+    ok = !error && data && data.length > 0;
+    if (ok) {
+      const local = allEstudios.find(x => x.id === fichaId);
+      if (local) { local.lat = p.lat; local.lng = p.lng; }
+    }
+  } else {
+    const { data, error } = await sb.from('sedes').update({ lat: p.lat, lng: p.lng }).eq('id', fichaPinTarget.sedeId).select();
+    ok = !error && data && data.length > 0;
+    if (ok) {
+      const local = allEstudios.find(x => x.id === fichaId);
+      const s = local && (local.sedes || []).find(x => x.id === fichaPinTarget.sedeId);
+      if (s) { s.lat = p.lat; s.lng = p.lng; }
+    }
+  }
+  setPinStatus('pinStatusFicha', ok ? '✅ Pin guardado' : 'No se pudo guardar el pin.', ok ? 'ok' : 'err');
 }
 
 function cerrarFicha() {
@@ -1049,6 +1164,7 @@ async function guardarFicha() {
     piso:        document.getElementById('mPiso').value.trim(),
     barrio:      document.getElementById('mBarrio').value.trim(),
     activo:      document.getElementById('mActivo').value === 'true',
+    tipo:        document.getElementById('mTipo').value,
   };
   if (!datos.nombre) {
     msg.className = 'msg err'; msg.style.display = 'block';
