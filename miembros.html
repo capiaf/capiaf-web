@@ -433,6 +433,13 @@
 
     <div id="sedesList"></div>
 
+    <div id="sedePinPanel" style="display:none;margin:.6rem 0 1rem">
+      <p class="map-hint" id="sedePinLabel"></p>
+      <span class="pin-status" id="pinStatusSedeExistente"></span>
+      <div id="mapSedeExistente" class="pin-map"></div>
+      <button type="button" class="btn-ubicar" onclick="guardarPinSede()">Guardar pin</button>
+    </div>
+
     <button class="btn-add-sede" onclick="toggleSedeForm()">+ Agregar sede</button>
 
     <div class="sede-form" id="sedeForm">
@@ -717,6 +724,7 @@ const CABA = [-34.6037, -58.4416];
 function pinCampos(cual) {
   if (cual === 'principal') return { dir: 'fDireccion', num: 'fNumero', mapId: 'mapPrincipal', status: 'pinStatusPrincipal' };
   if (cual === 'ficha')     return { dir: 'mDireccion', num: 'mNumero', mapId: 'mapFicha', status: 'pinStatusFicha' };
+  if (cual === 'sedeExistente') return { mapId: 'mapSedeExistente', status: 'pinStatusSedeExistente' };
   return { dir: 'sedeDireccion', num: 'sedeNumero', mapId: 'mapSede', status: 'pinStatusSede' };
 }
 
@@ -796,9 +804,10 @@ function renderSedes() {
   list.innerHTML = sedes.map(s => `
     <div class="sede-item">
       <div class="sede-item-info">
-        <strong>${s.nombre || 'Sede'}</strong>
+        <strong>${s.nombre || 'Sede'} ${s.lat ? '📍' : ''}</strong>
         <small>${s.direccion || ''} ${s.numero || ''} — ${s.barrio || ''}</small>
       </div>
+      <button type="button" class="btn-editar" onclick="ubicarSedeExistente('${s.id}')">📍 Ubicar</button>
       <button class="btn-remove" onclick="removeSede('${s.id}')" title="Eliminar">✕</button>
     </div>
   `).join('');
@@ -807,6 +816,44 @@ function renderSedes() {
 function toggleSedeForm() {
   const f = document.getElementById('sedeForm');
   f.classList.toggle('open');
+}
+
+let sedePinId = null;
+
+async function ubicarSedeExistente(id) {
+  const s = sedes.find(x => x.id === id);
+  if (!s) return;
+  sedePinId = id;
+  document.getElementById('sedePinPanel').style.display = 'block';
+  document.getElementById('sedePinLabel').textContent = 'Pin de: ' + (s.nombre || 'Sede') + ' — arrastralo hasta la entrada exacta y tocá Guardar pin.';
+
+  if (s.lat && s.lng) {
+    mostrarPin('sedeExistente', s.lat, s.lng, 17);
+    setPinStatus('pinStatusSedeExistente', 'Pin guardado — arrastralo para corregirlo', 'ok');
+    return;
+  }
+  setPinStatus('pinStatusSedeExistente', 'Buscando dirección...', '');
+  const g = await geocodificar(s.direccion || '', s.numero || '').catch(() => null);
+  if (g) {
+    mostrarPin('sedeExistente', g.lat, g.lng, 17);
+    setPinStatus('pinStatusSedeExistente', 'Ajustá el pin y tocá Guardar pin', 'ok');
+  } else {
+    mostrarPin('sedeExistente', CABA[0], CABA[1], 12);
+    setPinStatus('pinStatusSedeExistente', 'No se encontró la dirección: arrastrá el pin a mano', 'err');
+  }
+}
+
+async function guardarPinSede() {
+  if (!sedePinId || !pinMaps['sedeExistente']) return;
+  const p = pinMaps['sedeExistente'].marker.getLatLng();
+  const { data, error } = await sb.from('sedes').update({ lat: p.lat, lng: p.lng }).eq('id', sedePinId).select();
+  const ok = !error && data && data.length > 0;
+  if (ok) {
+    const s = sedes.find(x => x.id === sedePinId);
+    if (s) { s.lat = p.lat; s.lng = p.lng; }
+    renderSedes();
+  }
+  setPinStatus('pinStatusSedeExistente', ok ? '✅ Pin guardado' : 'No se pudo guardar el pin.', ok ? 'ok' : 'err');
 }
 
 async function addSede() {
