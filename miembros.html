@@ -554,7 +554,11 @@ async function register() {
     await sb.from('estudios').upsert({ user_id: data.user.id, nombre, email }, { onConflict: 'user_id' });
   }
 
-  showMsg('authMsg', '✅ ¡Cuenta creada! Revisá tu email para confirmarla.', 'success');
+  if (data.session) {
+    showMsg('authMsg', '✅ ¡Cuenta creada! Entrando al portal...', 'success');
+  } else {
+    showMsg('authMsg', '✅ ¡Cuenta creada! Revisá tu email para confirmarla.', 'success');
+  }
 }
 
 async function forgotPassword() {
