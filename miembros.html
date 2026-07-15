@@ -226,6 +226,14 @@
     .modal-card select:focus { border-color: var(--salvia); }
     .modal-actions { display: flex; gap: .6rem; margin-top: .4rem; justify-content: flex-end; flex-wrap: wrap; }
     .btn-cancelar { background: none; border: 1px solid var(--border); color: var(--mid); border-radius: 50px; padding: .5rem 1.2rem; font-family: 'Jost', sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; }
+    .pin-map { height: 260px; border-radius: 12px; border: 1.5px solid var(--border); margin: .6rem 0 1rem; display: none; }
+    .pin-map.visible { display: block; }
+    .map-hint { font-size: .78rem; color: var(--mid); margin-bottom: .5rem; }
+    .btn-ubicar { background: var(--salvia); color: white; border: none; border-radius: 50px; padding: .5rem 1.1rem; font-size: .8rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; margin-bottom: .4rem; }
+    .btn-ubicar:hover { opacity: .9; }
+    .pin-status { font-size: .75rem; margin-left: .5rem; }
+    .pin-status.ok { color: var(--ok); }
+    .pin-status.err { color: var(--error); }
     .btn-aprobar { background: var(--ok); color: white; border: none; border-radius: 50px; padding: .32rem .85rem; font-size: .7rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; white-space: nowrap; }
     .btn-aprobar:hover { opacity: .85; }
     .btn-desaprobar { background: none; border: 1px solid var(--border); color: var(--mid); border-radius: 50px; padding: .32rem .85rem; font-size: .7rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; white-space: nowrap; }
@@ -251,6 +259,8 @@
       .page { padding: 1.5rem 1rem 3rem; }
     }
   </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
 
@@ -368,6 +378,13 @@
         <label>Barrio *</label>
         <input type="text" id="fBarrio" placeholder="Ej: Palermo Hollywood" />
       </div>
+      <div class="full">
+        <label>Ubicación en el mapa</label>
+        <p class="map-hint">Completá calle y número, tocá el botón y después arrastrá el pin hasta la entrada exacta de tu estudio. Esa es la ubicación que va a ver la gente en el mapa de CAPIAF.</p>
+        <button type="button" class="btn-ubicar" onclick="ubicarPin('principal')">📍 Buscar dirección en el mapa</button>
+        <span class="pin-status" id="pinStatusPrincipal"></span>
+        <div id="mapPrincipal" class="pin-map"></div>
+      </div>
     </div>
 
     <button class="btn-save" id="btnSaveDatos" onclick="saveDatos()">Guardar datos</button>
@@ -426,6 +443,13 @@
           <label>Número</label>
           <input type="text" id="sedeNumero" placeholder="Ej: 2743" />
         </div>
+      </div>
+      <div class="full" style="grid-column:1/-1">
+        <label>Ubicación en el mapa</label>
+        <p class="map-hint">Buscá la dirección y ajustá el pin arrastrándolo.</p>
+        <button type="button" class="btn-ubicar" onclick="ubicarPin('sede')">📍 Buscar dirección en el mapa</button>
+        <span class="pin-status" id="pinStatusSede"></span>
+        <div id="mapSede" class="pin-map"></div>
       </div>
       <button class="btn-save" onclick="addSede()">Guardar sede</button>
       <span class="save-msg" id="sedeMsg"></span>
@@ -585,6 +609,11 @@ async function loadEstudio() {
       document.querySelector('.logo-upload-icon').style.display = 'none';
     }
 
+    if (data.lat && data.lng) {
+      mostrarPin('principal', data.lat, data.lng, 17);
+      setPinStatus('pinStatusPrincipal', '✅ Ubicación guardada', 'ok');
+    }
+
     await loadSedes();
   } else {
     // Create record if doesn't exist (upsert: nunca duplica)
@@ -608,6 +637,8 @@ async function saveDatos() {
     piso:        document.getElementById('fPiso').value.trim(),
     barrio:      document.getElementById('fBarrio').value.trim(),
   };
+  const coords = coordsDe('principal');
+  if (coords.lat) { datos.lat = coords.lat; datos.lng = coords.lng; }
 
   if (!datos.nombre) {
     btn.disabled = false; btn.textContent = 'Guardar datos';
@@ -667,6 +698,70 @@ async function uploadLogo() {
 // ── SEDES ──
 let sedes = [];
 
+// ── PINES EN EL MAPA ──
+const pinMaps = {};  // { principal: {map, marker}, sede: {...} }
+const CABA = [-34.6037, -58.4416];
+
+function pinCampos(cual) {
+  return cual === 'principal'
+    ? { dir: 'fDireccion', num: 'fNumero', barrio: 'fBarrio', mapId: 'mapPrincipal', status: 'pinStatusPrincipal' }
+    : { dir: 'sedeDireccion', num: 'sedeNumero', barrio: 'sedeBarrio', mapId: 'mapSede', status: 'pinStatusSede' };
+}
+
+function mostrarPin(cual, lat, lng, zoom) {
+  const c = pinCampos(cual);
+  document.getElementById(c.mapId).classList.add('visible');
+  if (!pinMaps[cual]) {
+    const map = L.map(c.mapId).setView([lat, lng], zoom || 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap', maxZoom: 19
+    }).addTo(map);
+    const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    marker.on('dragend', () => setPinStatus(c.status, '✅ Pin ajustado', 'ok'));
+    pinMaps[cual] = { map, marker };
+  } else {
+    pinMaps[cual].map.setView([lat, lng], zoom || 17);
+    pinMaps[cual].marker.setLatLng([lat, lng]);
+  }
+  setTimeout(() => pinMaps[cual].map.invalidateSize(), 100);
+}
+
+function setPinStatus(id, texto, tipo) {
+  const el = document.getElementById(id);
+  el.textContent = texto;
+  el.className = 'pin-status ' + (tipo || '');
+}
+
+function coordsDe(cual) {
+  if (!pinMaps[cual]) return { lat: null, lng: null };
+  const p = pinMaps[cual].marker.getLatLng();
+  return { lat: p.lat, lng: p.lng };
+}
+
+async function ubicarPin(cual) {
+  const c = pinCampos(cual);
+  const dir = document.getElementById(c.dir).value.trim();
+  const num = document.getElementById(c.num).value.trim();
+  if (!dir || !num) return setPinStatus(c.status, 'Completá calle y número primero.', 'err');
+
+  setPinStatus(c.status, 'Buscando...', '');
+  try {
+    const q = encodeURIComponent(`${dir} ${num}, Ciudad Autónoma de Buenos Aires, Argentina`);
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}`);
+    const res = await r.json();
+    if (res && res.length) {
+      mostrarPin(cual, parseFloat(res[0].lat), parseFloat(res[0].lon), 17);
+      setPinStatus(c.status, '✅ Encontrada — ajustá el pin si hace falta', 'ok');
+    } else {
+      mostrarPin(cual, CABA[0], CABA[1], 12);
+      setPinStatus(c.status, 'No se encontró la dirección: arrastrá el pin a mano.', 'err');
+    }
+  } catch (err) {
+    mostrarPin(cual, CABA[0], CABA[1], 12);
+    setPinStatus(c.status, 'No se pudo buscar: arrastrá el pin a mano.', 'err');
+  }
+}
+
 async function loadSedes() {
   const { data } = await sb.from('sedes').select('*').eq('estudio_id', estudioId);
   sedes = data || [];
@@ -703,6 +798,8 @@ async function addSede() {
     numero:     document.getElementById('sedeNumero').value.trim(),
     barrio:     document.getElementById('sedeBarrio').value.trim(),
   };
+  const sc = coordsDe('sede');
+  if (sc.lat) { sede.lat = sc.lat; sede.lng = sc.lng; }
 
   const { data, error } = await sb.from('sedes').insert(sede).select().single();
   if (error) return showSaveMsg('sedeMsg', 'Error al guardar.', 'err');
@@ -711,6 +808,8 @@ async function addSede() {
   renderSedes();
   document.getElementById('sedeForm').classList.remove('open');
   ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mapSede').classList.remove('visible');
+  setPinStatus('pinStatusSede', '', '');
   showSaveMsg('sedeMsg', '✅ Sede agregada', 'ok');
 }
 
