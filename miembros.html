@@ -185,32 +185,42 @@
 
 
     /* ── ADMIN ── */
-    .admin-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-    .estudio-card {
+    .admin-table-wrap {
       background: var(--white);
       border-radius: var(--radius);
-      padding: 1.4rem;
       box-shadow: 0 2px 12px rgba(46,66,56,.06);
-      border-left: 4px solid var(--border);
-      transition: border-color .2s;
+      margin-top: 1.5rem;
+      overflow-x: auto;
     }
-    .estudio-card.aprobado { border-left-color: var(--ok); }
-    .estudio-card.pendiente { border-left-color: #d4ac0d; }
-    .estudio-card h3 { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--pino); margin-bottom: .3rem; }
-    .estudio-card p { font-size: .78rem; color: var(--mid); line-height: 1.6; }
-    .estudio-card .tag { display: inline-block; font-size: .65rem; font-weight: 600; padding: .2rem .6rem; border-radius: 50px; margin-top: .5rem; text-transform: uppercase; letter-spacing: .06em; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .admin-table th {
+      font-size: .65rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em;
+      color: var(--mid); text-align: left; padding: .8rem .9rem;
+      border-bottom: 1.5px solid var(--border); white-space: nowrap;
+      position: sticky; top: 0; background: var(--white);
+    }
+    .admin-table td { padding: .65rem .9rem; border-bottom: 1px solid #EDE9E0; vertical-align: middle; }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table tbody tr { border-left: 3px solid transparent; transition: background .15s; }
+    .admin-table tbody tr:hover { background: var(--lino); }
+    .admin-table tbody tr.aprobado { border-left: 3px solid var(--ok); }
+    .admin-table tbody tr.pendiente { border-left: 3px solid #d4ac0d; }
+    .row-logo { width: 34px; height: 34px; border-radius: 8px; object-fit: contain; background: var(--lino); display: block; }
+    .row-logo-empty { width: 34px; height: 34px; border-radius: 8px; background: var(--lino); color: var(--salvia); font-family: 'Playfair Display', serif; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+    .row-nombre { font-family: 'Playfair Display', serif; font-weight: 600; color: var(--pino); font-size: .92rem; line-height: 1.2; }
+    .row-sub { font-size: .72rem; color: var(--mid); margin-top: .15rem; }
+    .row-falta { font-size: .68rem; color: var(--error); margin-top: .15rem; }
+    .tag { display: inline-block; font-size: .62rem; font-weight: 600; padding: .18rem .55rem; border-radius: 50px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
     .tag-ok { background: #f0faf5; color: var(--ok); }
     .tag-pending { background: #fef9e7; color: #d4ac0d; }
-    .tag-incomplete { background: #fdf2f2; color: var(--error); }
-    .estudio-actions { display: flex; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
-    .btn-aprobar { background: var(--ok); color: white; border: none; border-radius: 50px; padding: .35rem .9rem; font-size: .72rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; }
+    .btn-aprobar { background: var(--ok); color: white; border: none; border-radius: 50px; padding: .32rem .85rem; font-size: .7rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; white-space: nowrap; }
     .btn-aprobar:hover { opacity: .85; }
-    .btn-desaprobar { background: none; border: 1px solid var(--border); color: var(--mid); border-radius: 50px; padding: .35rem .9rem; font-size: .72rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; }
+    .btn-desaprobar { background: none; border: 1px solid var(--border); color: var(--mid); border-radius: 50px; padding: .32rem .85rem; font-size: .7rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; white-space: nowrap; }
+    .col-contacto, .col-barrio { white-space: nowrap; }
+    @media (max-width: 640px) {
+      .th-contacto, .col-contacto { display: none; }
+      .admin-table td, .admin-table th { padding: .55rem .6rem; }
+    }
     .admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
     .stat-card { background: var(--white); border-radius: var(--radius); padding: 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(46,66,56,.06); }
     .stat-card .num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; color: var(--pino); line-height: 1; }
@@ -758,33 +768,50 @@ function renderAdmin() {
 
   const grid = document.getElementById('adminGrid');
   if (list.length === 0) {
-    grid.innerHTML = '<p style="color:var(--mid);font-size:.88rem">No hay estudios que coincidan.</p>';
+    grid.innerHTML = '<p style="color:var(--mid);font-size:.88rem;padding:1.2rem">No hay estudios que coincidan.</p>';
     return;
   }
 
-  grid.innerHTML = list.map(e => `
-    <div class="estudio-card ${e.aprobado ? 'aprobado' : 'pendiente'}" id="card-${e.id}">
-      ${e.logo_url ? `<img src="${e.logo_url}" class="estudio-logo" alt="${e.nombre}" />` : ''}
-      <h3>${e.nombre || '(sin nombre)'}</h3>
-      <p>
-        ${e.email ? `📧 ${e.email}<br>` : ''}
-        ${e.telefono ? `📞 ${e.telefono}<br>` : ''}
-        ${e.instagram ? `📷 ${e.instagram}<br>` : ''}
-        ${e.direccion ? `📍 ${e.direccion} ${e.numero||''}, ${e.barrio||''}<br>` : ''}
-        ${e.sedes && e.sedes.length > 0 ? `🏢 ${e.sedes.length} sede(s) adicional(es)<br>` : ''}
-      </p>
-      <span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">
-        ${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
-      </span>
-      ${isIncompleto(e) ? `<span class="tag tag-incomplete" style="margin-left:.3rem">⚠️ Falta: ${camposFaltantes(e).join(', ')}</span>` : ''}
-      <div class="estudio-actions">
-        ${!e.aprobado
-          ? `<button class="btn-aprobar" onclick="aprobar('${e.id}', true)">Aprobar</button>`
-          : `<button class="btn-desaprobar" onclick="aprobar('${e.id}', false)">Desaprobar</button>`
-        }
-      </div>
-    </div>
-  `).join('');
+  const filas = list.map(e => {
+    const inicial = (e.nombre || '?').trim().charAt(0).toUpperCase();
+    const contacto = [e.telefono, e.instagram].filter(Boolean).join(' · ');
+    const ubic = e.direccion
+      ? `${e.direccion} ${e.numero || ''}${e.barrio ? ', ' + e.barrio : ''}`
+      : (e.barrio || '—');
+    const sedes = e.sedes && e.sedes.length > 0 ? ` (+${e.sedes.length} sede${e.sedes.length > 1 ? 's' : ''})` : '';
+    return `
+    <tr class="${e.aprobado ? 'aprobado' : 'pendiente'}" id="card-${e.id}">
+      <td>${e.logo_url
+        ? `<img src="${e.logo_url}" class="row-logo" alt="" />`
+        : `<div class="row-logo-empty">${inicial}</div>`}</td>
+      <td>
+        <div class="row-nombre">${e.nombre || '(sin nombre)'}</div>
+        <div class="row-sub">${e.email || ''}</div>
+        ${isIncompleto(e) ? `<div class="row-falta">⚠️ Falta: ${camposFaltantes(e).join(', ')}</div>` : ''}
+      </td>
+      <td class="col-contacto"><div class="row-sub">${contacto || '—'}</div></td>
+      <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div></td>
+      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span></td>
+      <td>${!e.aprobado
+        ? `<button class="btn-aprobar" onclick="aprobar('${e.id}', true)">Aprobar</button>`
+        : `<button class="btn-desaprobar" onclick="aprobar('${e.id}', false)">Desaprobar</button>`}</td>
+    </tr>`;
+  }).join('');
+
+  grid.innerHTML = `
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Estudio</th>
+        <th class="th-contacto">Contacto</th>
+        <th>Ubicación</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>${filas}</tbody>
+  </table>`;
 }
 
 async function aprobar(id, valor) {
@@ -831,7 +858,7 @@ async function aprobar(id, valor) {
     <button class="filter-pill" data-filter="incompleto" onclick="setAdminFilter('incompleto', this)">Incompletos</button>
   </div>
 
-  <div class="admin-grid" id="adminGrid"></div>
+  <div class="admin-table-wrap" id="adminGrid"></div>
 </div>
 
 </body>
