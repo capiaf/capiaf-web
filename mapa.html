@@ -130,6 +130,7 @@
 <div id="map"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // Map init — centered on CABA
 const map = L.map('map', {
@@ -162,7 +163,8 @@ function makeIcon(color = '#6E9080') {
 }
 
 // Studios data with pre-geocoded coordinates (Buenos Aires addresses)
-const estudios = [
+// Ubicaciones estimadas: se usan solo para estudios que todavia no fijaron su pin desde el portal
+const estudiosBase = [
   { name: "Tu Espacio", addr: "San José de Calasanz 15", barrio: "Caballito", lat: -34.6148, lng: -58.4394 },
   { name: "Dyna-mov Pilates", addr: "Gurruchaga 403", barrio: "Villa Crespo", lat: -34.5952, lng: -58.4358 },
   { name: "Mundo Pilates", addr: "Mendoza 2743", barrio: "Belgrano", lat: -34.5638, lng: -58.4562 },
@@ -236,26 +238,77 @@ const estudios = [
 const markers = [];
 const markerLayer = L.layerGroup().addTo(map);
 
-estudios.forEach(e => {
-  if (!e.lat) return;
-  
-  const marker = L.marker([e.lat, e.lng], { icon: makeIcon() });
-  
-  const waMsg = encodeURIComponent(`Hola CAPIAF, la ubicación de ${e.name} en el mapa no es correcta. La dirección es ${e.addr}.`);
-  const popup = `
-    <div class="popup-content">
-      <div class="popup-name">${e.name}</div>
-      ${e.addr ? `<div class="popup-addr">📍 ${e.addr}</div>` : ''}
-      ${e.barrio ? `<span class="popup-barrio">${e.barrio}</span>` : ''}
-      <a href="https://wa.me/5491153588840?text=${waMsg}" target="_blank" rel="noopener" class="popup-fix">
-        ¿Ubicación incorrecta? Avisanos
-      </a>
-    </div>`;
-  
-  marker.bindPopup(popup, { maxWidth: 240 });
-  marker.addTo(markerLayer);
-  markers.push({ marker, data: e });
-});
+const sb = supabase.createClient(
+  'https://rpxckpqptdgkkwaqtgzz.supabase.co',
+  'sb_publishable_QqQ4vWOitcfzNREsG3SoHA_rJAkTMDQ'
+);
+
+function renderMarkers(lista) {
+  lista.forEach(e => {
+    if (!e.lat) return;
+
+    const marker = L.marker([e.lat, e.lng], { icon: makeIcon() });
+
+    const waMsg = encodeURIComponent(`Hola CAPIAF, la ubicación de ${e.name} en el mapa no es correcta. La dirección es ${e.addr}.`);
+    const popup = `
+      <div class="popup-content">
+        <div class="popup-name">${e.name}</div>
+        ${e.addr ? `<div class="popup-addr">📍 ${e.addr}</div>` : ''}
+        ${e.barrio ? `<span class="popup-barrio">${e.barrio}</span>` : ''}
+        ${e.fijado
+          ? ''
+          : `<a href="https://wa.me/5491153588840?text=${waMsg}" target="_blank" rel="noopener" class="popup-fix">¿Ubicación incorrecta? Avisanos</a>`}
+      </div>`;
+
+    marker.bindPopup(popup, { maxWidth: 240 });
+    marker.addTo(markerLayer);
+    markers.push({ marker, data: e });
+  });
+  const count = markers.length;
+  const counter = document.getElementById('counter');
+  if (counter) counter.textContent = count + ' estudio' + (count !== 1 ? 's' : '');
+}
+
+async function cargarEstudios() {
+  let lista = [...estudiosBase];
+  const norm = s => (s || '').toLowerCase().trim();
+
+  try {
+    const { data } = await sb
+      .from('estudios')
+      .select('nombre, direccion, numero, barrio, lat, lng, sedes(nombre, direccion, numero, barrio, lat, lng)')
+      .eq('aprobado', true)
+      .eq('activo', true);
+
+    (data || []).forEach(e => {
+      // Pin fijado por el propio estudio: reemplaza la ubicacion estimada
+      if (e.lat && e.lng) {
+        lista = lista.filter(l => norm(l.name) !== norm(e.nombre));
+        lista.push({
+          name: e.nombre,
+          addr: `${e.direccion || ''} ${e.numero || ''}`.trim(),
+          barrio: e.barrio || '',
+          lat: e.lat, lng: e.lng, fijado: true
+        });
+      }
+      // Sedes adicionales con pin propio
+      (e.sedes || []).forEach(s => {
+        if (s.lat && s.lng) lista.push({
+          name: e.nombre + (s.nombre ? ' · ' + s.nombre : ''),
+          addr: `${s.direccion || ''} ${s.numero || ''}`.trim(),
+          barrio: s.barrio || '',
+          lat: s.lat, lng: s.lng, fijado: true
+        });
+      });
+    });
+  } catch (err) {
+    // si falla la base, el mapa sigue funcionando con las ubicaciones estimadas
+  }
+
+  renderMarkers(lista);
+}
+
+cargarEstudios();
 
 // Search
 document.getElementById('searchInput').addEventListener('input', function() {
