@@ -103,3 +103,16 @@ CREATE TRIGGER estudios_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ✅ Setup completo
+
+
+-- Coordenadas fijadas por cada estudio desde el portal
+ALTER TABLE estudios ADD COLUMN IF NOT EXISTS lat double precision;
+ALTER TABLE estudios ADD COLUMN IF NOT EXISTS lng double precision;
+ALTER TABLE sedes ADD COLUMN IF NOT EXISTS lat double precision;
+ALTER TABLE sedes ADD COLUMN IF NOT EXISTS lng double precision;
+
+-- Lectura publica para el mapa (solo aprobados y activos)
+CREATE POLICY "Publico ve estudios aprobados" ON estudios
+  FOR SELECT USING (aprobado = true AND activo = true);
+CREATE POLICY "Publico ve sedes de aprobados" ON sedes
+  FOR SELECT USING (estudio_id IN (SELECT id FROM estudios WHERE aprobado = true AND activo = true));
