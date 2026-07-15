@@ -7,7 +7,93 @@
   <link rel="icon" href="favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// ── ADMIN ──
+let allEstudios = [];
+let adminFilter = 'all';
+
+async function loadAllEstudios() {
+  const { data, error } = await sb.from('estudios').select('*, sedes(*)').order('created_at', { ascending: false });
+  allEstudios = data || [];
+  updateStats();
+  renderAdmin();
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = allEstudios.length;
+  document.getElementById('statAprobados').textContent = allEstudios.filter(e => e.aprobado).length;
+  document.getElementById('statPendientes').textContent = allEstudios.filter(e => !e.aprobado).length;
+}
+
+function setAdminFilter(filter, btn) {
+  adminFilter = filter;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderAdmin();
+}
+
+function isIncompleto(e) {
+  return !e.direccion || !e.telefono || !e.logo_url;
+}
+
+function renderAdmin() {
+  const q = document.getElementById('adminSearch').value.toLowerCase();
+  let list = allEstudios;
+
+  // Filter by search
+  if (q) list = list.filter(e =>
+    (e.nombre||'').toLowerCase().includes(q) ||
+    (e.email||'').toLowerCase().includes(q) ||
+    (e.barrio||'').toLowerCase().includes(q)
+  );
+
+  // Filter by status
+  if (adminFilter === 'aprobado') list = list.filter(e => e.aprobado);
+  if (adminFilter === 'pendiente') list = list.filter(e => !e.aprobado);
+  if (adminFilter === 'incompleto') list = list.filter(e => isIncompleto(e));
+
+  const grid = document.getElementById('adminGrid');
+  if (list.length === 0) {
+    grid.innerHTML = '<p style="color:var(--mid);font-size:.88rem">No hay estudios que coincidan.</p>';
+    return;
+  }
+
+  grid.innerHTML = list.map(e => `
+    <div class="estudio-card ${e.aprobado ? 'aprobado' : 'pendiente'}" id="card-${e.id}">
+      ${e.logo_url ? `<img src="${e.logo_url}" class="estudio-logo" alt="${e.nombre}" />` : ''}
+      <h3>${e.nombre || '(sin nombre)'}</h3>
+      <p>
+        ${e.email ? `📧 ${e.email}<br>` : ''}
+        ${e.telefono ? `📞 ${e.telefono}<br>` : ''}
+        ${e.instagram ? `📷 ${e.instagram}<br>` : ''}
+        ${e.direccion ? `📍 ${e.direccion} ${e.numero||''}, ${e.barrio||''}<br>` : ''}
+        ${e.sedes && e.sedes.length > 0 ? `🏢 ${e.sedes.length} sede(s) adicional(es)<br>` : ''}
+      </p>
+      <span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">
+        ${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
+      </span>
+      ${isIncompleto(e) ? '<span class="tag tag-incomplete" style="margin-left:.3rem">⚠️ Incompleto</span>' : ''}
+      <div class="estudio-actions">
+        ${!e.aprobado
+          ? `<button class="btn-aprobar" onclick="aprobar('${e.id}', true)">Aprobar</button>`
+          : `<button class="btn-desaprobar" onclick="aprobar('${e.id}', false)">Desaprobar</button>`
+        }
+      </div>
+    </div>
+  `).join('');
+}
+
+async function aprobar(id, valor) {
+  const { error } = await sb.from('estudios').update({ aprobado: valor }).eq('id', id);
+  if (!error) {
+    const e = allEstudios.find(e => e.id === id);
+    if (e) e.aprobado = valor;
+    updateStats();
+    renderAdmin();
+  }
+}
+
+</script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -182,6 +268,45 @@
     .save-msg { font-size: .78rem; margin-left: 1rem; display: none; }
     .save-msg.ok { color: var(--ok); display: inline; }
     .save-msg.err { color: var(--error); display: inline; }
+
+
+    /* ── ADMIN ── */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .estudio-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 1.4rem;
+      box-shadow: 0 2px 12px rgba(46,66,56,.06);
+      border-left: 4px solid var(--border);
+      transition: border-color .2s;
+    }
+    .estudio-card.aprobado { border-left-color: var(--ok); }
+    .estudio-card.pendiente { border-left-color: #d4ac0d; }
+    .estudio-card h3 { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--pino); margin-bottom: .3rem; }
+    .estudio-card p { font-size: .78rem; color: var(--mid); line-height: 1.6; }
+    .estudio-card .tag { display: inline-block; font-size: .65rem; font-weight: 600; padding: .2rem .6rem; border-radius: 50px; margin-top: .5rem; text-transform: uppercase; letter-spacing: .06em; }
+    .tag-ok { background: #f0faf5; color: var(--ok); }
+    .tag-pending { background: #fef9e7; color: #d4ac0d; }
+    .tag-incomplete { background: #fdf2f2; color: var(--error); }
+    .estudio-actions { display: flex; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
+    .btn-aprobar { background: var(--ok); color: white; border: none; border-radius: 50px; padding: .35rem .9rem; font-size: .72rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; }
+    .btn-aprobar:hover { opacity: .85; }
+    .btn-desaprobar { background: none; border: 1px solid var(--border); color: var(--mid); border-radius: 50px; padding: .35rem .9rem; font-size: .72rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; }
+    .admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--white); border-radius: var(--radius); padding: 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(46,66,56,.06); }
+    .stat-card .num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; color: var(--pino); line-height: 1; }
+    .stat-card .lbl { font-size: .7rem; color: var(--mid); text-transform: uppercase; letter-spacing: .1em; margin-top: .3rem; }
+    .admin-search { width: 100%; padding: .7rem 1rem; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: 'Jost', sans-serif; font-size: .9rem; background: var(--white); outline: none; margin-bottom: 1.5rem; }
+    .admin-search:focus { border-color: var(--salvia); }
+    .admin-filter { display: flex; gap: .5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .filter-pill { background: var(--white); border: 1.5px solid var(--border); color: var(--mid); border-radius: 50px; padding: .35rem 1rem; font-size: .75rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; transition: all .2s; }
+    .filter-pill.active { background: var(--pino); color: white; border-color: var(--pino); }
+    .estudio-logo { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; background: var(--lino); margin-bottom: .6rem; }
 
     @media (max-width: 600px) {
       .auth-card { padding: 1.8rem 1.2rem; }
@@ -468,20 +593,30 @@ async function logout() {
 function showAuth() {
   document.getElementById('authScreen').style.display = 'flex';
   document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('adminDashboard').style.display = 'none';
   document.getElementById('btnLogout').style.display = 'none';
   document.getElementById('navUser').textContent = '';
   currentUser = null; estudioId = null;
 }
 
 // ── ON LOGIN ──
+const ADMIN_EMAIL = 'camaradepilatescaba@gmail.com';
+
 async function onLogin(user) {
   currentUser = user;
   document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
   document.getElementById('btnLogout').style.display = 'inline-block';
   document.getElementById('navUser').textContent = user.email;
 
-  await loadEstudio();
+  if (user.email === ADMIN_EMAIL) {
+    document.getElementById('adminDashboard').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+    await loadAllEstudios();
+  } else {
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('adminDashboard').style.display = 'none';
+    await loadEstudio();
+  }
 }
 
 async function loadEstudio() {
@@ -651,7 +786,128 @@ function showSaveMsg(id, text, type) {
   el.className = `save-msg ${type}`;
   setTimeout(() => { el.textContent = ''; el.className = 'save-msg'; }, 3000);
 }
+
+// ── ADMIN ──
+let allEstudios = [];
+let adminFilter = 'all';
+
+async function loadAllEstudios() {
+  const { data, error } = await sb.from('estudios').select('*, sedes(*)').order('created_at', { ascending: false });
+  allEstudios = data || [];
+  updateStats();
+  renderAdmin();
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = allEstudios.length;
+  document.getElementById('statAprobados').textContent = allEstudios.filter(e => e.aprobado).length;
+  document.getElementById('statPendientes').textContent = allEstudios.filter(e => !e.aprobado).length;
+}
+
+function setAdminFilter(filter, btn) {
+  adminFilter = filter;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderAdmin();
+}
+
+function isIncompleto(e) {
+  return !e.direccion || !e.telefono || !e.logo_url;
+}
+
+function renderAdmin() {
+  const q = document.getElementById('adminSearch').value.toLowerCase();
+  let list = allEstudios;
+
+  // Filter by search
+  if (q) list = list.filter(e =>
+    (e.nombre||'').toLowerCase().includes(q) ||
+    (e.email||'').toLowerCase().includes(q) ||
+    (e.barrio||'').toLowerCase().includes(q)
+  );
+
+  // Filter by status
+  if (adminFilter === 'aprobado') list = list.filter(e => e.aprobado);
+  if (adminFilter === 'pendiente') list = list.filter(e => !e.aprobado);
+  if (adminFilter === 'incompleto') list = list.filter(e => isIncompleto(e));
+
+  const grid = document.getElementById('adminGrid');
+  if (list.length === 0) {
+    grid.innerHTML = '<p style="color:var(--mid);font-size:.88rem">No hay estudios que coincidan.</p>';
+    return;
+  }
+
+  grid.innerHTML = list.map(e => `
+    <div class="estudio-card ${e.aprobado ? 'aprobado' : 'pendiente'}" id="card-${e.id}">
+      ${e.logo_url ? `<img src="${e.logo_url}" class="estudio-logo" alt="${e.nombre}" />` : ''}
+      <h3>${e.nombre || '(sin nombre)'}</h3>
+      <p>
+        ${e.email ? `📧 ${e.email}<br>` : ''}
+        ${e.telefono ? `📞 ${e.telefono}<br>` : ''}
+        ${e.instagram ? `📷 ${e.instagram}<br>` : ''}
+        ${e.direccion ? `📍 ${e.direccion} ${e.numero||''}, ${e.barrio||''}<br>` : ''}
+        ${e.sedes && e.sedes.length > 0 ? `🏢 ${e.sedes.length} sede(s) adicional(es)<br>` : ''}
+      </p>
+      <span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">
+        ${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
+      </span>
+      ${isIncompleto(e) ? '<span class="tag tag-incomplete" style="margin-left:.3rem">⚠️ Incompleto</span>' : ''}
+      <div class="estudio-actions">
+        ${!e.aprobado
+          ? `<button class="btn-aprobar" onclick="aprobar('${e.id}', true)">Aprobar</button>`
+          : `<button class="btn-desaprobar" onclick="aprobar('${e.id}', false)">Desaprobar</button>`
+        }
+      </div>
+    </div>
+  `).join('');
+}
+
+async function aprobar(id, valor) {
+  const { error } = await sb.from('estudios').update({ aprobado: valor }).eq('id', id);
+  if (!error) {
+    const e = allEstudios.find(e => e.id === id);
+    if (e) e.aprobado = valor;
+    updateStats();
+    renderAdmin();
+  }
+}
+
 </script>
+
+
+<!-- ADMIN DASHBOARD -->
+<div class="page" id="adminDashboard" style="display:none;max-width:1100px">
+  <div class="dash-header">
+    <h2>Panel de Administración</h2>
+    <p>Gestioná los estudios miembros de CAPIAF.</p>
+  </div>
+
+  <div class="admin-stats">
+    <div class="stat-card">
+      <div class="num" id="statTotal">—</div>
+      <div class="lbl">Estudios registrados</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="statAprobados">—</div>
+      <div class="lbl">Aprobados</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="statPendientes">—</div>
+      <div class="lbl">Pendientes</div>
+    </div>
+  </div>
+
+  <input type="text" class="admin-search" id="adminSearch" placeholder="Buscar por nombre, barrio o email..." oninput="renderAdmin()" />
+
+  <div class="admin-filter">
+    <button class="filter-pill active" data-filter="all" onclick="setAdminFilter('all', this)">Todos</button>
+    <button class="filter-pill" data-filter="aprobado" onclick="setAdminFilter('aprobado', this)">Aprobados</button>
+    <button class="filter-pill" data-filter="pendiente" onclick="setAdminFilter('pendiente', this)">Pendientes</button>
+    <button class="filter-pill" data-filter="incompleto" onclick="setAdminFilter('incompleto', this)">Incompletos</button>
+  </div>
+
+  <div class="admin-grid" id="adminGrid"></div>
+</div>
 
 </body>
 </html>
