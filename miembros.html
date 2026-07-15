@@ -487,7 +487,7 @@ async function register() {
 
   // Create estudio record
   if (data.user) {
-    await sb.from('estudios').insert({ user_id: data.user.id, nombre, email });
+    await sb.from('estudios').upsert({ user_id: data.user.id, nombre, email }, { onConflict: 'user_id' });
   }
 
   showMsg('authMsg', '✅ ¡Cuenta creada! Revisá tu email para confirmarla.', 'success');
@@ -517,6 +517,7 @@ function showAuth() {
 const ADMIN_EMAIL = 'info@pilates.org.ar';
 
 async function onLogin(user) {
+  if (currentUser && currentUser.id === user.id) return; // ya procesado, evita doble carga
   currentUser = user;
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('btnLogout').style.display = 'inline-block';
@@ -534,7 +535,8 @@ async function onLogin(user) {
 }
 
 async function loadEstudio() {
-  const { data, error } = await sb.from('estudios').select('*').eq('user_id', currentUser.id).single();
+  const { data: rows } = await sb.from('estudios').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: true });
+  const data = rows && rows.length ? rows[0] : null;
 
   if (data) {
     estudioId = data.id;
@@ -562,8 +564,8 @@ async function loadEstudio() {
 
     await loadSedes();
   } else {
-    // Create record if doesn't exist
-    const { data: newData } = await sb.from('estudios').insert({ user_id: currentUser.id, nombre: '', email: currentUser.email }).select().single();
+    // Create record if doesn't exist (upsert: nunca duplica)
+    const { data: newData } = await sb.from('estudios').upsert({ user_id: currentUser.id, nombre: '', email: currentUser.email }, { onConflict: 'user_id' }).select().single();
     if (newData) estudioId = newData.id;
   }
 }
@@ -725,8 +727,17 @@ function setAdminFilter(filter, btn) {
   renderAdmin();
 }
 
+function camposFaltantes(e) {
+  const f = [];
+  if (!e.nombre)    f.push('nombre');
+  if (!e.direccion) f.push('dirección');
+  if (!e.telefono)  f.push('teléfono');
+  if (!e.logo_url)  f.push('logo');
+  return f;
+}
+
 function isIncompleto(e) {
-  return !e.direccion || !e.telefono || !e.logo_url;
+  return camposFaltantes(e).length > 0;
 }
 
 function renderAdmin() {
@@ -765,7 +776,7 @@ function renderAdmin() {
       <span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">
         ${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
       </span>
-      ${isIncompleto(e) ? '<span class="tag tag-incomplete" style="margin-left:.3rem">⚠️ Incompleto</span>' : ''}
+      ${isIncompleto(e) ? `<span class="tag tag-incomplete" style="margin-left:.3rem">⚠️ Falta: ${camposFaltantes(e).join(', ')}</span>` : ''}
       <div class="estudio-actions">
         ${!e.aprobado
           ? `<button class="btn-aprobar" onclick="aprobar('${e.id}', true)">Aprobar</button>`
