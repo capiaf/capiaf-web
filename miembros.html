@@ -347,7 +347,7 @@
       </div>
     </div>
 
-    <button class="btn-save" onclick="saveDatos()">Guardar datos</button>
+    <button class="btn-save" id="btnSaveDatos" onclick="saveDatos()">Guardar datos</button>
     <span class="save-msg" id="datosOk"></span>
   </div>
 
@@ -368,7 +368,7 @@
       </div>
     </div>
     <div class="msg" id="logoMsg"></div>
-    <button class="btn-save" onclick="uploadLogo()">Subir logo</button>
+    <button class="btn-save" id="btnSubirLogo" onclick="uploadLogo()">Subir logo</button>
     <span class="save-msg" id="logoOk"></span>
   </div>
 
@@ -572,7 +572,7 @@ async function loadEstudio() {
 
 // ── GUARDAR DATOS ──
 async function saveDatos() {
-  const btn = document.querySelector('.card:first-of-type .btn-save');
+  const btn = document.getElementById('btnSaveDatos');
   btn.disabled = true; btn.textContent = 'Guardando...';
 
   const datos = {
@@ -620,7 +620,7 @@ async function uploadLogo() {
   if (!file) return showSaveMsg('logoOk', 'Seleccioná un archivo primero.', 'err');
   if (file.size > 2 * 1024 * 1024) return showSaveMsg('logoOk', 'El archivo supera los 2MB.', 'err');
 
-  const btn = document.querySelectorAll('.btn-save')[1];
+  const btn = document.getElementById('btnSubirLogo');
   btn.disabled = true; btn.textContent = 'Subiendo...';
 
   const ext = file.name.split('.').pop();
