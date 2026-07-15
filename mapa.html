@@ -72,6 +72,13 @@
       color: #2E4238;
       margin-bottom: 0.3rem;
     }
+    .popup-desc {
+      font-size: 0.78rem;
+      color: #555;
+      font-style: italic;
+      margin: 0.3rem 0 0.35rem;
+      line-height: 1.45;
+    }
     .popup-addr {
       font-size: 0.8rem;
       color: #666;
@@ -253,6 +260,7 @@ function renderMarkers(lista) {
     const popup = `
       <div class="popup-content">
         <div class="popup-name">${e.name}</div>
+        ${e.desc ? `<div class="popup-desc">${e.desc}</div>` : ''}
         ${e.addr ? `<div class="popup-addr">📍 ${e.addr}</div>` : ''}
         ${e.barrio ? `<span class="popup-barrio">${e.barrio}</span>` : ''}
         ${e.fijado
@@ -276,7 +284,7 @@ async function cargarEstudios() {
   try {
     const { data } = await sb
       .from('estudios')
-      .select('nombre, direccion, numero, barrio, lat, lng, sedes(nombre, direccion, numero, barrio, lat, lng)')
+      .select('nombre, descripcion, direccion, numero, barrio, lat, lng, sedes(nombre, direccion, numero, barrio, lat, lng)')
       .eq('aprobado', true)
       .eq('activo', true);
 
@@ -286,6 +294,7 @@ async function cargarEstudios() {
         lista = lista.filter(l => norm(l.name) !== norm(e.nombre));
         lista.push({
           name: e.nombre,
+          desc: e.descripcion || '',
           addr: `${e.direccion || ''} ${e.numero || ''}`.trim(),
           barrio: e.barrio || '',
           lat: e.lat, lng: e.lng, fijado: true
@@ -295,6 +304,7 @@ async function cargarEstudios() {
       (e.sedes || []).forEach(s => {
         if (s.lat && s.lng) lista.push({
           name: e.nombre + (s.nombre ? ' · ' + s.nombre : ''),
+          desc: e.descripcion || '',
           addr: `${s.direccion || ''} ${s.numero || ''}`.trim(),
           barrio: s.barrio || '',
           lat: s.lat, lng: s.lng, fijado: true
