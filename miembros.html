@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal de Miembros — CAPIAF</title>
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --pino:   #2E4238;
+      --salvia: #6E9080;
+      --agua:   #7FB3AE;
+      --lino:   #F3F0E9;
+      --tinta:  #232A26;
+      --mid:    #7A8A82;
+      --white:  #ffffff;
+      --border: #DDD8CE;
+      --radius: 16px;
+      --error:  #c0392b;
+      --ok:     #27ae60;
+    }
+
+    body {
+      font-family: 'Jost', system-ui, sans-serif;
+      background: var(--lino);
+      color: var(--tinta);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--pino);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo { display: flex; align-items: center; gap: .7rem; text-decoration: none; }
+    .nav-logo img { height: 32px; width: 32px; object-fit: contain; }
+    .nav-logo span { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--white); letter-spacing: .08em; }
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+    .nav-user { font-size: .78rem; color: rgba(255,255,255,.55); }
+    .btn-logout { background: none; border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.7); padding: .35rem .9rem; border-radius: 50px; font-size: .75rem; cursor: pointer; font-family: 'Jost', sans-serif; transition: all .2s; }
+    .btn-logout:hover { background: rgba(255,255,255,.1); color: var(--white); }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ── AUTH SCREEN ── */
+    .auth-wrap {
+      min-height: calc(100vh - 64px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+    }
+    .auth-card {
+      background: var(--white);
+      border-radius: calc(var(--radius) * 1.5);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 40px rgba(46,66,56,.1);
+    }
+    .auth-logo { text-align: center; margin-bottom: 2rem; }
+    .auth-logo img { height: 56px; }
+    .auth-logo h1 { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 600; color: var(--pino); margin-top: .5rem; }
+    .auth-logo p { font-size: .82rem; color: var(--mid); margin-top: .25rem; }
+
+    .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 1.8rem; }
+    .tab { flex: 1; text-align: center; padding: .65rem; font-size: .82rem; font-weight: 600; cursor: pointer; color: var(--mid); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .2s; }
+    .tab.active { color: var(--salvia); border-bottom-color: var(--salvia); }
+
+    label { display: block; font-size: .78rem; font-weight: 600; color: var(--pino); margin-bottom: .4rem; letter-spacing: .04em; text-transform: uppercase; }
+    input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%; padding: .75rem 1rem; border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-family: 'Jost', sans-serif; font-size: .92rem; color: var(--tinta); background: var(--lino);
+      transition: border-color .2s; outline: none; margin-bottom: 1.1rem;
+    }
+    input:focus { border-color: var(--salvia); background: var(--white); }
+
+    .btn-primary {
+      width: 100%; padding: .9rem; background: var(--salvia); color: var(--white);
+      border: none; border-radius: 50px; font-family: 'Jost', sans-serif;
+      font-size: .9rem; font-weight: 600; cursor: pointer; transition: background .2s, transform .15s;
+      letter-spacing: .04em;
+    }
+    .btn-primary:hover { background: var(--agua); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .msg { padding: .75rem 1rem; border-radius: var(--radius); font-size: .82rem; margin-bottom: 1rem; display: none; }
+    .msg.error { background: #fdf2f2; color: var(--error); border: 1px solid #f5c6c6; display: block; }
+    .msg.success { background: #f0faf5; color: var(--ok); border: 1px solid #b7e4c7; display: block; }
+
+    /* ── DASHBOARD ── */
+    .dashboard { display: none; }
+    .dash-header { margin-bottom: 2rem; }
+    .dash-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 600; color: var(--pino); }
+    .dash-header p { font-size: .88rem; color: var(--mid); margin-top: .3rem; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .3rem .8rem; border-radius: 50px; font-size: .72rem; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase; margin-top: .5rem;
+    }
+    .status-badge.pending { background: #fef9e7; color: #d4ac0d; border: 1px solid #f9e79f; }
+    .status-badge.approved { background: #f0faf5; color: var(--ok); border: 1px solid #b7e4c7; }
+
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 12px rgba(46,66,56,.06);
+    }
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem; font-weight: 600; color: var(--pino);
+      margin-bottom: 1.3rem; padding-bottom: .8rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .card-title svg { color: var(--salvia); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    .btn-save {
+      background: var(--pino); color: var(--white);
+      border: none; border-radius: 50px; padding: .75rem 2rem;
+      font-family: 'Jost', sans-serif; font-size: .88rem; font-weight: 600;
+      cursor: pointer; transition: background .2s, transform .15s;
+    }
+    .btn-save:hover { background: var(--salvia); transform: translateY(-1px); }
+    .btn-save:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* Logo upload */
+    .logo-upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .logo-upload-area:hover { border-color: var(--salvia); background: var(--lino); }
+    .logo-upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .logo-preview { max-height: 80px; max-width: 200px; object-fit: contain; margin: 0 auto .5rem; display: none; }
+    .logo-upload-text { font-size: .82rem; color: var(--mid); }
+    .logo-upload-icon { font-size: 2rem; margin-bottom: .5rem; }
+
+    /* Sedes */
+    .sede-item {
+      background: var(--lino); border-radius: var(--radius);
+      padding: 1rem 1.2rem; margin-bottom: .8rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .sede-item-info { font-size: .88rem; color: var(--tinta); }
+    .sede-item-info small { color: var(--mid); display: block; font-size: .75rem; }
+    .btn-remove { background: none; border: none; color: var(--mid); cursor: pointer; font-size: 1.1rem; padding: .2rem; transition: color .2s; }
+    .btn-remove:hover { color: var(--error); }
+    .btn-add-sede {
+      background: none; border: 1.5px solid var(--salvia); color: var(--salvia);
+      border-radius: 50px; padding: .5rem 1.2rem;
+      font-family: 'Jost', sans-serif; font-size: .82rem; font-weight: 600;
+      cursor: pointer; transition: all .2s; margin-top: .5rem;
+    }
+    .btn-add-sede:hover { background: var(--salvia); color: var(--white); }
+
+    .sede-form { background: var(--lino); border-radius: var(--radius); padding: 1.2rem; margin-top: 1rem; display: none; }
+    .sede-form.open { display: block; }
+
+    .save-msg { font-size: .78rem; margin-left: 1rem; display: none; }
+    .save-msg.ok { color: var(--ok); display: inline; }
+    .save-msg.err { color: var(--error); display: inline; }
+
+    @media (max-width: 600px) {
+      .auth-card { padding: 1.8rem 1.2rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .page { padding: 1.5rem 1rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img src="capiaf-isologo-reverso-1024.png" alt="CAPIAF" />
+    <span>CAPIAF</span>
+  </a>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn-logout" id="btnLogout" style="display:none" onclick="logout()">Cerrar sesión</button>
+  </div>
+</nav>
+
+<!-- AUTH -->
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="capiaf-isologo-positivo.svg" alt="CAPIAF" />
+      <h1>Portal de Miembros</h1>
+      <p>Cámara de Pilates y Afines · C.A.B.A.</p>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Ingresar</div>
+      <div class="tab" onclick="switchTab('register')">Registrarse</div>
+    </div>
+
+    <div id="authMsg" class="msg"></div>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="tu@email.com" />
+      <label>Contraseña</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" />
+      <button class="btn-primary" onclick="login()">Ingresar</button>
+      <p style="text-align:center;margin-top:1rem;font-size:.78rem;color:var(--mid)">
+        <a href="#" onclick="forgotPassword()" style="color:var(--salvia)">¿Olvidaste tu contraseña?</a>
+      </p>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" style="display:none">
+      <label>Nombre del estudio</label>
+      <input type="text" id="regNombre" placeholder="Ej: Mi Estudio Pilates" />
+      <label>Email</label>
+      <input type="email" id="regEmail" placeholder="tu@email.com" />
+      <label>Contraseña</label>
+      <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" />
+      <label>Repetir contraseña</label>
+      <input type="password" id="regPassword2" placeholder="••••••••" />
+      <button class="btn-primary" onclick="register()">Crear cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page dashboard" id="dashboard">
+
+  <div class="dash-header">
+    <h2 id="dashTitle">Mi Estudio</h2>
+    <p>Completá los datos de tu estudio para aparecer correctamente en el directorio y el mapa de CAPIAF.</p>
+    <span class="status-badge pending" id="statusBadge">⏳ Pendiente de aprobación</span>
+  </div>
+
+  <!-- DATOS GENERALES -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Datos del estudio
+    </div>
+
+    <div id="datosMsgWrap"><div class="msg" id="datosMsg"></div></div>
+
+    <div class="form-grid">
+      <div class="full">
+        <label>Nombre del estudio *</label>
+        <input type="text" id="fNombre" placeholder="Nombre completo del estudio" />
+      </div>
+      <div>
+        <label>Teléfono / WhatsApp</label>
+        <input type="text" id="fTelefono" placeholder="+54 11 1234-5678" />
+      </div>
+      <div>
+        <label>Instagram</label>
+        <input type="text" id="fInstagram" placeholder="@miestudio" />
+      </div>
+      <div class="full">
+        <label>Descripción breve</label>
+        <input type="text" id="fDescripcion" placeholder="Ej: Estudio de Pilates en reformer con enfoque terapéutico" />
+      </div>
+    </div>
+
+    <div class="card-title" style="margin-top:1.2rem;border-top:1px solid var(--border);padding-top:1.2rem">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Sede principal
+    </div>
+
+    <div class="form-grid">
+      <div>
+        <label>Calle *</label>
+        <input type="text" id="fDireccion" placeholder="Ej: Bonpland" />
+      </div>
+      <div>
+        <label>Número *</label>
+        <input type="text" id="fNumero" placeholder="Ej: 2363" />
+      </div>
+      <div>
+        <label>Piso / Depto</label>
+        <input type="text" id="fPiso" placeholder="Ej: 2° B" />
+      </div>
+      <div>
+        <label>Barrio *</label>
+        <input type="text" id="fBarrio" placeholder="Ej: Palermo Hollywood" />
+      </div>
+    </div>
+
+    <button class="btn-save" onclick="saveDatos()">Guardar datos</button>
+    <span class="save-msg" id="datosOk"></span>
+  </div>
+
+  <!-- LOGO -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      Logo del estudio
+    </div>
+
+    <div class="logo-upload-area" id="logoArea">
+      <input type="file" accept="image/*" id="logoFile" onchange="previewLogo(this)" />
+      <img class="logo-preview" id="logoPreview" alt="Preview" />
+      <div class="logo-upload-icon">🖼️</div>
+      <div class="logo-upload-text">
+        <strong>Hacé click o arrastrá tu logo aquí</strong><br>
+        PNG, JPG o SVG — máximo 2MB
+      </div>
+    </div>
+    <div class="msg" id="logoMsg"></div>
+    <button class="btn-save" onclick="uploadLogo()">Subir logo</button>
+    <span class="save-msg" id="logoOk"></span>
+  </div>
+
+  <!-- SEDES ADICIONALES -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Sedes adicionales
+    </div>
+
+    <p style="font-size:.85rem;color:var(--mid);margin-bottom:1rem">Si tu estudio tiene más de una sede, agregala acá.</p>
+
+    <div id="sedesList"></div>
+
+    <button class="btn-add-sede" onclick="toggleSedeForm()">+ Agregar sede</button>
+
+    <div class="sede-form" id="sedeForm">
+      <div class="form-grid">
+        <div>
+          <label>Nombre de la sede</label>
+          <input type="text" id="sedeNombre" placeholder="Ej: Sede Belgrano" />
+        </div>
+        <div>
+          <label>Barrio</label>
+          <input type="text" id="sedeBarrio" placeholder="Ej: Belgrano" />
+        </div>
+        <div>
+          <label>Calle</label>
+          <input type="text" id="sedeDireccion" placeholder="Ej: Mendoza" />
+        </div>
+        <div>
+          <label>Número</label>
+          <input type="text" id="sedeNumero" placeholder="Ej: 2743" />
+        </div>
+      </div>
+      <button class="btn-save" onclick="addSede()">Guardar sede</button>
+      <span class="save-msg" id="sedeMsg"></span>
+    </div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<script>
+const SUPABASE_URL = 'https://rpxckpqptdgkkwaqtgzz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_QqQ4vWOitcfzNREsG3SoHA_rJAkTMDQ';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let estudioId = null;
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await onLogin(session.user);
+  }
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN') await onLogin(session.user);
+    if (event === 'SIGNED_OUT') showAuth();
+  });
+});
+
+// ── TABS ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+  clearMsg('authMsg');
+}
+
+// ── AUTH ──
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `msg ${type}`;
+}
+function clearMsg(id) {
+  const el = document.getElementById(id);
+  el.textContent = '';
+  el.className = 'msg';
+}
+
+async function login() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+  if (!email || !pass) return showMsg('authMsg', 'Completá email y contraseña.', 'error');
+
+  const btn = document.querySelector('#loginForm .btn-primary');
+  btn.disabled = true; btn.textContent = 'Ingresando...';
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Ingresar';
+  if (error) showMsg('authMsg', 'Email o contraseña incorrectos.', 'error');
+}
+
+async function register() {
+  const nombre = document.getElementById('regNombre').value.trim();
+  const email  = document.getElementById('regEmail').value.trim();
+  const pass   = document.getElementById('regPassword').value;
+  const pass2  = document.getElementById('regPassword2').value;
+
+  if (!nombre || !email || !pass) return showMsg('authMsg', 'Completá todos los campos.', 'error');
+  if (pass !== pass2) return showMsg('authMsg', 'Las contraseñas no coinciden.', 'error');
+  if (pass.length < 6) return showMsg('authMsg', 'La contraseña debe tener al menos 6 caracteres.', 'error');
+
+  const btn = document.querySelector('#registerForm .btn-primary');
+  btn.disabled = true; btn.textContent = 'Creando cuenta...';
+
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Crear cuenta';
+
+  if (error) return showMsg('authMsg', error.message, 'error');
+
+  // Create estudio record
+  if (data.user) {
+    await sb.from('estudios').insert({ user_id: data.user.id, nombre, email });
+  }
+
+  showMsg('authMsg', '✅ ¡Cuenta creada! Revisá tu email para confirmarla.', 'success');
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) return showMsg('authMsg', 'Escribí tu email primero.', 'error');
+  await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+  showMsg('authMsg', '✅ Te enviamos un email para resetear tu contraseña.', 'success');
+}
+
+async function logout() {
+  await sb.auth.signOut();
+}
+
+function showAuth() {
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('btnLogout').style.display = 'none';
+  document.getElementById('navUser').textContent = '';
+  currentUser = null; estudioId = null;
+}
+
+// ── ON LOGIN ──
+async function onLogin(user) {
+  currentUser = user;
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('btnLogout').style.display = 'inline-block';
+  document.getElementById('navUser').textContent = user.email;
+
+  await loadEstudio();
+}
+
+async function loadEstudio() {
+  const { data, error } = await sb.from('estudios').select('*').eq('user_id', currentUser.id).single();
+
+  if (data) {
+    estudioId = data.id;
+    document.getElementById('dashTitle').textContent = data.nombre || 'Mi Estudio';
+    document.getElementById('fNombre').value      = data.nombre      || '';
+    document.getElementById('fTelefono').value    = data.telefono    || '';
+    document.getElementById('fInstagram').value   = data.instagram   || '';
+    document.getElementById('fDescripcion').value = data.descripcion || '';
+    document.getElementById('fDireccion').value   = data.direccion   || '';
+    document.getElementById('fNumero').value      = data.numero      || '';
+    document.getElementById('fBarrio').value      = data.barrio      || '';
+
+    const badge = document.getElementById('statusBadge');
+    if (data.aprobado) {
+      badge.textContent = '✅ Miembro activo';
+      badge.className = 'status-badge approved';
+    }
+
+    if (data.logo_url) {
+      const img = document.getElementById('logoPreview');
+      img.src = data.logo_url;
+      img.style.display = 'block';
+      document.querySelector('.logo-upload-icon').style.display = 'none';
+    }
+
+    await loadSedes();
+  } else {
+    // Create record if doesn't exist
+    const { data: newData } = await sb.from('estudios').insert({ user_id: currentUser.id, nombre: '', email: currentUser.email }).select().single();
+    if (newData) estudioId = newData.id;
+  }
+}
+
+// ── GUARDAR DATOS ──
+async function saveDatos() {
+  const btn = document.querySelector('.card:first-of-type .btn-save');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  const datos = {
+    nombre:      document.getElementById('fNombre').value.trim(),
+    telefono:    document.getElementById('fTelefono').value.trim(),
+    instagram:   document.getElementById('fInstagram').value.trim(),
+    descripcion: document.getElementById('fDescripcion').value.trim(),
+    direccion:   document.getElementById('fDireccion').value.trim(),
+    numero:      document.getElementById('fNumero').value.trim(),
+    barrio:      document.getElementById('fBarrio').value.trim(),
+  };
+
+  if (!datos.nombre) {
+    btn.disabled = false; btn.textContent = 'Guardar datos';
+    return showSaveMsg('datosOk', 'El nombre es obligatorio.', 'err');
+  }
+
+  const { error } = await sb.from('estudios').update(datos).eq('id', estudioId);
+  btn.disabled = false; btn.textContent = 'Guardar datos';
+
+  if (error) {
+    showSaveMsg('datosOk', 'Error al guardar.', 'err');
+  } else {
+    document.getElementById('dashTitle').textContent = datos.nombre;
+    showSaveMsg('datosOk', '✅ Guardado', 'ok');
+  }
+}
+
+// ── LOGO ──
+function previewLogo(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('logoPreview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.querySelector('.logo-upload-icon').style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+async function uploadLogo() {
+  const file = document.getElementById('logoFile').files[0];
+  if (!file) return showSaveMsg('logoOk', 'Seleccioná un archivo primero.', 'err');
+  if (file.size > 2 * 1024 * 1024) return showSaveMsg('logoOk', 'El archivo supera los 2MB.', 'err');
+
+  const btn = document.querySelectorAll('.btn-save')[1];
+  btn.disabled = true; btn.textContent = 'Subiendo...';
+
+  const ext = file.name.split('.').pop();
+  const path = `${currentUser.id}/logo.${ext}`;
+
+  const { error: upErr } = await sb.storage.from('logos').upload(path, file, { upsert: true });
+
+  if (upErr) {
+    btn.disabled = false; btn.textContent = 'Subir logo';
+    return showSaveMsg('logoOk', 'Error al subir.', 'err');
+  }
+
+  const { data: { publicUrl } } = sb.storage.from('logos').getPublicUrl(path);
+  await sb.from('estudios').update({ logo_url: publicUrl }).eq('id', estudioId);
+
+  btn.disabled = false; btn.textContent = 'Subir logo';
+  showSaveMsg('logoOk', '✅ Logo actualizado', 'ok');
+}
+
+// ── SEDES ──
+let sedes = [];
+
+async function loadSedes() {
+  const { data } = await sb.from('sedes').select('*').eq('estudio_id', estudioId);
+  sedes = data || [];
+  renderSedes();
+}
+
+function renderSedes() {
+  const list = document.getElementById('sedesList');
+  if (sedes.length === 0) {
+    list.innerHTML = '<p style="font-size:.82rem;color:var(--mid);margin-bottom:.5rem">No hay sedes adicionales cargadas.</p>';
+    return;
+  }
+  list.innerHTML = sedes.map(s => `
+    <div class="sede-item">
+      <div class="sede-item-info">
+        <strong>${s.nombre || 'Sede'}</strong>
+        <small>${s.direccion || ''} ${s.numero || ''} — ${s.barrio || ''}</small>
+      </div>
+      <button class="btn-remove" onclick="removeSede('${s.id}')" title="Eliminar">✕</button>
+    </div>
+  `).join('');
+}
+
+function toggleSedeForm() {
+  const f = document.getElementById('sedeForm');
+  f.classList.toggle('open');
+}
+
+async function addSede() {
+  const sede = {
+    estudio_id: estudioId,
+    nombre:     document.getElementById('sedeNombre').value.trim(),
+    direccion:  document.getElementById('sedeDireccion').value.trim(),
+    numero:     document.getElementById('sedeNumero').value.trim(),
+    barrio:     document.getElementById('sedeBarrio').value.trim(),
+  };
+
+  const { data, error } = await sb.from('sedes').insert(sede).select().single();
+  if (error) return showSaveMsg('sedeMsg', 'Error al guardar.', 'err');
+
+  sedes.push(data);
+  renderSedes();
+  document.getElementById('sedeForm').classList.remove('open');
+  ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero'].forEach(id => document.getElementById(id).value = '');
+  showSaveMsg('sedeMsg', '✅ Sede agregada', 'ok');
+}
+
+async function removeSede(id) {
+  await sb.from('sedes').delete().eq('id', id);
+  sedes = sedes.filter(s => s.id !== id);
+  renderSedes();
+}
+
+function showSaveMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `save-msg ${type}`;
+  setTimeout(() => { el.textContent = ''; el.className = 'save-msg'; }, 3000);
+}
+</script>
+
+</body>
+</html>
