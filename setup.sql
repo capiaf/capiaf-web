@@ -57,7 +57,7 @@ CREATE POLICY "Usuarios crean su estudio"
 -- Admin ve todo (reemplazar con tu email)
 CREATE POLICY "Admin ve todo"
   ON estudios FOR ALL
-  USING (auth.email() = 'camaradepilatescaba@gmail.com');
+  USING (auth.email() = 'info@pilates.org.ar');
 
 -- Políticas para sedes
 CREATE POLICY "Usuarios ven sus sedes"
@@ -67,6 +67,10 @@ CREATE POLICY "Usuarios ven sus sedes"
 CREATE POLICY "Usuarios editan sus sedes"
   ON sedes FOR ALL
   USING (estudio_id IN (SELECT id FROM estudios WHERE user_id = auth.uid()));
+
+CREATE POLICY "Admin ve todas las sedes"
+  ON sedes FOR ALL
+  USING (auth.email() = 'info@pilates.org.ar');
 
 -- 4. Storage bucket para logos
 INSERT INTO storage.buckets (id, name, public)
