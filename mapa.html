@@ -279,7 +279,15 @@ function renderMarkers(lista) {
 
 async function cargarEstudios() {
   let lista = [...estudiosBase];
-  const norm = s => (s || '').toLowerCase().trim();
+  const norm = s => (s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b(pilates|estudio|estudios|espacio|studio|de|el|la)\b/g, '')
+    .replace(/[^a-z0-9]/g, '');
+  const mismoEstudio = (a, b) => {
+    a = norm(a); b = norm(b);
+    return a && b && (a.includes(b) || b.includes(a));
+  };
 
   try {
     const { data } = await sb
@@ -291,7 +299,7 @@ async function cargarEstudios() {
     (data || []).forEach(e => {
       // Pin fijado por el propio estudio: reemplaza la ubicacion estimada
       if (e.lat && e.lng) {
-        lista = lista.filter(l => norm(l.name) !== norm(e.nombre));
+        lista = lista.filter(l => !mismoEstudio(l.name, e.nombre));
         lista.push({
           name: e.nombre,
           desc: e.descripcion || '',
