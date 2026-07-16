@@ -44,7 +44,23 @@
     }
     .nav-logo { display: flex; align-items: center; gap: .7rem; text-decoration: none; }
     .nav-logo img { height: 32px; width: 32px; object-fit: contain; }
-    .nav-logo span { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--white); letter-spacing: .08em; }
+    .nav-logo-text { display: flex; flex-direction: column; line-height: 1.25; }
+    .nav-logo-name {
+      font-family: 'Jost', sans-serif;
+      font-weight: 600;
+      font-size: 1.05rem;
+      letter-spacing: 0.12em;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+    .nav-logo-sub {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.58rem;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
     .nav-right { display: flex; align-items: center; gap: 1rem; }
     .nav-user { font-size: .78rem; color: rgba(255,255,255,.55); }
     .btn-logout { background: none; border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.7); padding: .35rem .9rem; border-radius: 50px; font-size: .75rem; cursor: pointer; font-family: 'Jost', sans-serif; transition: all .2s; }
@@ -271,7 +287,10 @@
 <nav>
   <a href="index.html" class="nav-logo">
     <img src="capiaf-isologo-reverso-1024.png" alt="CAPIAF" />
-    <span>CAPIAF</span>
+    <span class="nav-logo-text">
+      <span class="nav-logo-name">CAPIAF</span>
+      <span class="nav-logo-sub">Cámara de Pilates · C.A.B.A.</span>
+    </span>
   </a>
   <div class="nav-right">
     <span class="nav-user" id="navUser"></span>
