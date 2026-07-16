@@ -357,6 +357,23 @@
         </select>
       </div>
       <div>
+        <label>Responsable (nombre y apellido)</label>
+        <input type="text" id="fResponsable" placeholder="Ej: María García" />
+      </div>
+      <div>
+        <label>Teléfono del responsable</label>
+        <input type="text" id="fTelResponsable" placeholder="+54 11 1234-5678" />
+      </div>
+      <div class="full">
+        <label>¿Tu espacio está habilitado por la AGC?</label>
+        <select id="fAgc">
+          <option value="">Elegí una opción</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+          <option value="no_puede">No puedo habilitarlo</option>
+        </select>
+      </div>
+      <div>
         <label>Instagram</label>
         <input type="text" id="fInstagram" placeholder="@miestudio" />
       </div>
@@ -631,6 +648,9 @@ async function loadEstudio() {
     }
 
     document.getElementById('fTipo').value = data.tipo || 'individual';
+    document.getElementById('fResponsable').value    = data.responsable || '';
+    document.getElementById('fTelResponsable').value = data.tel_responsable || '';
+    document.getElementById('fAgc').value            = data.agc || '';
     if (data.lat && data.lng) {
       mostrarPin('principal', data.lat, data.lng, 17);
       setPinStatus('pinStatusPrincipal', '✅ Ubicación guardada', 'ok');
@@ -659,6 +679,9 @@ async function saveDatos() {
     piso:        document.getElementById('fPiso').value.trim(),
     barrio:      document.getElementById('fBarrio').value.trim(),
     tipo:        document.getElementById('fTipo').value,
+    responsable:     document.getElementById('fResponsable').value.trim(),
+    tel_responsable: document.getElementById('fTelResponsable').value.trim(),
+    agc:             document.getElementById('fAgc').value,
   };
   const coords = coordsDe('principal');
   if (coords.lat) { datos.lat = coords.lat; datos.lng = coords.lng; }
@@ -926,6 +949,8 @@ function camposFaltantes(e) {
   if (!e.direccion) f.push('dirección');
   if (!e.telefono)  f.push('teléfono');
   if (!e.logo_url)  f.push('logo');
+  if (!e.responsable) f.push('responsable');
+  if (!e.agc)         f.push('AGC');
   return f;
 }
 
@@ -968,6 +993,7 @@ function renderAdmin() {
       <td>${e.logo_url
         ? `<img src="${e.logo_url}" class="row-logo" alt="" />`
         : `<div class="row-logo-empty">${inicial}</div>`}</td>
+      <td><div class="row-sub" style="font-weight:600">${e.nro_socio || '—'}</div></td>
       <td>
         <div class="row-nombre">${e.nombre || '(sin nombre)'}</div>
         <div class="row-sub">${e.email || ''}</div>
@@ -990,6 +1016,7 @@ function renderAdmin() {
     <thead>
       <tr>
         <th></th>
+        <th>N°</th>
         <th>Estudio</th>
         <th class="th-contacto">Contacto</th>
         <th>Ubicación</th>
@@ -1071,6 +1098,17 @@ async function aprobar(id, valor) {
           <option value="multisede">Multisede</option>
         </select>
       </div>
+      <div><label>N° de socio</label><input type="text" id="mNroSocio" /></div>
+      <div><label>Responsable</label><input type="text" id="mResponsable" /></div>
+      <div><label>Teléfono del responsable</label><input type="text" id="mTelResponsable" /></div>
+      <div><label>Habilitado por AGC</label>
+        <select id="mAgc">
+          <option value="">Sin responder</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+          <option value="no_puede">No puede habilitarlo</option>
+        </select>
+      </div>
       <div class="full"><label>Descripción breve</label><input type="text" id="mDescripcion" /></div>
       <div><label>Calle</label><input type="text" id="mDireccion" /></div>
       <div><label>Número</label><input type="text" id="mNumero" /></div>
@@ -1115,6 +1153,10 @@ function abrirFicha(id) {
   document.getElementById('mBarrio').value      = e.barrio || '';
   document.getElementById('mActivo').value      = e.activo === false ? 'false' : 'true';
   document.getElementById('mTipo').value        = e.tipo || 'individual';
+  document.getElementById('mNroSocio').value       = e.nro_socio || '';
+  document.getElementById('mResponsable').value    = e.responsable || '';
+  document.getElementById('mTelResponsable').value = e.tel_responsable || '';
+  document.getElementById('mAgc').value            = e.agc || '';
 
   const sedesDiv = document.getElementById('fichaSedes');
   sedesDiv.innerHTML = (e.sedes && e.sedes.length)
@@ -1216,6 +1258,10 @@ async function guardarFicha() {
     barrio:      document.getElementById('mBarrio').value.trim(),
     activo:      document.getElementById('mActivo').value === 'true',
     tipo:        document.getElementById('mTipo').value,
+    nro_socio:       document.getElementById('mNroSocio').value.trim(),
+    responsable:     document.getElementById('mResponsable').value.trim(),
+    tel_responsable: document.getElementById('mTelResponsable').value.trim(),
+    agc:             document.getElementById('mAgc').value,
   };
   if (!datos.nombre) {
     msg.className = 'msg err'; msg.style.display = 'block';
