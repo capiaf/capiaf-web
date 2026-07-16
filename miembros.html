@@ -117,10 +117,13 @@
 
     /* ── DASHBOARD ── */
     .dashboard { display: none; }
-    .welcome-card { background: #f0f6f2; border: 1.5px solid var(--salvia); border-radius: var(--radius); padding: 1.4rem; margin-bottom: 1.5rem; }
-    .welcome-card h3 { font-family: 'Playfair Display', serif; color: var(--pino); font-size: 1.15rem; margin-bottom: .4rem; }
-    .welcome-card p { font-size: .85rem; color: var(--mid); margin-bottom: .4rem; }
+    .welcome-card { background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--salvia); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(46,66,56,.05); }
+    .welcome-inner { display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap; }
+    .welcome-sello { width: 92px; height: 92px; flex-shrink: 0; }
+    .welcome-card h3 { font-family: 'Playfair Display', serif; color: var(--pino); font-size: 1.2rem; margin-bottom: .35rem; }
+    .welcome-card p { font-size: .85rem; color: var(--mid); margin-bottom: .35rem; line-height: 1.55; }
     .welcome-nro { font-family: 'Space Mono', monospace; color: var(--pino); font-weight: 700; }
+    .welcome-card .btn-save { margin-top: .6rem; }
     .dash-header { margin-bottom: 2rem; }
     .dash-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 600; color: var(--pino); }
     .dash-header p { font-size: .88rem; color: var(--mid); margin-top: .3rem; }
@@ -357,10 +360,15 @@
   </div>
 
   <div class="welcome-card" id="welcomeCard" style="display:none">
-    <h3>🎉 ¡Bienvenido a CAPIAF!</h3>
-    <p>Tu estudio es socio oficial de la Cámara — <span class="welcome-nro" id="welcomeNro"></span>.</p>
-    <p>Descargá tu sello de socio para imprimirlo y exhibirlo en tu estudio.</p>
-    <button class="btn-save" style="margin-top:.4rem" onclick="descargarSello()">⬇️ Descargar mi sello (PDF)</button>
+    <div class="welcome-inner">
+      <img src="sello-base.png" class="welcome-sello" alt="Sello de socio CAPIAF" />
+      <div>
+        <h3>Bienvenido a CAPIAF</h3>
+        <p>Tu estudio es socio oficial de la Cámara — <span class="welcome-nro" id="welcomeNro"></span>.</p>
+        <p>Descargá tu sello para imprimirlo y exhibirlo en tu estudio.</p>
+        <button class="btn-save" onclick="descargarSello()">Descargar mi sello (PDF)</button>
+      </div>
+    </div>
   </div>
 
   <!-- DATOS GENERALES -->
