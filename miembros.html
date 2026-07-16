@@ -117,6 +117,10 @@
 
     /* ── DASHBOARD ── */
     .dashboard { display: none; }
+    .welcome-card { background: #f0f6f2; border: 1.5px solid var(--salvia); border-radius: var(--radius); padding: 1.4rem; margin-bottom: 1.5rem; }
+    .welcome-card h3 { font-family: 'Playfair Display', serif; color: var(--pino); font-size: 1.15rem; margin-bottom: .4rem; }
+    .welcome-card p { font-size: .85rem; color: var(--mid); margin-bottom: .4rem; }
+    .welcome-nro { font-family: 'Space Mono', monospace; color: var(--pino); font-weight: 700; }
     .dash-header { margin-bottom: 2rem; }
     .dash-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 600; color: var(--pino); }
     .dash-header p { font-size: .88rem; color: var(--mid); margin-top: .3rem; }
@@ -278,6 +282,8 @@
       .page { padding: 1.5rem 1rem 3rem; }
     }
   </style>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
@@ -348,6 +354,13 @@
     <h2 id="dashTitle">Mi Estudio</h2>
     <p>Completá los datos de tu estudio para aparecer correctamente en el directorio y el mapa de CAPIAF.</p>
     <span class="status-badge pending" id="statusBadge">⏳ Pendiente de aprobación</span>
+  </div>
+
+  <div class="welcome-card" id="welcomeCard" style="display:none">
+    <h3>🎉 ¡Bienvenido a CAPIAF!</h3>
+    <p>Tu estudio es socio oficial de la Cámara — <span class="welcome-nro" id="welcomeNro"></span>.</p>
+    <p>Descargá tu sello de socio para imprimirlo y exhibirlo en tu estudio.</p>
+    <button class="btn-save" style="margin-top:.4rem" onclick="descargarSello()">⬇️ Descargar mi sello (PDF)</button>
   </div>
 
   <!-- DATOS GENERALES -->
@@ -667,6 +680,12 @@ async function loadEstudio() {
     }
 
     document.getElementById('fTipo').value = data.tipo || 'individual';
+
+    if (data.aprobado && data.nro_socio) {
+      window.selloNro = data.nro_socio;
+      document.getElementById('welcomeNro').textContent = 'Socio N° ' + data.nro_socio;
+      document.getElementById('welcomeCard').style.display = 'block';
+    }
     document.getElementById('fResponsable').value    = data.responsable || '';
     document.getElementById('fTelResponsable').value = data.tel_responsable || '';
     document.getElementById('fAgc').value            = data.agc || '';
@@ -833,6 +852,32 @@ async function ubicarPin(cual) {
     mostrarPin(cual, CABA[0], CABA[1], 12);
     setPinStatus(c.status, 'No se pudo buscar: arrastrá el pin a mano.', 'err');
   }
+}
+
+async function descargarSello() {
+  const nro = window.selloNro;
+  if (!nro) return;
+  try { await document.fonts.load('400 46px "Space Mono"'); } catch (e) {}
+
+  const img = new Image();
+  img.src = 'sello-base.png';
+  await img.decode();
+
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  ctx.fillStyle = '#3F5549';
+  ctx.font = '400 46px "Space Mono", monospace';
+  ctx.textAlign = 'center';
+  try { ctx.letterSpacing = '14px'; } catch (e) {}
+  ctx.fillText('N° ' + nro, 545, 940);
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  const wmm = 160, hmm = wmm * c.height / c.width;
+  pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', (210 - wmm) / 2, 55, wmm, hmm);
+  pdf.save('sello-socio-capiaf-' + nro + '.pdf');
 }
 
 async function loadSedes() {
@@ -1052,6 +1097,13 @@ async function aprobar(id, valor) {
   if (!error) {
     const e = allEstudios.find(e => e.id === id);
     if (e) e.aprobado = valor;
+
+    // Al aprobar, asignar el próximo número de socio libre si no tiene
+    if (valor && e && !e.nro_socio) {
+      const { data: nro, error: err2 } = await sb.rpc('asignar_nro_socio', { estudio: id });
+      if (!err2 && nro) e.nro_socio = nro;
+    }
+
     updateStats();
     renderAdmin();
   }
