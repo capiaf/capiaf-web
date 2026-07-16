@@ -378,7 +378,7 @@
         <input type="text" id="fNombre" placeholder="Nombre completo del estudio" />
       </div>
       <div>
-        <label>Teléfono / WhatsApp</label>
+        <label>Teléfono / WhatsApp *</label>
         <input type="text" id="fTelefono" placeholder="+54 11 1234-5678" />
       </div>
       <div>
@@ -389,15 +389,15 @@
         </select>
       </div>
       <div>
-        <label>Responsable (nombre y apellido)</label>
+        <label>Responsable (nombre y apellido) *</label>
         <input type="text" id="fResponsable" placeholder="Ej: María García" />
       </div>
       <div>
-        <label>Teléfono del responsable</label>
+        <label>Teléfono del responsable *</label>
         <input type="text" id="fTelResponsable" placeholder="+54 11 1234-5678" />
       </div>
       <div class="full">
-        <label>¿Tu espacio está habilitado por la AGC?</label>
+        <label>¿Tu espacio está habilitado por la AGC? *</label>
         <select id="fAgc">
           <option value="">Elegí una opción</option>
           <option value="si">Sí</option>
@@ -406,11 +406,11 @@
         </select>
       </div>
       <div>
-        <label>Instagram</label>
+        <label>Instagram *</label>
         <input type="text" id="fInstagram" placeholder="@miestudio" />
       </div>
       <div class="full">
-        <label>Descripción breve</label>
+        <label>Descripción breve *</label>
         <input type="text" id="fDescripcion" placeholder="Ej: Estudio de Pilates en reformer con enfoque terapéutico" />
       </div>
     </div>
@@ -728,9 +728,20 @@ async function saveDatos() {
   const coords = coordsDe('principal');
   if (coords.lat) { datos.lat = coords.lat; datos.lng = coords.lng; }
 
-  if (!datos.nombre) {
+  const faltan = [];
+  if (!datos.nombre)          faltan.push('nombre');
+  if (!datos.telefono)        faltan.push('teléfono');
+  if (!datos.instagram)       faltan.push('Instagram');
+  if (!datos.descripcion)     faltan.push('descripción');
+  if (!datos.responsable)     faltan.push('responsable');
+  if (!datos.tel_responsable) faltan.push('teléfono del responsable');
+  if (!datos.agc)             faltan.push('respuesta sobre AGC');
+  if (!datos.direccion)       faltan.push('calle');
+  if (!datos.numero)          faltan.push('número');
+  if (!datos.barrio)          faltan.push('barrio');
+  if (faltan.length) {
     btn.disabled = false; btn.textContent = 'Guardar datos';
-    return showSaveMsg('datosOk', 'El nombre es obligatorio.', 'err');
+    return showSaveMsg('datosOk', 'Faltan campos obligatorios: ' + faltan.join(', ') + '.', 'err');
   }
 
   const { data: upd, error } = await sb.from('estudios').update(datos).eq('id', estudioId).select();
@@ -1022,12 +1033,18 @@ function setAdminFilter(filter, btn) {
 
 function camposFaltantes(e) {
   const f = [];
-  if (!e.nombre)    f.push('nombre');
-  if (!e.direccion) f.push('dirección');
-  if (!e.telefono)  f.push('teléfono');
-  if (!e.logo_url)  f.push('logo');
-  if (!e.responsable) f.push('responsable');
-  if (!e.agc)         f.push('AGC');
+  if (!e.nombre)          f.push('nombre');
+  if (!e.telefono)        f.push('teléfono');
+  if (!e.instagram)       f.push('Instagram');
+  if (!e.descripcion)     f.push('descripción');
+  if (!e.responsable)     f.push('responsable');
+  if (!e.tel_responsable) f.push('tel. responsable');
+  if (!e.agc)             f.push('AGC');
+  if (!e.direccion)       f.push('dirección');
+  if (!e.numero)          f.push('número');
+  if (!e.barrio)          f.push('barrio');
+  if (!e.logo_url)        f.push('logo');
+  if (!e.lat)             f.push('ubicación en el mapa');
   return f;
 }
 
