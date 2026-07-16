@@ -437,16 +437,19 @@
         <label>Barrio *</label>
         <input type="text" id="fBarrio" placeholder="Ej: Palermo Hollywood" />
       </div>
-      <div class="full">
-        <label>Ubicación en el mapa</label>
-        <p class="map-hint">Completá calle y número, tocá el botón y después arrastrá el pin hasta la entrada exacta de tu estudio. Esa es la ubicación que va a ver la gente en el mapa de CAPIAF.</p>
-        <button type="button" class="btn-ubicar" onclick="ubicarPin('principal')">📍 Buscar dirección en el mapa</button>
-        <span class="pin-status" id="pinStatusPrincipal"></span>
-        <div id="mapPrincipal" class="pin-map"></div>
-      </div>
+
     </div>
 
     <button class="btn-save" id="btnSaveDatos" onclick="saveDatos()">Guardar datos</button>
+
+    <div style="margin-top:1.4rem">
+      <label>Ubicación en el mapa</label>
+      <p class="map-hint">Completá calle y número arriba, tocá el botón y arrastrá el pin hasta la entrada exacta de tu estudio. Al terminar, tocá "Guardar pin".</p>
+      <button type="button" class="btn-ubicar" onclick="ubicarPin('principal')">📍 Buscar dirección en el mapa</button>
+      <span class="pin-status" id="pinStatusPrincipal"></span>
+      <div id="mapPrincipal" class="pin-map"></div>
+      <button type="button" class="btn-ubicar" id="btnGuardarPinPrincipal" style="display:none" onclick="guardarPinPrincipal()">Guardar pin</button>
+    </div>
     <span class="save-msg" id="datosOk"></span>
   </div>
 
@@ -692,6 +695,7 @@ async function loadEstudio() {
     if (data.lat && data.lng) {
       mostrarPin('principal', data.lat, data.lng, 17);
       setPinStatus('pinStatusPrincipal', '✅ Ubicación guardada', 'ok');
+      document.getElementById('btnGuardarPinPrincipal').style.display = 'inline-block';
     }
 
     await loadSedes();
@@ -804,7 +808,7 @@ function mostrarPin(cual, lat, lng, zoom) {
   const c = pinCampos(cual);
   document.getElementById(c.mapId).classList.add('visible');
   if (!pinMaps[cual]) {
-    const map = L.map(c.mapId).setView([lat, lng], zoom || 17);
+    const map = L.map(c.mapId, { dragging: !L.Browser.mobile, tap: false }).setView([lat, lng], zoom || 17);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap', maxZoom: 19
     }).addTo(map);
@@ -832,6 +836,7 @@ function coordsDe(cual) {
 
 async function ubicarPin(cual) {
   const c = pinCampos(cual);
+  if (cual === 'principal') document.getElementById('btnGuardarPinPrincipal').style.display = 'inline-block';
   const dir = document.getElementById(c.dir).value.trim();
   const num = document.getElementById(c.num).value.trim();
   if (!dir || !num) return setPinStatus(c.status, 'Completá calle y número primero.', 'err');
@@ -932,6 +937,14 @@ async function ubicarSedeExistente(id) {
     mostrarPin('sedeExistente', CABA[0], CABA[1], 12);
     setPinStatus('pinStatusSedeExistente', 'No se encontró la dirección: arrastrá el pin a mano', 'err');
   }
+}
+
+async function guardarPinPrincipal() {
+  if (!estudioId || !pinMaps['principal']) return;
+  const p = pinMaps['principal'].marker.getLatLng();
+  const { data, error } = await sb.from('estudios').update({ lat: p.lat, lng: p.lng }).eq('id', estudioId).select();
+  const ok = !error && data && data.length > 0;
+  setPinStatus('pinStatusPrincipal', ok ? '✅ Pin guardado' : 'No se pudo guardar el pin.', ok ? 'ok' : 'err');
 }
 
 async function guardarPinSede() {
