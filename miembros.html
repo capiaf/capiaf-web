@@ -887,7 +887,7 @@ async function descargarSello() {
   ctx.font = '400 46px "Space Mono", monospace';
   ctx.textAlign = 'center';
   try { ctx.letterSpacing = '14px'; } catch (e) {}
-  ctx.fillText('N° ' + nro, 545, 940);
+  ctx.fillText('N° ' + nro, 537, 925);
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
