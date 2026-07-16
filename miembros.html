@@ -1068,6 +1068,8 @@ function renderAdmin() {
   if (adminFilter === 'pendiente') list = list.filter(e => !e.aprobado);
   if (adminFilter === 'incompleto') list = list.filter(e => isIncompleto(e));
   if (adminFilter === 'inactivo') list = list.filter(e => e.activo === false);
+  if (adminFilter === 'individual') list = list.filter(e => e.tipo !== 'multisede');
+  if (adminFilter === 'multisede') list = list.filter(e => e.tipo === 'multisede');
 
   const grid = document.getElementById('adminGrid');
   if (list.length === 0) {
@@ -1172,6 +1174,8 @@ async function aprobar(id, valor) {
     <button class="filter-pill" data-filter="pendiente" onclick="setAdminFilter('pendiente', this)">Pendientes</button>
     <button class="filter-pill" data-filter="incompleto" onclick="setAdminFilter('incompleto', this)">Incompletos</button>
     <button class="filter-pill" data-filter="inactivo" onclick="setAdminFilter('inactivo', this)">Inactivos</button>
+    <button class="filter-pill" data-filter="individual" onclick="setAdminFilter('individual', this)">Individuales</button>
+    <button class="filter-pill" data-filter="multisede" onclick="setAdminFilter('multisede', this)">Multisede</button>
   </div>
 
   <div class="admin-table-wrap" id="adminGrid"></div>
