@@ -884,18 +884,21 @@ async function descargarSello() {
   try { await document.fonts.load('400 92px "Space Mono"'); } catch (e) {}
 
   const img = new Image();
-  img.src = 'sello-base.png';
+  img.src = 'sello-base.png?v=' + Date.now();  // siempre la imagen actual
   await img.decode();
 
   const c = document.createElement('canvas');
   c.width = img.naturalWidth; c.height = img.naturalHeight;
   const ctx = c.getContext('2d');
   ctx.drawImage(img, 0, 0);
+
+  // posición y tamaño en proporción a la imagen (funciona con cualquier resolución)
+  const esc = c.width / 2128;
   ctx.fillStyle = '#3F5549';
-  ctx.font = '400 92px "Space Mono", monospace';
+  ctx.font = '400 ' + Math.round(92 * esc) + 'px "Space Mono", monospace';
   ctx.textAlign = 'center';
-  try { ctx.letterSpacing = '28px'; } catch (e) {}
-  ctx.fillText('N° ' + nro, 1074, 1850);
+  try { ctx.letterSpacing = Math.round(28 * esc) + 'px'; } catch (e) {}
+  ctx.fillText('N° ' + nro, c.width * 0.5047, c.height * 0.8694);
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
