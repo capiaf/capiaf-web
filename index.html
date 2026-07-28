@@ -215,13 +215,16 @@
       border-radius: 2px;
       transition: all .3s;
     }
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
     /* ── MOBILE MENU ── */
     .mobile-menu { display:none; position:fixed; inset:0; background:rgba(46,66,56,0.99); z-index:190; flex-direction:column; align-items:center; justify-content:center; gap:2rem; }
     .mobile-menu.open { display:flex; }
     .mobile-menu a { font-family:'Playfair Display',serif; font-size:1.9rem; font-weight:400; color:rgba(255,255,255,.85); text-decoration:none; transition:color .2s; }
     .mobile-menu a:hover { color:var(--sage-lt); }
-    .mobile-close { position:absolute; top:1.5rem; right:2rem; font-size:2rem; color:var(--white); cursor:pointer; background:none; border:none; }
+    .mobile-close { display:none; }
 
     /* ── HERO ── */
     #hero { position:relative; min-height:100svh; display:flex; align-items:center; overflow:hidden; background:var(--slate-dk); }
@@ -1220,8 +1223,11 @@
   const hamburger = document.getElementById('hamburger');
   const mobileMenu = document.getElementById('mobileMenu');
   const mobileClose = document.getElementById('mobileClose');
-  hamburger.addEventListener('click', () => { mobileMenu.classList.add('open'); document.body.style.overflow='hidden'; });
-  const closeMenu = () => { mobileMenu.classList.remove('open'); document.body.style.overflow=''; };
+  const closeMenu = () => { mobileMenu.classList.remove('open'); hamburger.classList.remove('open'); document.body.style.overflow=''; };
+  hamburger.addEventListener('click', () => {
+    if (mobileMenu.classList.contains('open')) { closeMenu(); }
+    else { mobileMenu.classList.add('open'); hamburger.classList.add('open'); document.body.style.overflow='hidden'; }
+  });
   mobileClose.addEventListener('click', closeMenu);
   document.querySelectorAll('.mobile-link').forEach(l => l.addEventListener('click', closeMenu));
 
