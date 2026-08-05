@@ -118,6 +118,8 @@
 
     /* ── DASHBOARD ── */
     .dashboard { display: none; }
+    .alta-checklist { background: #fdf6ec; border: 1px solid #e7c988; border-radius: var(--radius); padding: .9rem 1.1rem; margin: 1rem 0 0; font-size: .82rem; color: #8a6d1f; line-height: 1.6; display: none; }
+    .alta-checklist strong { color: #6e5613; }
     .welcome-card { background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--salvia); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(46,66,56,.05); }
     .welcome-inner { display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap; }
     .welcome-sello { width: 92px; height: 92px; flex-shrink: 0; }
@@ -358,6 +360,7 @@
     <h2 id="dashTitle">Mi Estudio</h2>
     <p>Completá los datos de tu estudio para aparecer correctamente en el directorio y el mapa de CAPIAF.</p>
     <span class="status-badge pending" id="statusBadge">⏳ Pendiente de aprobación</span>
+    <div class="alta-checklist" id="altaChecklist"></div>
   </div>
 
   <div class="welcome-card" id="welcomeCard" style="display:none">
@@ -487,7 +490,7 @@
     </div>
 
     <div style="margin-top:1.4rem">
-      <label>Oblea de habilitación AGC — sede principal</label>
+      <label>Oblea de habilitación AGC — sede principal<span id="obleaReq" style="display:none"> *</span></label>
       <p class="map-hint">El PDF o foto de la oblea con el código QR que emite la AGC.</p>
       <input type="file" id="fOblea" accept=".pdf,image/*" />
       <button type="button" class="btn-ubicar" onclick="subirDoc('oblea')">Subir oblea</button>
@@ -739,6 +742,7 @@ async function loadEstudio() {
     document.getElementById('fTelResponsable').value = data.tel_responsable || '';
     document.getElementById('fAgc').value            = data.agc || '';
     document.getElementById('fComision').value       = data.comision_directiva ? 'si' : 'no';
+    pintarChecklist(data);
     if (data.dni_frente_url || data.dni_url) setPinStatus('dniFrenteStatus', '✓ Cargado', 'ok');
     if (data.dni_dorso_url || data.dni_url)  setPinStatus('dniDorsoStatus', '✓ Cargado', 'ok');
     if (data.oblea_url) setPinStatus('obleaStatus', '✓ Oblea cargada', 'ok');
@@ -803,6 +807,7 @@ async function saveDatos() {
   } else {
     document.getElementById('dashTitle').textContent = datos.nombre;
     showSaveMsg('datosOk', '✅ Guardado', 'ok');
+    refrescarChecklist();
   }
 }
 
@@ -950,6 +955,25 @@ async function descargarSello() {
   pdf.save('sello-socio-capiaf-' + nro + '.pdf');
 }
 
+function pintarChecklist(e) {
+  const box = document.getElementById('altaChecklist');
+  const f = camposFaltantes(e);
+  if (f.length === 0) {
+    box.style.display = 'none';
+  } else {
+    box.innerHTML = '<strong>Para completar tu alta falta:</strong> ' + f.join(', ') + '.';
+    box.style.display = 'block';
+  }
+  const obleaReq = document.getElementById('obleaReq');
+  if (obleaReq) obleaReq.style.display = (e.agc === 'si') ? 'inline' : 'none';
+}
+
+async function refrescarChecklist() {
+  if (!estudioId) return;
+  const { data } = await sb.from('estudios').select('*').eq('id', estudioId).limit(1);
+  if (data && data[0]) pintarChecklist(data[0]);
+}
+
 async function subirDoc(tipo) {
   const conf = {
     dni_frente: { input: 'fDniFrente', status: 'dniFrenteStatus', col: 'dni_frente_url' },
@@ -971,6 +995,7 @@ async function subirDoc(tipo) {
   const { data: upd, error: e2 } = await sb.from('estudios').update({ [conf.col]: path }).eq('id', estudioId).select();
   if (e2 || !upd || upd.length === 0) return setPinStatus(st, 'No se pudo guardar la referencia.', 'err');
   setPinStatus(st, '✓ Archivo cargado', 'ok');
+  refrescarChecklist();
 }
 
 let obleaSedeId = null;
@@ -1061,6 +1086,7 @@ async function guardarPinPrincipal() {
   const { data, error } = await sb.from('estudios').update({ lat: p.lat, lng: p.lng }).eq('id', estudioId).select();
   const ok = !error && data && data.length > 0;
   setPinStatus('pinStatusPrincipal', ok ? '✅ Pin guardado' : 'No se pudo guardar el pin.', ok ? 'ok' : 'err');
+  if (ok) refrescarChecklist();
 }
 
 async function guardarPinSede() {
