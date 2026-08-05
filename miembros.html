@@ -414,6 +414,13 @@
           <option value="no_puede">No puedo habilitarlo</option>
         </select>
       </div>
+      <div class="full">
+        <label>¿Integrás la Comisión Directiva de CAPIAF?</label>
+        <select id="fComision">
+          <option value="no">No</option>
+          <option value="si">Sí</option>
+        </select>
+      </div>
       <div>
         <label>Instagram *</label>
         <input type="text" id="fInstagram" placeholder="@miestudio" />
@@ -459,6 +466,22 @@
       <div id="mapPrincipal" class="pin-map"></div>
       <button type="button" class="btn-ubicar" id="btnGuardarPinPrincipal" style="display:none" onclick="guardarPinPrincipal()">Guardar pin</button>
     </div>
+
+    <div style="margin-top:1.4rem">
+      <label>DNI del responsable (frente y dorso) *</label>
+      <p class="map-hint">Un solo archivo PDF o imagen que incluya las dos caras. Solo lo ven la Cámara y vos.</p>
+      <input type="file" id="fDni" accept=".pdf,image/*" />
+      <button type="button" class="btn-ubicar" onclick="subirDoc('dni')">Subir DNI</button>
+      <span class="pin-status" id="dniStatus"></span>
+    </div>
+
+    <div style="margin-top:1.4rem">
+      <label>Oblea de habilitación AGC — sede principal</label>
+      <p class="map-hint">El PDF o foto de la oblea con el código QR que emite la AGC.</p>
+      <input type="file" id="fOblea" accept=".pdf,image/*" />
+      <button type="button" class="btn-ubicar" onclick="subirDoc('oblea')">Subir oblea</button>
+      <span class="pin-status" id="obleaStatus"></span>
+    </div>
     <span class="save-msg" id="datosOk"></span>
   </div>
 
@@ -493,6 +516,9 @@
     <p style="font-size:.85rem;color:var(--mid);margin-bottom:1rem">Si tu estudio tiene más de una sede, agregala acá.</p>
 
     <div id="sedesList"></div>
+
+    <input type="file" id="obleaSedeFile" accept=".pdf,image/*" style="display:none" />
+    <span class="pin-status" id="obleaSedeStatus"></span>
 
     <div id="sedePinPanel" style="display:none;margin:.6rem 0 1rem">
       <p class="map-hint" id="sedePinLabel"></p>
@@ -701,6 +727,9 @@ async function loadEstudio() {
     document.getElementById('fResponsable').value    = data.responsable || '';
     document.getElementById('fTelResponsable').value = data.tel_responsable || '';
     document.getElementById('fAgc').value            = data.agc || '';
+    document.getElementById('fComision').value       = data.comision_directiva ? 'si' : 'no';
+    if (data.dni_url)   setPinStatus('dniStatus', '✓ DNI cargado', 'ok');
+    if (data.oblea_url) setPinStatus('obleaStatus', '✓ Oblea cargada', 'ok');
     if (data.lat && data.lng) {
       mostrarPin('principal', data.lat, data.lng, 17);
       setPinStatus('pinStatusPrincipal', '✅ Ubicación guardada', 'ok');
@@ -733,6 +762,7 @@ async function saveDatos() {
     responsable:     document.getElementById('fResponsable').value.trim(),
     tel_responsable: document.getElementById('fTelResponsable').value.trim(),
     agc:             document.getElementById('fAgc').value,
+    comision_directiva: document.getElementById('fComision').value === 'si',
   };
   const coords = coordsDe('principal');
   if (coords.lat) { datos.lat = coords.lat; datos.lng = coords.lng; }
@@ -908,6 +938,52 @@ async function descargarSello() {
   pdf.save('sello-socio-capiaf-' + nro + '.pdf');
 }
 
+async function subirDoc(tipo) {
+  const inp = document.getElementById(tipo === 'dni' ? 'fDni' : 'fOblea');
+  const st  = tipo === 'dni' ? 'dniStatus' : 'obleaStatus';
+  const file = inp.files[0];
+  if (!file) return setPinStatus(st, 'Elegí un archivo primero.', 'err');
+  if (file.size > 10 * 1024 * 1024) return setPinStatus(st, 'El archivo supera los 10 MB.', 'err');
+  setPinStatus(st, 'Subiendo...', '');
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  const path = `${currentUser.id}/${tipo}-${Date.now()}.${ext}`;
+  const { error } = await sb.storage.from('documentos').upload(path, file, { upsert: true });
+  if (error) return setPinStatus(st, 'Error al subir: ' + error.message, 'err');
+
+  const col = tipo === 'dni' ? 'dni_url' : 'oblea_url';
+  const { data: upd, error: e2 } = await sb.from('estudios').update({ [col]: path }).eq('id', estudioId).select();
+  if (e2 || !upd || upd.length === 0) return setPinStatus(st, 'No se pudo guardar la referencia.', 'err');
+  setPinStatus(st, '✓ Archivo cargado', 'ok');
+}
+
+let obleaSedeId = null;
+
+function subirObleaSede(id) {
+  obleaSedeId = id;
+  document.getElementById('obleaSedeFile').click();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('obleaSedeFile').addEventListener('change', async (ev) => {
+    const file = ev.target.files[0];
+    if (!file || !obleaSedeId) return;
+    if (file.size > 10 * 1024 * 1024) return setPinStatus('obleaSedeStatus', 'El archivo supera los 10 MB.', 'err');
+    setPinStatus('obleaSedeStatus', 'Subiendo oblea...', '');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const path = `${currentUser.id}/oblea-sede-${obleaSedeId}-${Date.now()}.${ext}`;
+    const { error } = await sb.storage.from('documentos').upload(path, file, { upsert: true });
+    if (error) return setPinStatus('obleaSedeStatus', 'Error al subir: ' + error.message, 'err');
+    const { data: upd, error: e2 } = await sb.from('sedes').update({ oblea_url: path }).eq('id', obleaSedeId).select();
+    if (e2 || !upd || upd.length === 0) return setPinStatus('obleaSedeStatus', 'No se pudo guardar la referencia.', 'err');
+    const s = sedes.find(x => x.id === obleaSedeId);
+    if (s) s.oblea_url = path;
+    renderSedes();
+    setPinStatus('obleaSedeStatus', '✓ Oblea cargada', 'ok');
+    ev.target.value = '';
+  });
+});
+
 async function loadSedes() {
   const { data } = await sb.from('sedes').select('*').eq('estudio_id', estudioId);
   sedes = data || [];
@@ -927,6 +1003,7 @@ function renderSedes() {
         <small>${s.direccion || ''} ${s.numero || ''} — ${s.barrio || ''}</small>
       </div>
       <button type="button" class="btn-editar" onclick="ubicarSedeExistente('${s.id}')">📍 Ubicar</button>
+      <button type="button" class="btn-editar" onclick="subirObleaSede('${s.id}')">${s.oblea_url ? 'Oblea ✓' : 'Subir oblea'}</button>
       <button class="btn-remove" onclick="removeSede('${s.id}')" title="Eliminar">✕</button>
     </div>
   `).join('');
@@ -1057,6 +1134,8 @@ function camposFaltantes(e) {
   if (!e.barrio)          f.push('barrio');
   if (!e.logo_url)        f.push('logo');
   if (!e.lat)             f.push('ubicación en el mapa');
+  if (!e.dni_url)         f.push('DNI responsable');
+  if (e.agc === 'si' && !e.oblea_url) f.push('oblea habilitación');
   return f;
 }
 
@@ -1109,7 +1188,7 @@ function renderAdmin() {
       </td>
       <td class="col-contacto"><div class="row-sub">${contacto || '—'}</div></td>
       <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div></td>
-      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}</td>
+      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.comision_directiva ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Comisión Directiva</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}</td>
       <td><div class="row-actions">
         <button class="btn-editar" onclick="abrirFicha('${e.id}')">Editar</button>
         ${!e.aprobado
@@ -1226,6 +1305,13 @@ async function aprobar(id, valor) {
           <option value="no_puede">No puede habilitarlo</option>
         </select>
       </div>
+      <div><label>Comisión Directiva</label>
+        <select id="mComision">
+          <option value="no">No</option>
+          <option value="si">Sí</option>
+        </select>
+      </div>
+      <div class="full"><label>Documentación</label><div class="map-hint" id="mDocs" style="margin:0"></div></div>
       <div class="full"><label>Descripción breve</label><input type="text" id="mDescripcion" /></div>
       <div><label>Calle</label><input type="text" id="mDireccion" /></div>
       <div><label>Número</label><input type="text" id="mNumero" /></div>
@@ -1274,6 +1360,22 @@ function abrirFicha(id) {
   document.getElementById('mResponsable').value    = e.responsable || '';
   document.getElementById('mTelResponsable').value = e.tel_responsable || '';
   document.getElementById('mAgc').value            = e.agc || '';
+  document.getElementById('mComision').value       = e.comision_directiva ? 'si' : 'no';
+
+  const docsDiv = document.getElementById('mDocs');
+  docsDiv.textContent = 'Cargando documentación...';
+  (async () => {
+    async function docLink(path, titulo) {
+      if (!path) return `<span style="color:var(--error)">${titulo}: falta</span>`;
+      const { data } = await sb.storage.from('documentos').createSignedUrl(path, 3600);
+      return data ? `<a href="${data.signedUrl}" target="_blank" rel="noopener" style="color:var(--salvia);font-weight:600">${titulo}</a>` : `${titulo}: error`;
+    }
+    const partes = [];
+    partes.push(await docLink(e.dni_url, 'DNI responsable'));
+    partes.push(await docLink(e.oblea_url, 'Oblea sede principal'));
+    for (const s of (e.sedes || [])) partes.push(await docLink(s.oblea_url, 'Oblea ' + (s.nombre || 'sede')));
+    docsDiv.innerHTML = partes.join(' &nbsp;·&nbsp; ');
+  })();
 
   const sedesDiv = document.getElementById('fichaSedes');
   sedesDiv.innerHTML = (e.sedes && e.sedes.length)
@@ -1379,6 +1481,7 @@ async function guardarFicha() {
     responsable:     document.getElementById('mResponsable').value.trim(),
     tel_responsable: document.getElementById('mTelResponsable').value.trim(),
     agc:             document.getElementById('mAgc').value,
+    comision_directiva: document.getElementById('mComision').value === 'si',
   };
   if (!datos.nombre) {
     msg.className = 'msg err'; msg.style.display = 'block';
