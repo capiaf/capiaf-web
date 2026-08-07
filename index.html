@@ -1276,7 +1276,7 @@
     );
     const { data } = await sbSocios
       .from('estudios')
-      .select('nombre, logo_url')
+      .select('nombre, logo_url, instagram, web')
       .eq('aprobado', true)
       .eq('activo', true);
     if (!data || !data.length) return;
@@ -1291,6 +1291,23 @@
     const grid = document.getElementById('sociosGrid');
     if (!grid) return;
 
+    const linkSocio = e => {
+      const web = (e.web || '').trim();
+      if (web) return web.match(/^https?:\/\//) ? web : 'https://' + web;
+      const ig = (e.instagram || '').replace(/^@/, '').trim();
+      if (ig) return 'https://instagram.com/' + ig;
+      return null;
+    };
+    const contenidoCard = (e, letra) => {
+      const inner = e.logo_url
+        ? `<img src="${e.logo_url}" alt="${e.nombre}" loading="lazy" />`
+        : `<div class="socio-placeholder"><div class="socio-initial">${letra}</div><span class="socio-name">${e.nombre}</span></div>`;
+      const url = linkSocio(e);
+      return url
+        ? `<a href="${url}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit" title="${e.nombre}">${inner}</a>`
+        : inner;
+    };
+
     data.forEach(e => {
       if (!e.nombre) return;
       const cards = Array.from(grid.querySelectorAll('.socio-logo-card'));
@@ -1300,15 +1317,13 @@
       if (match) {
         match.dataset.name = e.nombre;
         match.dataset.letter = letra;
-        if (e.logo_url) match.innerHTML = `<img src="${e.logo_url}" alt="${e.nombre}" loading="lazy" />`;
+        match.innerHTML = contenidoCard(e, letra);
       } else {
         const card = document.createElement('div');
         card.className = 'socio-logo-card';
         card.dataset.name = e.nombre;
         card.dataset.letter = letra;
-        card.innerHTML = e.logo_url
-          ? `<img src="${e.logo_url}" alt="${e.nombre}" loading="lazy" />`
-          : `<div class="socio-placeholder"><div class="socio-initial">${letra}</div><span class="socio-name">${e.nombre}</span></div>`;
+        card.innerHTML = contenidoCard(e, letra);
         const siguiente = cards.find(c => (c.dataset.name || '').localeCompare(e.nombre, 'es') > 0);
         grid.insertBefore(card, siguiente || null);
       }
