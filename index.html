@@ -1265,5 +1265,58 @@
     </svg>
   </a>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Grilla de socios híbrida: logos frescos de la base reemplazan a los históricos por nombre
+(async () => {
+  try {
+    const sbSocios = supabase.createClient(
+      'https://rpxckpqptdgkkwaqtgzz.supabase.co',
+      'sb_publishable_QqQ4vWOitcfzNREsG3SoHA_rJAkTMDQ'
+    );
+    const { data } = await sbSocios
+      .from('estudios')
+      .select('nombre, logo_url')
+      .eq('aprobado', true)
+      .eq('activo', true);
+    if (!data || !data.length) return;
+
+    const norm = s => (s || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\b(pilates|estudio|estudios|espacio|studio|de|el|la)\b/g, '')
+      .replace(/[^a-z0-9]/g, '');
+    const mismo = (a, b) => { a = norm(a); b = norm(b); return a && b && (a.includes(b) || b.includes(a)); };
+
+    const grid = document.getElementById('sociosGrid');
+    if (!grid) return;
+
+    data.forEach(e => {
+      if (!e.nombre) return;
+      const cards = Array.from(grid.querySelectorAll('.socio-logo-card'));
+      const letra = e.nombre.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').charAt(0).toUpperCase();
+      const match = cards.find(c => mismo(c.dataset.name, e.nombre));
+
+      if (match) {
+        match.dataset.name = e.nombre;
+        match.dataset.letter = letra;
+        if (e.logo_url) match.innerHTML = `<img src="${e.logo_url}" alt="${e.nombre}" loading="lazy" />`;
+      } else {
+        const card = document.createElement('div');
+        card.className = 'socio-logo-card';
+        card.dataset.name = e.nombre;
+        card.dataset.letter = letra;
+        card.innerHTML = e.logo_url
+          ? `<img src="${e.logo_url}" alt="${e.nombre}" loading="lazy" />`
+          : `<div class="socio-placeholder"><div class="socio-initial">${letra}</div><span class="socio-name">${e.nombre}</span></div>`;
+        const siguiente = cards.find(c => (c.dataset.name || '').localeCompare(e.nombre, 'es') > 0);
+        grid.insertBefore(card, siguiente || null);
+      }
+    });
+  } catch (err) {
+    // si la base no responde, la grilla histórica queda tal cual
+  }
+})();
+</script>
 </body>
 </html>
