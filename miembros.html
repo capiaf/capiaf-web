@@ -425,6 +425,10 @@
         </select>
       </div>
       <div>
+        <label>Sitio web (opcional)</label>
+        <input type="text" id="fWeb" placeholder="www.miestudio.com.ar" />
+      </div>
+      <div>
         <label>Instagram *</label>
         <input type="text" id="fInstagram" placeholder="@miestudio" />
       </div>
@@ -742,6 +746,7 @@ async function loadEstudio() {
     document.getElementById('fTelResponsable').value = data.tel_responsable || '';
     document.getElementById('fAgc').value            = data.agc || '';
     document.getElementById('fComision').value       = data.comision_directiva ? 'si' : 'no';
+    document.getElementById('fWeb').value            = data.web || '';
     pintarChecklist(data);
     if (data.dni_frente_url || data.dni_url) setPinStatus('dniFrenteStatus', '✓ Cargado', 'ok');
     if (data.dni_dorso_url || data.dni_url)  setPinStatus('dniDorsoStatus', '✓ Cargado', 'ok');
@@ -769,6 +774,7 @@ async function saveDatos() {
     nombre:      document.getElementById('fNombre').value.trim(),
     telefono:    document.getElementById('fTelefono').value.trim(),
     instagram:   document.getElementById('fInstagram').value.trim(),
+    web:         document.getElementById('fWeb').value.trim(),
     descripcion: document.getElementById('fDescripcion').value.trim(),
     direccion:   document.getElementById('fDireccion').value.trim(),
     numero:      document.getElementById('fNumero').value.trim(),
@@ -1324,6 +1330,7 @@ async function aprobar(id, valor) {
       <div><label>Email de contacto</label><input type="text" id="mEmail" /></div>
       <div><label>Teléfono / WhatsApp</label><input type="text" id="mTelefono" /></div>
       <div><label>Instagram</label><input type="text" id="mInstagram" /></div>
+      <div><label>Sitio web</label><input type="text" id="mWeb" /></div>
       <div><label>Estado</label>
         <select id="mActivo">
           <option value="true">Activo</option>
@@ -1391,6 +1398,7 @@ function abrirFicha(id) {
   document.getElementById('mEmail').value       = e.email || '';
   document.getElementById('mTelefono').value    = e.telefono || '';
   document.getElementById('mInstagram').value   = e.instagram || '';
+  document.getElementById('mWeb').value            = e.web || '';
   document.getElementById('mDescripcion').value = e.descripcion || '';
   document.getElementById('mDireccion').value   = e.direccion || '';
   document.getElementById('mNumero').value      = e.numero || '';
@@ -1516,6 +1524,7 @@ async function guardarFicha() {
     email:       document.getElementById('mEmail').value.trim(),
     telefono:    document.getElementById('mTelefono').value.trim(),
     instagram:   document.getElementById('mInstagram').value.trim(),
+    web:         document.getElementById('mWeb').value.trim(),
     descripcion: document.getElementById('mDescripcion').value.trim(),
     direccion:   document.getElementById('mDireccion').value.trim(),
     numero:      document.getElementById('mNumero').value.trim(),
