@@ -127,6 +127,10 @@
     .welcome-card p { font-size: .85rem; color: var(--mid); margin-bottom: .35rem; line-height: 1.55; }
     .welcome-nro { font-family: 'Space Mono', monospace; color: var(--pino); font-weight: 700; }
     .welcome-card .btn-save { margin-top: .6rem; }
+    .dl-item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .95rem 0; border-top: 1px solid #EDE9E0; }
+    .dl-item strong { display: block; font-size: .92rem; color: var(--pino); margin-bottom: .15rem; }
+    .dl-item span { font-size: .78rem; color: var(--mid); line-height: 1.5; }
+    .dl-btn { margin: 0 !important; padding: .5rem 1.3rem; font-size: .8rem; text-decoration: none; display: inline-block; text-align: center; white-space: nowrap; }
     .dash-header { margin-bottom: 2rem; }
     .dash-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 600; color: var(--pino); }
     .dash-header p { font-size: .88rem; color: var(--mid); margin-top: .3rem; }
@@ -363,15 +367,27 @@
     <div class="alta-checklist" id="altaChecklist"></div>
   </div>
 
-  <div class="welcome-card" id="welcomeCard" style="display:none">
-    <div class="welcome-inner">
-      <img src="sello-base.png" class="welcome-sello" alt="Sello de socio CAPIAF" />
+  <div class="welcome-card" id="downloadsCard">
+    <h3>Descargables para socios</h3>
+    <p id="dlBienvenida" style="display:none">Bienvenido a CAPIAF — tu estudio es socio oficial de la Cámara, <span class="welcome-nro" id="welcomeNro"></span>.</p>
+
+    <div class="dl-item" style="border-top:none;margin-top:.4rem">
       <div>
-        <h3>Bienvenido a CAPIAF</h3>
-        <p>Tu estudio es socio oficial de la Cámara — <span class="welcome-nro" id="welcomeNro"></span>.</p>
-        <p>Descargá tu sello para imprimirlo y exhibirlo en tu estudio.</p>
-        <button class="btn-save" onclick="descargarSello()">Descargar mi sello (PDF)</button>
+        <strong>Checklist · Inspecciones AGC</strong>
+        <span>Qué tener en regla en tu estudio ante una inspección de la Agencia Gubernamental de Control.</span>
       </div>
+      <a class="btn-save dl-btn" href="checklist-agc.pdf" target="_blank" rel="noopener">Descargar</a>
+    </div>
+
+    <div class="dl-item">
+      <div style="display:flex;align-items:center;gap:.9rem">
+        <img src="sello-base.png" alt="" style="width:52px;height:52px;flex-shrink:0" />
+        <div>
+          <strong>Sello de socio (PDF)</strong>
+          <span id="dlSelloDesc">Disponible cuando tu ficha esté aprobada por la Cámara.</span>
+        </div>
+      </div>
+      <button class="btn-save dl-btn" id="btnSello" onclick="descargarSello()" disabled style="opacity:.45">Descargar</button>
     </div>
   </div>
 
@@ -740,7 +756,10 @@ async function loadEstudio() {
     if (data.aprobado && data.nro_socio) {
       window.selloNro = data.nro_socio;
       document.getElementById('welcomeNro').textContent = 'Socio N° ' + data.nro_socio;
-      document.getElementById('welcomeCard').style.display = 'block';
+      document.getElementById('dlBienvenida').style.display = 'block';
+      document.getElementById('dlSelloDesc').textContent = 'Tu sello oficial con el N° ' + data.nro_socio + ', en alta calidad para imprimir.';
+      const b = document.getElementById('btnSello');
+      b.disabled = false; b.style.opacity = '1';
     }
     document.getElementById('fResponsable').value    = data.responsable || '';
     document.getElementById('fTelResponsable').value = data.tel_responsable || '';
