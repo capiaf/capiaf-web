@@ -1205,6 +1205,13 @@
     transition: border-color .25s ease, transform .25s ease;
   }
   .formacion-card:hover { border-color: var(--sage); transform: translateY(-2px); }
+  .formacion-logo {
+    height: 42px;
+    max-width: 165px;
+    object-fit: contain;
+    object-position: left center;
+    margin-bottom: .35rem;
+  }
   .formacion-estudio {
     font-family: 'Playfair Display', serif;
     font-size: 1.18rem;
@@ -1271,7 +1278,7 @@
 /* ---------------------------------------------------------------
    LISTADO DE FORMACIONES
    Para agregar una formación, copiar un bloque { } y completarlo.
-   Campos opcionales: si no hay dato, borrar la línea entera.
+   Campos opcionales (instagram, whatsapp, web, logo): si no hay dato, borrar la línea.
    El orden alfabético se aplica solo, no hace falta ordenarlas.
    --------------------------------------------------------------- */
 const FORMACIONES = [
@@ -1279,7 +1286,9 @@ const FORMACIONES = [
     estudio:   "Âme Pilates Body Ballet",
     formacion: "Certificación de 100 hs — Método Âme Pilates Body Ballet",
     instagram: "ame.pilatesbodyballet",
-    whatsapp:  "5491137629676"
+    whatsapp:  "5491137629676",
+    web:       "https://www.amepilates.com.ar/sobre-ame/",
+    logo:      "logos/formaciones/ame_pilates.png"
   }
 ];
 
@@ -1303,6 +1312,7 @@ const FORMACIONES = [
     if (f.web)       links.push(`<a href="${f.web}" target="_blank" rel="noopener">Sitio web</a>`);
     return `
       <article class="formacion-card">
+        ${f.logo ? `<img class="formacion-logo" src="${f.logo}" alt="${f.estudio}" loading="lazy">` : ''}
         <h4 class="formacion-estudio">${f.estudio}</h4>
         <p class="formacion-nombre">${f.formacion}</p>
         ${links.length ? `<div class="formacion-links">${links.join('')}</div>` : ''}
