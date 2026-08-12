@@ -615,6 +615,7 @@
   <a href="#testimonios" class="mobile-link">Miembros</a>
   <a href="#socios"     class="mobile-link">Estudios</a>
   <a href="#mapa"      class="mobile-link">Mapa</a>
+  <a href="#formaciones" class="mobile-link">Formaciones</a>
   <a href="#contacto"   class="mobile-link">Contacto</a>
   <a href="miembros.html" class="mobile-link">Acceso miembros</a>
   <a href="#asociarse"  class="mobile-link" style="color:var(--sage-lt)">Asociate →</a>
@@ -636,6 +637,7 @@
     <li><a href="#beneficios">Beneficios</a></li>
     <li><a href="#socios">Estudios</a></li>
     <li><a href="#mapa">Mapa</a></li>
+    <li><a href="#formaciones">Formaciones</a></li>
       <li><a href="#contacto">Contacto</a></li>
     <li><a href="miembros.html" class="nav-login">Acceso miembros</a></li>
     <li><a href="#asociarse" class="nav-cta">Asociate</a></li>
@@ -1137,6 +1139,179 @@
 </section>
 
 <div class="wave-divider" aria-hidden="true" style="background:white"><svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0 C360,72 1080,72 1440,0 L1440,72 L0,72 Z" fill="var(--off)"/></svg></div>
+
+<!-- FORMACIONES -->
+<style>
+  .form-aviso {
+    background: var(--sage-bg);
+    border-left: 3px solid var(--sage);
+    padding: 1.6rem 1.8rem;
+    border-radius: 4px;
+    max-width: 62ch;
+    margin: 2rem 0 3.5rem;
+  }
+  .form-aviso h4 {
+    font-family: 'Jost', sans-serif;
+    font-size: .78rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin: 0 0 .7rem;
+    font-weight: 600;
+  }
+  .form-aviso p { font-size: .95rem; line-height: 1.75; color: var(--ink); margin: 0 0 .8rem; }
+  .form-aviso p:last-child { margin-bottom: 0; }
+
+  .criterios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.6rem 2.4rem;
+    margin: 2rem 0 1rem;
+  }
+  .criterio { display: flex; gap: 1rem; align-items: flex-start; }
+  .criterio-num {
+    font-family: 'Jost', sans-serif;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    color: var(--sage-lt);
+    padding-top: .2rem;
+    flex-shrink: 0;
+  }
+  .criterio p { font-size: .95rem; line-height: 1.7; color: var(--ink); margin: 0; }
+
+  .form-nota {
+    font-size: .9rem;
+    line-height: 1.75;
+    color: var(--mid);
+    max-width: 60ch;
+    margin: 1.4rem 0 0;
+  }
+
+  .formaciones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.4rem;
+    margin-top: 2rem;
+  }
+  .formacion-card {
+    background: var(--white);
+    border: 1px solid #E4E0D6;
+    border-radius: 6px;
+    padding: 1.5rem 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    transition: border-color .25s ease, transform .25s ease;
+  }
+  .formacion-card:hover { border-color: var(--sage); transform: translateY(-2px); }
+  .formacion-estudio {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.18rem;
+    line-height: 1.3;
+    color: var(--slate-dk);
+    margin: 0;
+  }
+  .formacion-nombre { font-size: .92rem; line-height: 1.6; color: var(--ink); margin: 0; }
+  .formacion-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1.2rem;
+    margin-top: .5rem;
+    padding-top: .8rem;
+    border-top: 1px solid #EFECE4;
+  }
+  .formacion-links a {
+    font-family: 'Jost', sans-serif;
+    font-size: .84rem;
+    color: var(--sage);
+    text-decoration: none;
+    transition: color .2s ease;
+  }
+  .formacion-links a:hover { color: var(--slate); text-decoration: underline; }
+  .formaciones-vacio { font-size: .95rem; color: var(--mid); line-height: 1.75; }
+</style>
+
+<section id="formaciones" class="section-wrap" style="background:var(--off)">
+  <div class="section-inner">
+    <p class="eyebrow reveal">Formarse en Pilates</p>
+    <h2 class="section-title reveal reveal-delay-1">Cómo elegir <em>una formación</em></h2>
+
+    <div class="form-aviso reveal reveal-delay-1">
+      <h4>Aclaración institucional</h4>
+      <p>CAPIAF ha aprobado un Reglamento de Homologación de Formaciones, pero dicho régimen no se encuentra aún en funcionamiento. <strong>A la fecha, ningún programa de formación cuenta con homologación de esta Cámara.</strong></p>
+      <p>Si una oferta formativa se presentara como avalada por CAPIAF, esa afirmación no sería correcta. Las primeras resoluciones, cuando se emitan, serán publicadas en este sitio.</p>
+    </div>
+
+    <h3 class="reveal" style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--slate-dk);margin:0 0 .6rem;font-weight:500;">Cinco preguntas antes de inscribirse</h3>
+    <p class="reveal" style="font-size:.95rem;color:var(--mid);line-height:1.75;max-width:58ch;margin:0;">Solicite estas respuestas por escrito. La ausencia de una respuesta concreta a cualquiera de estos puntos constituye, en sí misma, un dato relevante sobre la propuesta.</p>
+
+    <div class="criterios-grid reveal reveal-delay-1">
+      <div class="criterio"><span class="criterio-num">01</span><p>Carga horaria total, con discriminación entre horas presenciales y horas a distancia.</p></div>
+      <div class="criterio"><span class="criterio-num">02</span><p>Cantidad de horas de práctica supervisada y equipos sobre los que se realiza.</p></div>
+      <div class="criterio"><span class="criterio-num">03</span><p>Régimen de evaluación y condiciones de aprobación.</p></div>
+      <div class="criterio"><span class="criterio-num">04</span><p>Identidad y trayectoria de los formadores a cargo.</p></div>
+      <div class="criterio"><span class="criterio-num">05</span><p>Texto exacto que consignará el certificado a emitirse.</p></div>
+    </div>
+
+    <h3 class="reveal" style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--slate-dk);margin:3.5rem 0 .6rem;font-weight:500;">Formaciones dictadas por estudios asociados</h3>
+    <p class="form-nota reveal">Listado en orden alfabético, sin orden de mérito. La condición de asociado acredita la adhesión del estudio a los principios de CAPIAF; no implica que esta Cámara haya evaluado ni homologado sus programas.</p>
+
+    <div class="formaciones-grid reveal reveal-delay-1" id="formacionesGrid"></div>
+
+    <p class="form-nota reveal" style="margin-top:2.5rem;">
+      ¿Su estudio es socio y dicta formación? Escríbanos a
+      <a href="mailto:info@pilates.org.ar" style="color:var(--sage);">info@pilates.org.ar</a>
+      para incorporarla a este listado.
+    </p>
+  </div>
+</section>
+
+<script>
+/* ---------------------------------------------------------------
+   LISTADO DE FORMACIONES
+   Para agregar una formación, copiar un bloque { } y completarlo.
+   Campos opcionales: si no hay dato, borrar la línea entera.
+   El orden alfabético se aplica solo, no hace falta ordenarlas.
+   --------------------------------------------------------------- */
+const FORMACIONES = [
+  {
+    estudio:   "Âme Pilates Body Ballet",
+    formacion: "Certificación de 100 hs — Método Âme Pilates Body Ballet",
+    instagram: "ame.pilatesbodyballet",
+    whatsapp:  "5491137629676"
+  }
+];
+
+(function renderFormaciones() {
+  const grid = document.getElementById('formacionesGrid');
+  if (!grid) return;
+
+  if (!FORMACIONES.length) {
+    grid.innerHTML = '<p class="formaciones-vacio">Estamos recopilando la información de las formaciones dictadas por estudios asociados. Próximamente disponible.</p>';
+    return;
+  }
+
+  const orden = [...FORMACIONES].sort((a, b) =>
+    a.estudio.localeCompare(b.estudio, 'es', { sensitivity: 'base' })
+  );
+
+  grid.innerHTML = orden.map(f => {
+    const links = [];
+    if (f.instagram) links.push(`<a href="https://instagram.com/${f.instagram}" target="_blank" rel="noopener">@${f.instagram}</a>`);
+    if (f.whatsapp)  links.push(`<a href="https://wa.me/${f.whatsapp}" target="_blank" rel="noopener">WhatsApp</a>`);
+    if (f.web)       links.push(`<a href="${f.web}" target="_blank" rel="noopener">Sitio web</a>`);
+    return `
+      <article class="formacion-card">
+        <h4 class="formacion-estudio">${f.estudio}</h4>
+        <p class="formacion-nombre">${f.formacion}</p>
+        ${links.length ? `<div class="formacion-links">${links.join('')}</div>` : ''}
+      </article>`;
+  }).join('');
+})();
+</script>
+
+<div class="wave-divider" aria-hidden="true" style="background:var(--off)"><svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,72 C360,0 1080,0 1440,72 L1440,72 L0,72 Z" fill="#ffffff"/></svg></div>
 
 <!-- CONTACTO -->
 <section id="alianzas" class="section-wrap">
