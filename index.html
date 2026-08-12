@@ -1222,8 +1222,8 @@
   .formacion-nombre { font-size: .92rem; line-height: 1.6; color: var(--ink); margin: 0; }
   .formacion-links {
     display: flex;
-    flex-wrap: wrap;
-    gap: .5rem 1.2rem;
+    flex-direction: column;
+    gap: .35rem;
     margin-top: .5rem;
     padding-top: .8rem;
     border-top: 1px solid #EFECE4;
@@ -1236,6 +1236,9 @@
     transition: color .2s ease;
   }
   .formacion-links a:hover { color: var(--slate); text-decoration: underline; }
+  .formacion-contacto { display: flex; align-items: center; gap: .45rem; }
+  .formacion-sep { color: #C9CFC9; font-size: .8rem; }
+  .formacion-nombre + .formacion-nombre { margin-top: .3rem; }
   .formaciones-vacio { font-size: .95rem; color: var(--mid); line-height: 1.75; }
 </style>
 
@@ -1277,38 +1280,67 @@
 <script>
 /* ---------------------------------------------------------------
    LISTADO DE FORMACIONES
-   Para agregar una formación, copiar un bloque { } y completarlo.
-   Campos opcionales (instagram, whatsapp, web, logo): si no hay dato, borrar la línea.
-   El orden alfabético se aplica solo, no hace falta ordenarlas.
+   Para agregar: copiar un bloque { } y completarlo.
+   - formacion: puede ser texto o un array si el estudio dicta varias.
+   - contactos: un objeto por cuenta; admite varios si es un programa conjunto.
+   - logo: opcional. Archivos en logos/formaciones/
+   El orden alfabético se aplica solo.
    --------------------------------------------------------------- */
 const FORMACIONES = [
   {
     estudio:   "Âme Pilates Body Ballet",
     formacion: "Certificación de 100 hs — Método Âme Pilates Body Ballet",
-    instagram: "ame.pilatesbodyballet",
-    whatsapp:  "5491137629676",
+    contactos: [{ instagram: "ame.pilatesbodyballet", whatsapp: "5491131920990" }],
     web:       "https://www.amepilates.com.ar/sobre-ame/",
     logo:      "logos/formaciones/ame_pilates.png"
   },
   {
-    estudio:   "BAE Pilates",
-    formacion: "Curso de Formación en Pilates Reformer Contemporáneo",
-    instagram: "estudio.baepilates",
-    whatsapp:  "5491150568789",
+    estudio:   "BAE Pilates & Raisa Pilates",
+    formacion: "Curso Intensivo de Formación en Pilates Reformer Contemporáneo",
+    contactos: [
+      { instagram: "estudio.baepilates", whatsapp: "5491150568789" },
+      { instagram: "raisapilates",       whatsapp: "5491165585287" }
+    ],
     logo:      "logos/formaciones/bae_pilates.png"
   },
   {
     estudio:   "Delbuono Pilates",
     formacion: "Programa de Formación en Pilates Reformer",
-    instagram: "delbuonopilates",
-    whatsapp:  "5491159365503",
+    contactos: [{ instagram: "delbuonopilates", whatsapp: "5491159365503" }],
     logo:      "logos/formaciones/delbuono_pilates.png"
+  },
+  /* PENDIENTE: falta el nombre del programa de F&S Pilates.
+  {
+    estudio:   "F&S Pilates",
+    formacion: "",
+    contactos: [{ instagram: "fspilatesstudio", whatsapp: "5491162520344" }]
+  },
+  */
+  {
+    estudio:   "Gloss Fit",
+    formacion: [
+      "Instructorado Pilates Reformer Nivel I & Mat",
+      "Instructorado Pilates Reformer Intermedio / Avanzado"
+    ],
+    contactos: [{ instagram: "gloss.fit", whatsapp: "5491162147313" }],
+    logo:      "logos/formaciones/gloss_fit.png"
+  },
+  {
+    estudio:   "Naapura",
+    formacion: "Instructorado Pilates Naapura",
+    contactos: [{ instagram: "casanaapura", whatsapp: "5491132010821" }],
+    logo:      "logos/formaciones/naapura.png"
+  },
+  {
+    estudio:   "Pura Vida Pilates",
+    formacion: "Instructorado en Pilates Reformer funcional contemporáneo con enfoque kinésico",
+    contactos: [{ instagram: "puravidapilates.ba", whatsapp: "5491132279625" }],
+    logo:      "logos/formaciones/pura_vida.png"
   },
   {
     estudio:   "Toulouse Pilates",
     formacion: "Formación de 130 hs — Pilates Tenségrico",
-    instagram: "toulouse.pilates",
-    whatsapp:  "5491123991880",
+    contactos: [{ instagram: "toulouse.pilates", whatsapp: "5491123991880" }],
     web:       "https://www.toulousepilates.com/formacion",
     logo:      "logos/formaciones/toulouse_pilates.png"
   }
@@ -1328,16 +1360,27 @@ const FORMACIONES = [
   );
 
   grid.innerHTML = orden.map(f => {
-    const links = [];
-    if (f.instagram) links.push(`<a href="https://instagram.com/${f.instagram}" target="_blank" rel="noopener">@${f.instagram}</a>`);
-    if (f.whatsapp)  links.push(`<a href="https://wa.me/${f.whatsapp}" target="_blank" rel="noopener">WhatsApp</a>`);
-    if (f.web)       links.push(`<a href="${f.web}" target="_blank" rel="noopener">Sitio web</a>`);
+    const progs = Array.isArray(f.formacion) ? f.formacion : [f.formacion];
+    const listaProgs = progs.filter(Boolean)
+      .map(p => `<p class="formacion-nombre">${p}</p>`).join('');
+
+    const contactos = (f.contactos || []).map(c => {
+      const partes = [];
+      if (c.instagram) partes.push(`<a href="https://instagram.com/${c.instagram}" target="_blank" rel="noopener">@${c.instagram}</a>`);
+      if (c.whatsapp)  partes.push(`<a href="https://wa.me/${c.whatsapp}" target="_blank" rel="noopener">WhatsApp</a>`);
+      return partes.length ? `<div class="formacion-contacto">${partes.join('<span class="formacion-sep">·</span>')}</div>` : '';
+    }).join('');
+
+    const web = f.web
+      ? `<div class="formacion-contacto"><a href="${f.web}" target="_blank" rel="noopener">Sitio web</a></div>`
+      : '';
+
     return `
       <article class="formacion-card">
         ${f.logo ? `<img class="formacion-logo" src="${f.logo}" alt="${f.estudio}" loading="lazy">` : ''}
         <h4 class="formacion-estudio">${f.estudio}</h4>
-        <p class="formacion-nombre">${f.formacion}</p>
-        ${links.length ? `<div class="formacion-links">${links.join('')}</div>` : ''}
+        ${listaProgs}
+        ${(contactos || web) ? `<div class="formacion-links">${contactos}${web}</div>` : ''}
       </article>`;
   }).join('');
 })();
