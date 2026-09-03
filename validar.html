@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Validar cupón de socio — CAPIAF</title>
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --pino:#2E4238; --salvia:#6E9080; --agua:#7FB3AE; --lino:#F3F0E9; --tinta:#232A26;
+      --mid:#7A8A82; --white:#fff; --border:#DDD8CE; --radius:16px; --error:#c0392b; --ok:#27ae60;
+    }
+    body { font-family:'Jost',system-ui,sans-serif; background:var(--lino); color:var(--tinta); min-height:100vh; -webkit-font-smoothing:antialiased; }
+    nav { background:var(--pino); padding:0 1.5rem; height:64px; display:flex; align-items:center; }
+    .nav-logo { display:flex; align-items:center; gap:.7rem; text-decoration:none; }
+    .nav-logo img { height:32px; width:32px; object-fit:contain; }
+    .nav-logo-name { font-weight:600; font-size:1.05rem; letter-spacing:.12em; color:#fff; text-transform:uppercase; display:block; line-height:1.2; }
+    .nav-logo-sub { font-size:.58rem; color:rgba(255,255,255,.45); letter-spacing:.08em; text-transform:uppercase; display:block; }
+
+    .wrap { max-width:520px; margin:0 auto; padding:2rem 1.2rem 4rem; }
+    h1 { font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:600; color:var(--pino); }
+    .sub { font-size:.88rem; color:var(--mid); margin:.3rem 0 1.5rem; line-height:1.5; }
+
+    .card { background:#fff; border-radius:var(--radius); padding:1.5rem; box-shadow:0 2px 12px rgba(46,66,56,.06); margin-bottom:1.2rem; }
+    label { display:block; font-size:.72rem; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--mid); margin-bottom:.4rem; }
+    .row { display:flex; gap:.6rem; }
+    input { flex:1; min-width:0; padding:.8rem 1rem; border:1.5px solid var(--border); border-radius:12px; font-family:'Jost',sans-serif; font-size:1.05rem; letter-spacing:.12em; text-transform:uppercase; outline:none; background:#fff; }
+    input:focus { border-color:var(--salvia); }
+    .btn { padding:.8rem 1.3rem; border:none; border-radius:12px; font-family:'Jost',sans-serif; font-weight:500; font-size:.9rem; cursor:pointer; background:var(--pino); color:#fff; transition:background .15s; white-space:nowrap; }
+    .btn:hover { background:var(--salvia); }
+    .btn:disabled { opacity:.55; cursor:not-allowed; }
+    .btn-ok { background:var(--ok); width:100%; margin-top:1rem; font-size:1rem; padding:.95rem; }
+    .btn-ok:hover { background:#219a52; }
+
+    .estado { display:inline-block; padding:.35rem .9rem; border-radius:999px; font-size:.78rem; font-weight:500; letter-spacing:.06em; text-transform:uppercase; margin-bottom:1rem; }
+    .vigente     { background:#E3F4EA; color:#1e7a45; }
+    .usado       { background:#ece8e0; color:#8a857c; }
+    .vencido     { background:#fdecea; color:var(--error); }
+    .suspendido  { background:#fdecea; color:var(--error); }
+    .inexistente { background:#fdecea; color:var(--error); }
+
+    .estudio { font-family:'Playfair Display',serif; font-size:1.45rem; color:var(--pino); line-height:1.25; }
+    .nro { font-size:.82rem; color:var(--mid); margin-top:.2rem; }
+    .benef { margin-top:1.1rem; padding-top:1rem; border-top:1px solid #EDE9E0; }
+    .benef strong { display:block; color:var(--pino); font-size:1rem; }
+    .benef span { display:block; font-size:.82rem; color:var(--mid); margin-top:.25rem; line-height:1.5; }
+    .meta { font-size:.78rem; color:var(--mid); margin-top:.9rem; line-height:1.7; }
+    .cod { font-family:'Jost',sans-serif; letter-spacing:.15em; font-weight:600; color:var(--pino); }
+    .msg { font-size:.88rem; line-height:1.55; color:var(--tinta); }
+    .foot { font-size:.75rem; color:var(--mid); text-align:center; line-height:1.6; margin-top:2rem; }
+    .foot a { color:var(--salvia); }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img src="capiaf-isologo-reverso-1024.png" alt="CAPIAF" />
+    <span><span class="nav-logo-name">CAPIAF</span><span class="nav-logo-sub">Cámara de Pilates · C.A.B.A.</span></span>
+  </a>
+</nav>
+
+<div class="wrap">
+  <h1>Validar cupón de socio</h1>
+  <p class="sub">Herramienta para proveedores con convenio CAPIAF. Ingresá el código que te muestra el estudio y confirmá que el beneficio corresponde.</p>
+
+  <div class="card">
+    <label for="codigo">Código del cupón</label>
+    <div class="row">
+      <input id="codigo" placeholder="CAP-XXXX-XX" autocomplete="off" autocapitalize="characters" />
+      <button class="btn" id="btnVal" onclick="validar()">Validar</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="resultado"></div>
+
+  <p class="foot">Los cupones son personales, de uso único y se generan desde el portal de miembros de CAPIAF. Ante dudas escribinos a <a href="mailto:info@pilates.org.ar">info@pilates.org.ar</a>.</p>
+</div>
+
+<script>
+const sb = supabase.createClient('https://rpxckpqptdgkkwaqtgzz.supabase.co', 'sb_publishable_QqQ4vWOitcfzNREsG3SoHA_rJAkTMDQ');
+const $ = id => document.getElementById(id);
+const fecha = s => s ? new Date(s).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const TEXTO = {
+  vigente:     ['✅ Cupón vigente', 'El estudio es socio activo de CAPIAF. Aplicá el beneficio y marcá el cupón como usado para que no pueda volver a presentarse.'],
+  usado:       ['Cupón ya utilizado', 'Este cupón ya fue canjeado. Si el estudio necesita otro, puede generarlo desde su portal.'],
+  vencido:     ['Cupón vencido', 'El cupón superó su fecha de validez. El estudio puede generar uno nuevo desde su portal.'],
+  suspendido:  ['Socio no habilitado', 'El estudio no está habilitado actualmente para usar beneficios de CAPIAF. No apliques el descuento.'],
+  inexistente: ['Código inexistente', 'No encontramos ningún cupón con ese código. Revisá que esté bien escrito.'],
+};
+
+function normalizar(c) {
+  c = (c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (c.startsWith('CAP')) c = c.slice(3);
+  return c.length >= 6 ? `CAP-${c.slice(0,4)}-${c.slice(4,6)}` : 'CAP-' + c;
+}
+
+function render(r) {
+  const box = $('resultado');
+  box.classList.remove('hidden');
+  const [tit, txt] = TEXTO[r.estado] || TEXTO.inexistente;
+
+  if (r.estado === 'inexistente') {
+    box.innerHTML = `<span class="estado inexistente">${tit}</span><p class="msg">${txt}</p>`;
+    return;
+  }
+  box.innerHTML = `
+    <span class="estado ${r.estado}">${tit}</span>
+    <div class="estudio">${esc(r.estudio)}</div>
+    <div class="nro">${r.nro_socio ? 'Socio N° ' + esc(r.nro_socio) : 'Estudio socio de CAPIAF'}</div>
+    <div class="benef">
+      <strong>${esc(r.beneficio)}</strong>
+      <span>${esc(r.proveedor)}${r.condiciones ? ' · ' + esc(r.condiciones) : ''}</span>
+    </div>
+    <div class="meta">
+      Código: <span class="cod">${esc(r.codigo)}</span><br>
+      Emitido: ${fecha(r.creado_en)} · Vence: ${fecha(r.vence_en)}
+      ${r.usado_en ? '<br>Usado: ' + fecha(r.usado_en) : ''}
+    </div>
+    <p class="msg" style="margin-top:.9rem">${txt}</p>
+    ${r.estado === 'vigente' ? '<button class="btn btn-ok" id="btnCanje" onclick="canjear()">Marcar como usado</button>' : ''}
+  `;
+}
+
+async function validar() {
+  const cod = normalizar($('codigo').value);
+  $('codigo').value = cod;
+  if (cod.length < 11) return;
+  const b = $('btnVal'); b.disabled = true; b.textContent = '...';
+  const { data, error } = await sb.rpc('validar_cupon', { p_codigo: cod });
+  b.disabled = false; b.textContent = 'Validar';
+  if (error) { render({ estado: 'inexistente' }); console.error(error); return; }
+  render(data);
+  history.replaceState(null, '', '?c=' + encodeURIComponent(cod));
+}
+
+async function canjear() {
+  if (!confirm('¿Confirmás que aplicaste el beneficio y querés marcar este cupón como usado? No se puede deshacer.')) return;
+  const b = $('btnCanje'); b.disabled = true; b.textContent = 'Registrando...';
+  const { data, error } = await sb.rpc('canjear_cupon', { p_codigo: $('codigo').value, p_nota: null });
+  if (error) { b.disabled = false; b.textContent = 'Marcar como usado'; alert('No se pudo registrar. Intentá de nuevo.'); return; }
+  render(data);
+}
+
+$('codigo').addEventListener('keydown', e => { if (e.key === 'Enter') validar(); });
+const q = new URLSearchParams(location.search).get('c');
+if (q) { $('codigo').value = normalizar(q); validar(); }
+</script>
+</body>
+</html>
