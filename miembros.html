@@ -1467,6 +1467,7 @@ function renderAdmin() {
       <td>
         <div class="row-nombre">${e.nombre || '(sin nombre)'}</div>
         <div class="row-sub">${e.email || ''}</div>
+        ${e.cuit ? `<div class="row-sub" style="color:var(--pino)">CUIT ${fmtCuit(e.cuit)}${e.razon_social ? ' · ' + esc(e.razon_social) : ''}</div>` : ''}
         ${isIncompleto(e) ? `<div class="row-falta">⚠️ Falta: ${camposFaltantes(e).join(', ')}</div>` : ''}
       </td>
       <td class="col-contacto"><div class="row-sub">${contacto || '—'}</div></td>
