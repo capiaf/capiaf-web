@@ -793,6 +793,8 @@ async function onLogin(user) {
 }
 
 async function loadEstudio() {
+  // Si CAPIAF precargó la ficha de este estudio (mismo mail, sin usuario), la reclama antes de crear una nueva
+  try { await sb.rpc('reclamar_ficha'); } catch (_) {}
   const { data: rows } = await sb.from('estudios').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: true });
   const data = rows && rows.length ? rows[0] : null;
 
@@ -1443,6 +1445,7 @@ function renderAdmin() {
   if (adminFilter === 'multisede') list = list.filter(e => e.tipo === 'multisede');
   if (adminFilter === 'param_activo') list = list.filter(e => e.paramedic_estado === 'activo');
   if (adminFilter === 'param_no') list = list.filter(e => e.aprobado && e.activo !== false && e.paramedic_estado !== 'activo');
+  if (adminFilter === 'sinusuario') list = list.filter(e => !e.user_id);
   if (adminFilter === 'mora') list = list.filter(e => { const c = estadoCuota(e); return c && c.cls === 'tag-mora'; });
 
   const grid = document.getElementById('adminGrid');
@@ -1472,7 +1475,7 @@ function renderAdmin() {
       </td>
       <td class="col-contacto"><div class="row-sub">${contacto || '—'}</div></td>
       <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div></td>
-      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.comision_directiva ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Comisión Directiva</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}${e.aprobado ? '<br>' + tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<br><span class="tag ${c.cls}" style="margin-top:.25rem">${c.txt}</span>` : ''; })()}</td>
+      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.comision_directiva ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Comisión Directiva</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}${!e.user_id ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Sin usuario</span>' : ''}${e.aprobado ? '<br>' + tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<br><span class="tag ${c.cls}" style="margin-top:.25rem">${c.txt}</span>` : ''; })()}</td>
       <td><div class="row-actions">
         <button class="btn-editar" onclick="abrirFicha('${e.id}')">Editar</button>
         ${!e.aprobado
@@ -1559,6 +1562,7 @@ async function aprobar(id, valor) {
     <button class="filter-pill" data-filter="param_activo" onclick="setAdminFilter('param_activo', this)">🚑 Paramedic</button>
     <button class="filter-pill" data-filter="param_no" onclick="setAdminFilter('param_no', this)">Sin Paramedic</button>
     <button class="filter-pill" data-filter="mora" onclick="setAdminFilter('mora', this)">Con deuda</button>
+    <button class="filter-pill" data-filter="sinusuario" onclick="setAdminFilter('sinusuario', this)">Sin usuario</button>
   </div>
 
   <div class="admin-export">
