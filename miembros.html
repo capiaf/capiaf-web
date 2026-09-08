@@ -283,6 +283,15 @@
     .ficha-sede { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .45rem 0; border-bottom: 1px solid #EDE9E0; font-size: .8rem; color: var(--mid); }
     .ficha-sede:last-child { border-bottom: none; }
     .tag-multisede { background: #eef4f2; color: var(--salvia); }
+    .tag-param { background: #e8f3ef; color: #2f7a5d; }
+    .tag-mora { background: #fdecec; color: #b3261e; }
+    .tag-trans { background: #fef3e2; color: #b26a00; }
+    .admin-export { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; margin: 0 0 1.2rem; }
+    .admin-export input[type=month] { padding:.4rem .6rem; border:1.5px solid var(--border); border-radius:8px; font-family:'Jost',sans-serif; font-size:.8rem; }
+    .cuotas-mini { font-size:.78rem; display:flex; gap:.4rem; flex-wrap:wrap; }
+    .cuotas-mini span { padding:.2rem .5rem; border-radius:6px; background:#f4f2ec; }
+    .cuotas-mini .ok { background:#f0faf5; color:var(--ok); }
+    .cuotas-mini .deuda { background:#fdecec; color:#b3261e; }
     .modal-actions { display: flex; gap: .6rem; margin-top: .4rem; justify-content: flex-end; flex-wrap: wrap; }
     .btn-cancelar { background: none; border: 1px solid var(--border); color: var(--mid); border-radius: 50px; padding: .5rem 1.2rem; font-family: 'Jost', sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; }
     .pin-map { height: 260px; border-radius: 12px; border: 1.5px solid var(--border); margin: .6rem 0 1rem; display: none; }
@@ -301,7 +310,7 @@
       .th-contacto, .col-contacto { display: none; }
       .admin-table td, .admin-table th { padding: .55rem .6rem; }
     }
-    .admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
     .stat-card { background: var(--white); border-radius: var(--radius); padding: 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(46,66,56,.06); }
     .stat-card .num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; color: var(--pino); line-height: 1; }
     .stat-card .lbl { font-size: .7rem; color: var(--mid); text-transform: uppercase; letter-spacing: .1em; margin-top: .3rem; }
@@ -320,6 +329,7 @@
   </style>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
@@ -456,6 +466,15 @@
           <option value="individual">Individual (una sede)</option>
           <option value="multisede">Multisede</option>
         </select>
+      </div>
+      <div>
+        <label>Razón social (titular de la habilitación) *</label>
+        <input type="text" id="fRazon" placeholder="Ej: María García / Pilates SRL" />
+      </div>
+      <div>
+        <label>CUIT *</label>
+        <input type="text" id="fCuit" placeholder="20-12345678-9" inputmode="numeric" />
+        <p class="map-hint" style="margin:.25rem 0 0">Lo necesitamos para el certificado de cobertura Paramedic.</p>
       </div>
       <div>
         <label>Responsable (nombre y apellido) *</label>
@@ -621,6 +640,14 @@
         <div>
           <label>Número</label>
           <input type="text" id="sedeNumero" placeholder="Ej: 2743" />
+        </div>
+        <div>
+          <label>Razón social de esta sede (si es distinta)</label>
+          <input type="text" id="sedeRazon" placeholder="Dejar vacío si es la misma" />
+        </div>
+        <div>
+          <label>CUIT de esta sede (si es distinto)</label>
+          <input type="text" id="sedeCuit" placeholder="Dejar vacío si es el mismo" inputmode="numeric" />
         </div>
       </div>
       <div class="full" style="grid-column:1/-1">
@@ -808,6 +835,8 @@ async function loadEstudio() {
     document.getElementById('fAgc').value            = data.agc || '';
     document.getElementById('fComision').value       = data.comision_directiva ? 'si' : 'no';
     document.getElementById('fWeb').value            = data.web || '';
+    document.getElementById('fRazon').value          = data.razon_social || '';
+    document.getElementById('fCuit').value           = fmtCuit(data.cuit);
     pintarChecklist(data);
     if (data.dni_frente_url || data.dni_url) setPinStatus('dniFrenteStatus', '✓ Cargado', 'ok');
     if (data.dni_dorso_url || data.dni_url)  setPinStatus('dniDorsoStatus', '✓ Cargado', 'ok');
@@ -847,6 +876,8 @@ async function saveDatos() {
     tel_responsable: document.getElementById('fTelResponsable').value.trim(),
     agc:             document.getElementById('fAgc').value,
     comision_directiva: document.getElementById('fComision').value === 'si',
+    razon_social:    document.getElementById('fRazon').value.trim(),
+    cuit:            normCuit(document.getElementById('fCuit').value),
   };
   const coords = coordsDe('principal');
   if (coords.lat) { datos.lat = coords.lat; datos.lng = coords.lng; }
@@ -862,6 +893,12 @@ async function saveDatos() {
   if (!datos.direccion)       faltan.push('calle');
   if (!datos.numero)          faltan.push('número');
   if (!datos.barrio)          faltan.push('barrio');
+  if (!datos.razon_social)    faltan.push('razón social');
+  if (!datos.cuit)            faltan.push('CUIT');
+  else if (!cuitValido(datos.cuit)) {
+    btn.disabled = false; btn.textContent = 'Guardar datos';
+    return showSaveMsg('datosOk', 'El CUIT no es válido: revisá los 11 dígitos.', 'err');
+  }
   if (faltan.length) {
     btn.disabled = false; btn.textContent = 'Guardar datos';
     return showSaveMsg('datosOk', 'Faltan campos obligatorios: ' + faltan.join(', ') + '.', 'err');
@@ -1109,7 +1146,7 @@ function renderSedes() {
     <div class="sede-item">
       <div class="sede-item-info">
         <strong>${s.nombre || 'Sede'} ${s.lat ? '📍' : ''}</strong>
-        <small>${s.direccion || ''} ${s.numero || ''} — ${s.barrio || ''}</small>
+        <small>${s.direccion || ''} ${s.numero || ''} — ${s.barrio || ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) : ''}</small>
       </div>
       <button type="button" class="btn-editar" onclick="ubicarSedeExistente('${s.id}')">📍 Ubicar</button>
       <button type="button" class="btn-editar" onclick="subirObleaSede('${s.id}')">${s.oblea_url ? 'Oblea ✓' : 'Subir oblea'}</button>
@@ -1177,7 +1214,10 @@ async function addSede() {
     direccion:  document.getElementById('sedeDireccion').value.trim(),
     numero:     document.getElementById('sedeNumero').value.trim(),
     barrio:     document.getElementById('sedeBarrio').value.trim(),
+    razon_social: document.getElementById('sedeRazon').value.trim() || null,
+    cuit:         normCuit(document.getElementById('sedeCuit').value) || null,
   };
+  if (sede.cuit && !cuitValido(sede.cuit)) return showSaveMsg('sedeMsg', 'El CUIT de la sede no es válido.', 'err');
   const sc = coordsDe('sede');
   if (sc.lat) { sede.lat = sc.lat; sede.lng = sc.lng; }
 
@@ -1187,7 +1227,7 @@ async function addSede() {
   sedes.push(data);
   renderSedes();
   document.getElementById('sedeForm').classList.remove('open');
-  ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero'].forEach(id => document.getElementById(id).value = '');
+  ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero','sedeRazon','sedeCuit'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('mapSede').classList.remove('visible');
   setPinStatus('pinStatusSede', '', '');
   showSaveMsg('sedeMsg', '✅ Sede agregada', 'ok');
@@ -1287,6 +1327,15 @@ function linkContacto(c) {
 function fechaCorta(s) { return new Date(s).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
 
+function normCuit(v) { return String(v || '').replace(/\D/g, ''); }
+function fmtCuit(v) { const d = normCuit(v); return d.length === 11 ? `${d.slice(0,2)}-${d.slice(2,10)}-${d.slice(10)}` : (v || ''); }
+function cuitValido(v) {
+  const d = normCuit(v); if (d.length !== 11) return false;
+  const pesos = [5,4,3,2,7,6,5,4,3,2];
+  let s = 0; for (let i = 0; i < 10; i++) s += parseInt(d[i]) * pesos[i];
+  let dv = 11 - (s % 11); if (dv === 11) dv = 0; if (dv === 10) dv = 9;
+  return dv === parseInt(d[10]);
+}
 function showSaveMsg(id, text, type) {
   const el = document.getElementById(id);
   el.textContent = text;
@@ -1299,7 +1348,10 @@ let allEstudios = [];
 let adminFilter = 'all';
 
 async function loadAllEstudios() {
-  const { data, error } = await sb.from('estudios').select('*, sedes(*)').order('created_at', { ascending: false });
+  let { data, error } = await sb.from('estudios').select('*, sedes(*), cuotas(*)').order('created_at', { ascending: false });
+  if (error) { // tabla cuotas todavía no creada: cargar sin ella
+    ({ data, error } = await sb.from('estudios').select('*, sedes(*)').order('created_at', { ascending: false }));
+  }
   allEstudios = data || [];
   updateStats();
   renderAdmin();
@@ -1309,6 +1361,32 @@ function updateStats() {
   document.getElementById('statTotal').textContent = allEstudios.length;
   document.getElementById('statAprobados').textContent = allEstudios.filter(e => e.aprobado).length;
   document.getElementById('statPendientes').textContent = allEstudios.filter(e => !e.aprobado).length;
+  const act = allEstudios.filter(e => e.paramedic_estado === 'activo' && e.aprobado && e.activo !== false);
+  const domicilios = act.reduce((n, e) => n + 1 + (e.sedes ? e.sedes.length : 0), 0);
+  document.getElementById('statParamedic').textContent = act.length;
+  document.getElementById('statParamedicSub').textContent = `${domicilios} domicilio${domicilios === 1 ? '' : 's'} cubierto${domicilios === 1 ? '' : 's'}`;
+}
+
+// ── Cuotas / mora ──
+function mesActual() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); }
+function cuotasImpagas(e) {
+  return (e.cuotas || []).filter(c => c.estado === 'pendiente' && new Date(c.periodo + 'T00:00:00') < mesActual());
+}
+function estadoCuota(e) {
+  if (e.cuotas && e.cuotas.length) {
+    const n = cuotasImpagas(e).length;
+    if (n >= 2) return { cls: 'tag-mora', txt: `🔴 Mora (${n})` };
+    if (n === 1) return { cls: 'tag-pending', txt: '🟡 1 cuota impaga' };
+    return { cls: 'tag-ok', txt: '🟢 Cuota al día' };
+  }
+  return e.cuota_al_dia === false ? { cls: 'tag-mora', txt: '🔴 Adeuda cuota' } : null;
+}
+const PARAM_LBL = { activo: '🚑 Paramedic', pendiente: 'Paramedic pendiente', transitorio: 'Transitorio', baja: 'Baja Paramedic' };
+function tagParamedic(e) {
+  const st = e.paramedic_estado || 'pendiente';
+  const cls = st === 'activo' ? 'tag-param' : st === 'transitorio' ? 'tag-trans' : st === 'baja' ? 'tag-mora' : 'tag-inactivo';
+  const extra = st === 'transitorio' && e.preaviso_vence ? ' · vence ' + fechaCorta(e.preaviso_vence) : '';
+  return `<span class="tag ${cls}" style="margin-top:.25rem">${PARAM_LBL[st]}${extra}</span>`;
 }
 
 function setAdminFilter(filter, btn) {
@@ -1330,6 +1408,8 @@ function camposFaltantes(e) {
   if (!e.direccion)       f.push('dirección');
   if (!e.numero)          f.push('número');
   if (!e.barrio)          f.push('barrio');
+  if (!e.razon_social)    f.push('razón social');
+  if (!e.cuit)            f.push('CUIT');
   if (!e.logo_url)        f.push('logo');
   if (!e.lat)             f.push('ubicación en el mapa');
   if (!(e.dni_url || (e.dni_frente_url && e.dni_dorso_url))) f.push('DNI responsable');
@@ -1349,7 +1429,9 @@ function renderAdmin() {
   if (q) list = list.filter(e =>
     (e.nombre||'').toLowerCase().includes(q) ||
     (e.email||'').toLowerCase().includes(q) ||
-    (e.barrio||'').toLowerCase().includes(q)
+    (e.barrio||'').toLowerCase().includes(q) ||
+    (normCuit(q) && normCuit(e.cuit).includes(normCuit(q))) ||
+    (e.razon_social||'').toLowerCase().includes(q)
   );
 
   // Filter by status
@@ -1359,6 +1441,9 @@ function renderAdmin() {
   if (adminFilter === 'inactivo') list = list.filter(e => e.activo === false);
   if (adminFilter === 'individual') list = list.filter(e => e.tipo !== 'multisede');
   if (adminFilter === 'multisede') list = list.filter(e => e.tipo === 'multisede');
+  if (adminFilter === 'param_activo') list = list.filter(e => e.paramedic_estado === 'activo');
+  if (adminFilter === 'param_no') list = list.filter(e => e.aprobado && e.activo !== false && e.paramedic_estado !== 'activo');
+  if (adminFilter === 'mora') list = list.filter(e => { const c = estadoCuota(e); return c && c.cls === 'tag-mora'; });
 
   const grid = document.getElementById('adminGrid');
   if (list.length === 0) {
@@ -1386,7 +1471,7 @@ function renderAdmin() {
       </td>
       <td class="col-contacto"><div class="row-sub">${contacto || '—'}</div></td>
       <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div></td>
-      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.comision_directiva ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Comisión Directiva</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}</td>
+      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.comision_directiva ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Comisión Directiva</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}${e.aprobado ? '<br>' + tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<br><span class="tag ${c.cls}" style="margin-top:.25rem">${c.txt}</span>` : ''; })()}</td>
       <td><div class="row-actions">
         <button class="btn-editar" onclick="abrirFicha('${e.id}')">Editar</button>
         ${!e.aprobado
@@ -1453,9 +1538,14 @@ async function aprobar(id, valor) {
       <div class="num" id="statPendientes">—</div>
       <div class="lbl">Pendientes</div>
     </div>
+    <div class="stat-card">
+      <div class="num" id="statParamedic">—</div>
+      <div class="lbl">En Paramedic</div>
+      <div class="lbl" id="statParamedicSub" style="text-transform:none;letter-spacing:0;margin-top:.15rem">—</div>
+    </div>
   </div>
 
-  <input type="text" class="admin-search" id="adminSearch" placeholder="Buscar por nombre, barrio o email..." oninput="renderAdmin()" />
+  <input type="text" class="admin-search" id="adminSearch" placeholder="Buscar por nombre, barrio, email, CUIT o razón social..." oninput="renderAdmin()" />
 
   <div class="admin-filter">
     <button class="filter-pill active" data-filter="all" onclick="setAdminFilter('all', this)">Todos</button>
@@ -1465,6 +1555,16 @@ async function aprobar(id, valor) {
     <button class="filter-pill" data-filter="inactivo" onclick="setAdminFilter('inactivo', this)">Inactivos</button>
     <button class="filter-pill" data-filter="individual" onclick="setAdminFilter('individual', this)">Individuales</button>
     <button class="filter-pill" data-filter="multisede" onclick="setAdminFilter('multisede', this)">Multisede</button>
+    <button class="filter-pill" data-filter="param_activo" onclick="setAdminFilter('param_activo', this)">🚑 Paramedic</button>
+    <button class="filter-pill" data-filter="param_no" onclick="setAdminFilter('param_no', this)">Sin Paramedic</button>
+    <button class="filter-pill" data-filter="mora" onclick="setAdminFilter('mora', this)">Con deuda</button>
+  </div>
+
+  <div class="admin-export">
+    <button class="btn-editar" onclick="exportNomina()">⬇️ Nómina Paramedic (Excel)</button>
+    <input type="month" id="novMes" />
+    <button class="btn-editar" onclick="exportNovedades()">⬇️ Novedades del mes</button>
+    <button class="btn-editar" onclick="exportCuotas()">⬇️ Cuotas del mes</button>
   </div>
 
   <div class="admin-table-wrap" id="adminGrid"></div>
@@ -1531,6 +1631,21 @@ async function aprobar(id, valor) {
           <option value="false">Adeuda (bloquea beneficios)</option>
         </select>
       </div>
+      <div><label>Razón social</label><input type="text" id="mRazon" /></div>
+      <div><label>CUIT</label><input type="text" id="mCuit" inputmode="numeric" /></div>
+      <div><label>Cobertura Paramedic</label>
+        <select id="mParamedic">
+          <option value="pendiente">Pendiente de alta</option>
+          <option value="activo">Activo</option>
+          <option value="transitorio">Transitorio (preaviso con otro prestador)</option>
+          <option value="baja">Baja</option>
+        </select>
+      </div>
+      <div><label>Fecha de alta Paramedic</label><input type="date" id="mParamAlta" /></div>
+      <div><label>Fecha de baja Paramedic</label><input type="date" id="mParamBaja" /></div>
+      <div><label>Preaviso vence (solo transitorio)</label><input type="date" id="mPreaviso" /></div>
+      <div class="full"><label>Nota Paramedic</label><input type="text" id="mParamNota" placeholder="Ej: certificado enviado 10/10" /></div>
+      <div class="full"><label>Cuotas (últimos meses)</label><div class="cuotas-mini" id="mCuotas"></div></div>
       <div><label>Responsable</label><input type="text" id="mResponsable" /></div>
       <div><label>Teléfono del responsable</label><input type="text" id="mTelResponsable" /></div>
       <div><label>Habilitado por AGC</label>
@@ -1599,6 +1714,17 @@ function abrirFicha(id) {
   document.getElementById('mTelResponsable').value = e.tel_responsable || '';
   document.getElementById('mAgc').value            = e.agc || '';
   document.getElementById('mComision').value       = e.comision_directiva ? 'si' : 'no';
+  document.getElementById('mRazon').value          = e.razon_social || '';
+  document.getElementById('mCuit').value           = fmtCuit(e.cuit);
+  document.getElementById('mParamedic').value      = e.paramedic_estado || 'pendiente';
+  document.getElementById('mParamAlta').value      = e.paramedic_alta || '';
+  document.getElementById('mParamBaja').value      = e.paramedic_baja || '';
+  document.getElementById('mPreaviso').value       = e.preaviso_vence || '';
+  document.getElementById('mParamNota').value      = e.paramedic_nota || '';
+  const cuotas = (e.cuotas || []).slice().sort((a, b) => b.periodo.localeCompare(a.periodo)).slice(0, 6);
+  document.getElementById('mCuotas').innerHTML = cuotas.length
+    ? cuotas.map(c => `<span class="${c.estado === 'pagada' ? 'ok' : (new Date(c.periodo + 'T00:00:00') < mesActual() ? 'deuda' : '')}">${c.periodo.slice(0,7)} · ${c.estado}${c.importe ? ' · $' + Number(c.importe).toLocaleString('es-AR') : ''}${c.factura ? ' · ' + c.factura : ''}</span>`).join('')
+    : '<span>Sin cuotas sincronizadas todavía.</span>';
 
   const docsDiv = document.getElementById('mDocs');
   docsDiv.textContent = 'Cargando documentación...';
@@ -1623,7 +1749,7 @@ function abrirFicha(id) {
   sedesDiv.innerHTML = (e.sedes && e.sedes.length)
     ? e.sedes.map(s => `
         <div class="ficha-sede">
-          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}</span>
+          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) : ''}</span>
           <button type="button" class="btn-editar" onclick="fichaUbicar('sede','${s.id}')">📍 Pin</button>
         </div>`).join('')
     : '<p class="map-hint" style="margin:0">Sin sedes adicionales.</p>';
@@ -1726,7 +1852,21 @@ async function guardarFicha() {
     tel_responsable: document.getElementById('mTelResponsable').value.trim(),
     agc:             document.getElementById('mAgc').value,
     comision_directiva: document.getElementById('mComision').value === 'si',
+    razon_social:     document.getElementById('mRazon').value.trim() || null,
+    cuit:             normCuit(document.getElementById('mCuit').value) || null,
+    paramedic_estado: document.getElementById('mParamedic').value,
+    paramedic_alta:   document.getElementById('mParamAlta').value || null,
+    paramedic_baja:   document.getElementById('mParamBaja').value || null,
+    preaviso_vence:   document.getElementById('mPreaviso').value || null,
+    paramedic_nota:   document.getElementById('mParamNota').value.trim() || null,
   };
+  if (datos.cuit && !cuitValido(datos.cuit)) {
+    msg.className = 'msg err'; msg.style.display = 'block';
+    msg.textContent = 'El CUIT no es válido.';
+    return;
+  }
+  if (datos.paramedic_estado === 'activo' && !datos.paramedic_alta) datos.paramedic_alta = new Date().toISOString().slice(0,10);
+  if (datos.paramedic_estado === 'baja' && !datos.paramedic_baja) datos.paramedic_baja = new Date().toISOString().slice(0,10);
   if (!datos.nombre) {
     msg.className = 'msg err'; msg.style.display = 'block';
     msg.textContent = 'El nombre es obligatorio.';
@@ -1743,6 +1883,63 @@ async function guardarFicha() {
     renderAdmin();
     cerrarFicha();
   }
+}
+
+// ── EXPORTS PARAMEDIC / CUOTAS ──
+function filasDomicilios(e) {
+  const base = { 'N° socio': e.nro_socio || '', 'Estudio': e.nombre || '', 'Teléfono': e.telefono || '', 'Email': e.email || '' };
+  const filas = [{ ...base, 'Sede': 'Sede principal', 'Razón social': e.razon_social || '', 'CUIT': fmtCuit(e.cuit),
+    'Dirección': `${e.direccion || ''} ${e.numero || ''}${e.piso ? ' ' + e.piso : ''}`.trim(), 'Barrio': e.barrio || '' }];
+  for (const s of (e.sedes || [])) filas.push({ ...base, 'Sede': s.nombre || 'Sede', 'Razón social': s.razon_social || e.razon_social || '',
+    'CUIT': fmtCuit(s.cuit || e.cuit), 'Dirección': `${s.direccion || ''} ${s.numero || ''}`.trim(), 'Barrio': s.barrio || '' });
+  return filas;
+}
+function descargarXlsx(filas, hoja, nombre) {
+  if (!filas.length) return alert('No hay datos para exportar.');
+  const ws = XLSX.utils.json_to_sheet(filas);
+  ws['!cols'] = Object.keys(filas[0]).map(k => ({ wch: Math.min(40, Math.max(k.length + 2, ...filas.map(f => String(f[k] ?? '').length + 2))) }));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, hoja);
+  XLSX.writeFile(wb, nombre);
+}
+function mesSeleccionado() {
+  const v = document.getElementById('novMes').value; // "2026-10"
+  if (v) return v;
+  const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+function exportNomina() {
+  const hoy = new Date().toISOString().slice(0, 10);
+  const filas = allEstudios
+    .filter(e => e.aprobado && e.activo !== false && e.paramedic_estado === 'activo')
+    .sort((a, b) => (parseInt(a.nro_socio) || 9999) - (parseInt(b.nro_socio) || 9999))
+    .flatMap(e => filasDomicilios(e).map(f => ({ ...f, 'Alta': e.paramedic_alta || '' })));
+  descargarXlsx(filas, 'Nómina', `CAPIAF_Paramedic_nomina_${hoy}.xlsx`);
+}
+function exportNovedades() {
+  const mes = mesSeleccionado();
+  const filas = [];
+  for (const e of allEstudios) {
+    if ((e.paramedic_alta || '').startsWith(mes)) filasDomicilios(e).forEach(f => filas.push({ 'Novedad': 'ALTA', 'Fecha': e.paramedic_alta, ...f }));
+    if ((e.paramedic_baja || '').startsWith(mes)) filasDomicilios(e).forEach(f => filas.push({ 'Novedad': 'BAJA', 'Fecha': e.paramedic_baja, ...f }));
+  }
+  filas.sort((a, b) => a.Fecha.localeCompare(b.Fecha));
+  descargarXlsx(filas, 'Novedades', `CAPIAF_Paramedic_novedades_${mes}.xlsx`);
+}
+function exportCuotas() {
+  const mes = mesSeleccionado();
+  const filas = allEstudios
+    .filter(e => e.aprobado && e.activo !== false)
+    .sort((a, b) => (parseInt(a.nro_socio) || 9999) - (parseInt(b.nro_socio) || 9999))
+    .map(e => {
+      const c = (e.cuotas || []).find(x => x.periodo.startsWith(mes));
+      const extra = e.sedes ? e.sedes.length : 0;
+      return { 'N° socio': e.nro_socio || '', 'Estudio': e.nombre || '', 'Razón social': e.razon_social || '', 'CUIT': fmtCuit(e.cuit),
+        'Paramedic': PARAM_LBL[e.paramedic_estado || 'pendiente'], 'Sedes extra': extra,
+        'Tipo cuota': c ? c.tipo : (e.paramedic_estado === 'transitorio' ? 'transitoria' : 'plena'),
+        'Importe': c && c.importe != null ? Number(c.importe) : '', 'Factura': c ? c.factura || '' : '',
+        'Estado': c ? c.estado : 'sin sincronizar', 'Fecha de pago': c ? c.fecha_pago || '' : '',
+        'Impagas vencidas': cuotasImpagas(e).length };
+    });
+  descargarXlsx(filas, 'Cuotas ' + mes, `CAPIAF_cuotas_${mes}.xlsx`);
 }
 
 // ── ADMIN: BENEFICIOS / CUPONES ──
