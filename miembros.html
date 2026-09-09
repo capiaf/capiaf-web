@@ -1363,13 +1363,14 @@ function updateStats() {
   document.getElementById('statTotal').textContent = allEstudios.length;
   document.getElementById('statAprobados').textContent = allEstudios.filter(e => e.aprobado).length;
   document.getElementById('statPendientes').textContent = allEstudios.filter(e => !e.aprobado).length;
-  const act = allEstudios.filter(e => e.paramedic_estado === 'activo' && e.aprobado && e.activo !== false);
+  const act = allEstudios.filter(e => e.paramedic_estado === 'activo' && esSocio(e));
   const domicilios = act.reduce((n, e) => n + 1 + (e.sedes ? e.sedes.length : 0), 0);
   document.getElementById('statParamedic').textContent = act.length;
   document.getElementById('statParamedicSub').textContent = `${domicilios} domicilio${domicilios === 1 ? '' : 's'} cubierto${domicilios === 1 ? '' : 's'}`;
 }
 
 // ── Cuotas / mora ──
+function esSocio(e) { return e.activo !== false && !!e.cuit; }
 function mesActual() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); }
 function cuotasImpagas(e) {
   return (e.cuotas || []).filter(c => c.estado === 'pendiente' && new Date(c.periodo + 'T00:00:00') < mesActual());
@@ -1444,7 +1445,7 @@ function renderAdmin() {
   if (adminFilter === 'individual') list = list.filter(e => e.tipo !== 'multisede');
   if (adminFilter === 'multisede') list = list.filter(e => e.tipo === 'multisede');
   if (adminFilter === 'param_activo') list = list.filter(e => e.paramedic_estado === 'activo');
-  if (adminFilter === 'param_no') list = list.filter(e => e.aprobado && e.activo !== false && e.paramedic_estado !== 'activo');
+  if (adminFilter === 'param_no') list = list.filter(e => esSocio(e) && e.paramedic_estado !== 'activo');
   if (adminFilter === 'sinusuario') list = list.filter(e => !e.user_id);
   if (adminFilter === 'mora') list = list.filter(e => { const c = estadoCuota(e); return c && c.cls === 'tag-mora'; });
 
@@ -1475,7 +1476,7 @@ function renderAdmin() {
       </td>
       <td class="col-contacto"><div class="row-sub">${contacto || '—'}</div></td>
       <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div></td>
-      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.comision_directiva ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Comisión Directiva</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}${!e.user_id ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Sin usuario</span>' : ''}${e.aprobado ? '<br>' + tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<br><span class="tag ${c.cls}" style="margin-top:.25rem">${c.txt}</span>` : ''; })()}</td>
+      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.comision_directiva ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Comisión Directiva</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}${!e.user_id ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Sin usuario</span>' : ''}${esSocio(e) ? '<br>' + tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<br><span class="tag ${c.cls}" style="margin-top:.25rem">${c.txt}</span>` : ''; })()}</td>
       <td><div class="row-actions">
         <button class="btn-editar" onclick="abrirFicha('${e.id}')">Editar</button>
         ${!e.aprobado
@@ -1914,7 +1915,7 @@ function mesSeleccionado() {
 function exportNomina() {
   const hoy = new Date().toISOString().slice(0, 10);
   const filas = allEstudios
-    .filter(e => e.aprobado && e.activo !== false && e.paramedic_estado === 'activo')
+    .filter(e => esSocio(e) && e.paramedic_estado === 'activo')
     .sort((a, b) => (parseInt(a.nro_socio) || 9999) - (parseInt(b.nro_socio) || 9999))
     .flatMap(e => filasDomicilios(e).map(f => ({ ...f, 'Alta': e.paramedic_alta || '' })));
   descargarXlsx(filas, 'Nómina', `CAPIAF_Paramedic_nomina_${hoy}.xlsx`);
@@ -1932,7 +1933,7 @@ function exportNovedades() {
 function exportCuotas() {
   const mes = mesSeleccionado();
   const filas = allEstudios
-    .filter(e => e.aprobado && e.activo !== false)
+    .filter(e => esSocio(e))
     .sort((a, b) => (parseInt(a.nro_socio) || 9999) - (parseInt(b.nro_socio) || 9999))
     .map(e => {
       const c = (e.cuotas || []).find(x => x.periodo.startsWith(mes));
