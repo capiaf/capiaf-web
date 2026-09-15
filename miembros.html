@@ -97,7 +97,7 @@
     .tab.active { color: var(--salvia); border-bottom-color: var(--salvia); }
 
     label { display: block; font-size: .78rem; font-weight: 600; color: var(--pino); margin-bottom: .4rem; letter-spacing: .04em; text-transform: uppercase; }
-    input[type="text"], input[type="email"], input[type="password"] {
+    input[type="text"], input[type="email"], input[type="password"], input[type="date"] {
       width: 100%; padding: .75rem 1rem; border: 1.5px solid var(--border); border-radius: var(--radius);
       font-family: 'Jost', sans-serif; font-size: .92rem; color: var(--tinta); background: var(--lino);
       transition: border-color .2s; outline: none; margin-bottom: 1.1rem;
@@ -536,6 +536,10 @@
         <label>Barrio *</label>
         <input type="text" id="fBarrio" placeholder="Ej: Palermo Hollywood" />
       </div>
+      <div>
+        <label>Vencimiento carga matafuego</label>
+        <input type="date" id="fMatafuego" />
+      </div>
 
     </div>
 
@@ -632,6 +636,10 @@
         <div>
           <label>Barrio</label>
           <input type="text" id="sedeBarrio" placeholder="Ej: Belgrano" />
+        </div>
+        <div>
+          <label>Vencimiento carga matafuego</label>
+          <input type="date" id="sedeMatafuego" />
         </div>
         <div>
           <label>Calle</label>
@@ -837,6 +845,7 @@ async function loadEstudio() {
     document.getElementById('fAgc').value            = data.agc || '';
     document.getElementById('fComision').value       = data.comision_directiva ? 'si' : 'no';
     document.getElementById('fWeb').value            = data.web || '';
+    document.getElementById('fMatafuego').value      = data.matafuego_vto || '';
     document.getElementById('fRazon').value          = data.razon_social || '';
     document.getElementById('fCuit').value           = fmtCuit(data.cuit);
     pintarChecklist(data);
@@ -873,6 +882,7 @@ async function saveDatos() {
     numero:      document.getElementById('fNumero').value.trim(),
     piso:        document.getElementById('fPiso').value.trim(),
     barrio:      document.getElementById('fBarrio').value.trim(),
+    matafuego_vto: document.getElementById('fMatafuego').value || null,
     tipo:        document.getElementById('fTipo').value,
     responsable:     document.getElementById('fResponsable').value.trim(),
     tel_responsable: document.getElementById('fTelResponsable').value.trim(),
@@ -1149,6 +1159,10 @@ function renderSedes() {
       <div class="sede-item-info">
         <strong>${s.nombre || 'Sede'} ${s.lat ? '📍' : ''}</strong>
         <small>${s.direccion || ''} ${s.numero || ''} — ${s.barrio || ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) : ''}</small>
+        <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem">Vto. matafuego:
+          <input type="date" value="${s.matafuego_vto || ''}" style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto"
+                 onchange="setVtoSede('${s.id}', this.value)" />
+        </small>
       </div>
       <button type="button" class="btn-editar" onclick="ubicarSedeExistente('${s.id}')">📍 Ubicar</button>
       <button type="button" class="btn-editar" onclick="subirObleaSede('${s.id}')">${s.oblea_url ? 'Oblea ✓' : 'Subir oblea'}</button>
@@ -1196,6 +1210,16 @@ async function guardarPinPrincipal() {
   if (ok) refrescarChecklist();
 }
 
+async function setVtoSede(id, valor) {
+  const { data, error } = await sb.from('sedes').update({ matafuego_vto: valor || null }).eq('id', id).select();
+  const ok = !error && data && data.length > 0;
+  if (ok) {
+    const s = sedes.find(x => x.id === id);
+    if (s) s.matafuego_vto = valor || null;
+  }
+  setPinStatus('obleaSedeStatus', ok ? '✓ Vencimiento guardado' : 'No se pudo guardar el vencimiento.', ok ? 'ok' : 'err');
+}
+
 async function guardarPinSede() {
   if (!sedePinId || !pinMaps['sedeExistente']) return;
   const p = pinMaps['sedeExistente'].marker.getLatLng();
@@ -1220,6 +1244,7 @@ async function addSede() {
     cuit:         normCuit(document.getElementById('sedeCuit').value) || null,
   };
   if (sede.cuit && !cuitValido(sede.cuit)) return showSaveMsg('sedeMsg', 'El CUIT de la sede no es válido.', 'err');
+  sede.matafuego_vto = document.getElementById('sedeMatafuego').value || null;
   const sc = coordsDe('sede');
   if (sc.lat) { sede.lat = sc.lat; sede.lng = sc.lng; }
 
@@ -1229,7 +1254,7 @@ async function addSede() {
   sedes.push(data);
   renderSedes();
   document.getElementById('sedeForm').classList.remove('open');
-  ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero','sedeRazon','sedeCuit'].forEach(id => document.getElementById(id).value = '');
+  ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero','sedeRazon','sedeCuit','sedeMatafuego'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('mapSede').classList.remove('visible');
   setPinStatus('pinStatusSede', '', '');
   showSaveMsg('sedeMsg', '✅ Sede agregada', 'ok');
@@ -1399,6 +1424,13 @@ function setAdminFilter(filter, btn) {
   renderAdmin();
 }
 
+function matafuegoProximo(e) {
+  const limite = new Date();
+  limite.setDate(limite.getDate() + 30);
+  const fechas = [e.matafuego_vto, ...((e.sedes || []).map(s => s.matafuego_vto))].filter(Boolean);
+  return fechas.some(f => new Date(f + 'T00:00:00') <= limite);
+}
+
 function camposFaltantes(e) {
   const f = [];
   if (!e.nombre)          f.push('nombre');
@@ -1444,6 +1476,7 @@ function renderAdmin() {
   if (adminFilter === 'inactivo') list = list.filter(e => e.activo === false);
   if (adminFilter === 'individual') list = list.filter(e => e.tipo !== 'multisede');
   if (adminFilter === 'multisede') list = list.filter(e => e.tipo === 'multisede');
+  if (adminFilter === 'matafuego') list = list.filter(e => matafuegoProximo(e));
   if (adminFilter === 'param_activo') list = list.filter(e => e.paramedic_estado === 'activo');
   if (adminFilter === 'param_no') list = list.filter(e => esSocio(e) && e.paramedic_estado !== 'activo');
   if (adminFilter === 'sinusuario') list = list.filter(e => !e.user_id);
@@ -1475,7 +1508,7 @@ function renderAdmin() {
         ${isIncompleto(e) ? `<div class="row-falta">⚠️ Falta: ${camposFaltantes(e).join(', ')}</div>` : ''}
       </td>
       <td class="col-contacto"><div class="row-sub">${contacto || '—'}</div></td>
-      <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div></td>
+      <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div>${matafuegoProximo(e) ? '<div class="row-falta">Matafuego por vencer</div>' : ''}</td>
       <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.comision_directiva ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Comisión Directiva</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}${!e.user_id ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Sin usuario</span>' : ''}${esSocio(e) ? '<br>' + tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<br><span class="tag ${c.cls}" style="margin-top:.25rem">${c.txt}</span>` : ''; })()}</td>
       <td><div class="row-actions">
         <button class="btn-editar" onclick="abrirFicha('${e.id}')">Editar</button>
@@ -1560,6 +1593,7 @@ async function aprobar(id, valor) {
     <button class="filter-pill" data-filter="inactivo" onclick="setAdminFilter('inactivo', this)">Inactivos</button>
     <button class="filter-pill" data-filter="individual" onclick="setAdminFilter('individual', this)">Individuales</button>
     <button class="filter-pill" data-filter="multisede" onclick="setAdminFilter('multisede', this)">Multisede</button>
+    <button class="filter-pill" data-filter="matafuego" onclick="setAdminFilter('matafuego', this)">Matafuegos ≤30 días</button>
     <button class="filter-pill" data-filter="param_activo" onclick="setAdminFilter('param_activo', this)">🚑 Paramedic</button>
     <button class="filter-pill" data-filter="param_no" onclick="setAdminFilter('param_no', this)">Sin Paramedic</button>
     <button class="filter-pill" data-filter="mora" onclick="setAdminFilter('mora', this)">Con deuda</button>
@@ -1618,6 +1652,7 @@ async function aprobar(id, valor) {
       <div><label>Teléfono / WhatsApp</label><input type="text" id="mTelefono" /></div>
       <div><label>Instagram</label><input type="text" id="mInstagram" /></div>
       <div><label>Sitio web</label><input type="text" id="mWeb" /></div>
+      <div><label>Vto. matafuego (sede principal)</label><input type="date" id="mMatafuego" /></div>
       <div><label>Estado</label>
         <select id="mActivo">
           <option value="true">Activo</option>
@@ -1707,6 +1742,7 @@ function abrirFicha(id) {
   document.getElementById('mTelefono').value    = e.telefono || '';
   document.getElementById('mInstagram').value   = e.instagram || '';
   document.getElementById('mWeb').value            = e.web || '';
+  document.getElementById('mMatafuego').value      = e.matafuego_vto || '';
   document.getElementById('mDescripcion').value = e.descripcion || '';
   document.getElementById('mDireccion').value   = e.direccion || '';
   document.getElementById('mNumero').value      = e.numero || '';
@@ -1755,7 +1791,7 @@ function abrirFicha(id) {
   sedesDiv.innerHTML = (e.sedes && e.sedes.length)
     ? e.sedes.map(s => `
         <div class="ficha-sede">
-          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) : ''}</span>
+          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) : ''}${s.matafuego_vto ? ' · matafuego vence ' + s.matafuego_vto.split('-').reverse().join('/') : ''}</span>
           <button type="button" class="btn-editar" onclick="fichaUbicar('sede','${s.id}')">📍 Pin</button>
         </div>`).join('')
     : '<p class="map-hint" style="margin:0">Sin sedes adicionales.</p>';
@@ -1845,6 +1881,7 @@ async function guardarFicha() {
     telefono:    document.getElementById('mTelefono').value.trim(),
     instagram:   document.getElementById('mInstagram').value.trim(),
     web:         document.getElementById('mWeb').value.trim(),
+    matafuego_vto: document.getElementById('mMatafuego').value || null,
     descripcion: document.getElementById('mDescripcion').value.trim(),
     direccion:   document.getElementById('mDireccion').value.trim(),
     numero:      document.getElementById('mNumero').value.trim(),
