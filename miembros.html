@@ -650,12 +650,16 @@
           <input type="text" id="sedeNumero" placeholder="Ej: 2743" />
         </div>
         <div>
-          <label>Razón social de esta sede (si es distinta)</label>
-          <input type="text" id="sedeRazon" placeholder="Dejar vacío si es la misma" />
+          <label>Titular de esta sede *</label>
+          <input type="text" id="sedeRazon" placeholder="Nombre y apellido o razón social" />
         </div>
         <div>
-          <label>CUIT de esta sede (si es distinto)</label>
-          <input type="text" id="sedeCuit" placeholder="Dejar vacío si es el mismo" inputmode="numeric" />
+          <label>CUIT de esta sede *</label>
+          <input type="text" id="sedeCuit" placeholder="20-12345678-3" inputmode="numeric" />
+        </div>
+        <div style="grid-column:1/-1">
+          <p class="map-hint" style="margin:0 0 .5rem">Cada sede necesita el CUIT con el que está habilitada y el nombre del titular de ese CUIT: con ese dato la Cámara tramita el certificado de cobertura de emergencias médicas de la sede.</p>
+          <button type="button" class="btn-editar" onclick="copiarTitularEstudio()">Usar los mismos datos del estudio</button>
         </div>
       </div>
       <div class="full" style="grid-column:1/-1">
@@ -1158,7 +1162,17 @@ function renderSedes() {
     <div class="sede-item">
       <div class="sede-item-info">
         <strong>${s.nombre || 'Sede'} ${s.lat ? '📍' : ''}</strong>
-        <small>${s.direccion || ''} ${s.numero || ''} — ${s.barrio || ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) : ''}</small>
+        <small>${s.direccion || ''} ${s.numero || ''} — ${s.barrio || ''}</small>
+        <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem;flex-wrap:wrap">Titular:
+          <input type="text" value="${esc(s.razon_social || '')}" placeholder="Nombre o razón social"
+                 style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:150px"
+                 onchange="setTitularSede('${s.id}', 'razon_social', this.value)" />
+          CUIT:
+          <input type="text" value="${fmtCuit(s.cuit)}" placeholder="20-12345678-3" inputmode="numeric"
+                 style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:120px"
+                 onchange="setTitularSede('${s.id}', 'cuit', this.value)" />
+          ${(s.cuit && s.razon_social) ? '' : '<span style="color:var(--error)">falta para la cobertura</span>'}
+        </small>
         <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem">Vto. matafuego:
           <input type="date" value="${s.matafuego_vto || ''}" style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto"
                  onchange="setVtoSede('${s.id}', this.value)" />
@@ -1210,6 +1224,22 @@ async function guardarPinPrincipal() {
   if (ok) refrescarChecklist();
 }
 
+async function setTitularSede(id, campo, valor) {
+  let v = (valor || '').trim();
+  if (campo === 'cuit') {
+    v = normCuit(v);
+    if (v && !cuitValido(v)) return setPinStatus('obleaSedeStatus', 'El CUIT de la sede no es válido.', 'err');
+  }
+  const { data, error } = await sb.from('sedes').update({ [campo]: v || null }).eq('id', id).select();
+  const ok = !error && data && data.length > 0;
+  if (ok) {
+    const s = sedes.find(x => x.id === id);
+    if (s) s[campo] = v || null;
+    renderSedes();
+  }
+  setPinStatus('obleaSedeStatus', ok ? '✓ Datos de la sede guardados' : 'No se pudo guardar.', ok ? 'ok' : 'err');
+}
+
 async function setVtoSede(id, valor) {
   const { data, error } = await sb.from('sedes').update({ matafuego_vto: valor || null }).eq('id', id).select();
   const ok = !error && data && data.length > 0;
@@ -1233,6 +1263,11 @@ async function guardarPinSede() {
   setPinStatus('pinStatusSedeExistente', ok ? '✅ Pin guardado' : 'No se pudo guardar el pin.', ok ? 'ok' : 'err');
 }
 
+function copiarTitularEstudio() {
+  document.getElementById('sedeRazon').value = document.getElementById('fRazon').value;
+  document.getElementById('sedeCuit').value  = document.getElementById('fCuit').value;
+}
+
 async function addSede() {
   const sede = {
     estudio_id: estudioId,
@@ -1243,7 +1278,9 @@ async function addSede() {
     razon_social: document.getElementById('sedeRazon').value.trim() || null,
     cuit:         normCuit(document.getElementById('sedeCuit').value) || null,
   };
-  if (sede.cuit && !cuitValido(sede.cuit)) return showSaveMsg('sedeMsg', 'El CUIT de la sede no es válido.', 'err');
+  if (!sede.razon_social) return showSaveMsg('sedeMsg', 'Indicá el titular de esta sede (nombre y apellido o razón social).', 'err');
+  if (!sede.cuit) return showSaveMsg('sedeMsg', 'El CUIT de la sede es obligatorio: lo necesitamos para la cobertura médica.', 'err');
+  if (!cuitValido(sede.cuit)) return showSaveMsg('sedeMsg', 'El CUIT de la sede no es válido.', 'err');
   sede.matafuego_vto = document.getElementById('sedeMatafuego').value || null;
   const sc = coordsDe('sede');
   if (sc.lat) { sede.lat = sc.lat; sede.lng = sc.lng; }
@@ -1449,6 +1486,8 @@ function camposFaltantes(e) {
   if (!e.lat)             f.push('ubicación en el mapa');
   if (!(e.dni_url || (e.dni_frente_url && e.dni_dorso_url))) f.push('DNI responsable');
   if (e.agc === 'si' && !e.oblea_url) f.push('oblea habilitación');
+  const sedesSinCuit = (e.sedes || []).filter(s => !s.cuit || !s.razon_social).length;
+  if (sedesSinCuit) f.push(`CUIT/titular de ${sedesSinCuit} sede${sedesSinCuit > 1 ? 's' : ''}`);
   return f;
 }
 
@@ -1791,7 +1830,7 @@ function abrirFicha(id) {
   sedesDiv.innerHTML = (e.sedes && e.sedes.length)
     ? e.sedes.map(s => `
         <div class="ficha-sede">
-          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) : ''}${s.matafuego_vto ? ' · matafuego vence ' + s.matafuego_vto.split('-').reverse().join('/') : ''}</span>
+          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) + (s.razon_social ? ' · ' + esc(s.razon_social) : '') : ' · SIN CUIT'}${s.matafuego_vto ? ' · matafuego vence ' + s.matafuego_vto.split('-').reverse().join('/') : ''}</span>
           <button type="button" class="btn-editar" onclick="fichaUbicar('sede','${s.id}')">📍 Pin</button>
         </div>`).join('')
     : '<p class="map-hint" style="margin:0">Sin sedes adicionales.</p>';
