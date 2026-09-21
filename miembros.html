@@ -306,6 +306,9 @@
     .btn-aprobar:hover { opacity: .85; }
     .btn-desaprobar { background: none; border: 1px solid var(--border); color: var(--mid); border-radius: 50px; padding: .32rem .85rem; font-size: .7rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; white-space: nowrap; }
     .col-barrio { max-width: 220px; }
+    .th-sort { cursor: pointer; user-select: none; }
+    .th-sort:hover { color: var(--pino); }
+    .th-sort .flecha { font-size: .6rem; margin-left: .25rem; color: var(--salvia); }
     .admin-table .row-sub { overflow-wrap: anywhere; }
     .col-estado { max-width: 190px; }
     .estado-tags { display: flex; flex-wrap: wrap; gap: .25rem; }
@@ -1484,6 +1487,37 @@ function showSaveMsg(id, text, type) {
 // ── ADMIN ──
 let allEstudios = [];
 let adminFilter = 'all';
+let adminSort = { col: null, dir: 1 };
+
+function ordenarAdmin(col) {
+  if (adminSort.col === col) adminSort.dir = -adminSort.dir;
+  else adminSort = { col, dir: col === 'nro' ? -1 : 1 };
+  renderAdmin();
+}
+
+function flechaSort(col) {
+  if (adminSort.col !== col) return '<span class="flecha">↕</span>';
+  return '<span class="flecha">' + (adminSort.dir === 1 ? '▲' : '▼') + '</span>';
+}
+
+function aplicarOrden(list) {
+  const { col, dir } = adminSort;
+  if (!col) return list;
+  const clave = e => {
+    if (col === 'nro') { const n = parseInt(e.nro_socio, 10); return isNaN(n) ? null : n; }
+    if (col === 'nombre') return (e.nombre || '').trim() || null;
+    if (col === 'barrio') return (e.barrio || '').trim() || null;
+    return null;
+  };
+  return [...list].sort((a, b) => {
+    const ka = clave(a), kb = clave(b);
+    if (ka === null && kb === null) return 0;
+    if (ka === null) return 1;          // vacíos siempre al final
+    if (kb === null) return -1;
+    if (typeof ka === 'number') return (ka - kb) * dir;
+    return ka.localeCompare(kb, 'es', { sensitivity: 'base' }) * dir;
+  });
+}
 
 async function loadAllEstudios() {
   let { data, error } = await sb.from('estudios').select('*, sedes(*), cuotas(*)').order('created_at', { ascending: false });
@@ -1614,6 +1648,7 @@ function renderAdmin() {
     return;
   }
 
+  list = aplicarOrden(list);
   const filas = list.map(e => {
     const inicial = (e.nombre || '?').trim().charAt(0).toUpperCase();
     const contacto = [e.telefono, e.instagram].filter(Boolean).join(' · ');
@@ -1649,9 +1684,9 @@ function renderAdmin() {
     <thead>
       <tr>
         <th></th>
-        <th>N°</th>
-        <th>Estudio</th>
-        <th>Ubicación</th>
+        <th class="th-sort" onclick="ordenarAdmin('nro')">N°${flechaSort('nro')}</th>
+        <th class="th-sort" onclick="ordenarAdmin('nombre')">Estudio${flechaSort('nombre')}</th>
+        <th class="th-sort" onclick="ordenarAdmin('barrio')">Ubicación${flechaSort('barrio')}</th>
         <th>Estado</th>
         <th></th>
       </tr>
