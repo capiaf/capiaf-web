@@ -374,8 +374,18 @@
       <input type="password" id="loginPassword" placeholder="••••••••" />
       <button class="btn-primary" onclick="login()">Ingresar</button>
       <p style="text-align:center;margin-top:1rem;font-size:.78rem;color:var(--mid)">
-        <a href="#" onclick="forgotPassword()" style="color:var(--salvia)">¿Olvidaste tu contraseña?</a>
+        <a href="#" onclick="forgotPassword(); return false;" style="color:var(--salvia)">¿Olvidaste tu contraseña?</a>
       </p>
+    </div>
+
+    <!-- NUEVA CONTRASEÑA (link de recuperación) -->
+    <div id="recoveryForm" style="display:none">
+      <p style="font-size:.85rem;color:var(--mid);margin-bottom:1rem">Elegí tu nueva contraseña.</p>
+      <label>Nueva contraseña</label>
+      <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres" />
+      <label>Repetila</label>
+      <input type="password" id="newPassword2" placeholder="••••••••" />
+      <button class="btn-primary" onclick="guardarNuevaPassword()">Guardar contraseña</button>
     </div>
 
     <!-- REGISTER -->
@@ -686,15 +696,42 @@ let currentUser = null;
 let estudioId = null;
 
 // ── INIT ──
+let enRecuperacion = /type=recovery/.test(window.location.hash);
+
+function mostrarRecuperacion() {
+  enRecuperacion = true;
+  showAuth();
+  document.querySelector('.tabs').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'none';
+  document.getElementById('recoveryForm').style.display = 'block';
+}
+
+async function guardarNuevaPassword() {
+  const p1 = document.getElementById('newPassword').value;
+  const p2 = document.getElementById('newPassword2').value;
+  if (p1.length < 6) return showMsg('authMsg', 'La contraseña debe tener al menos 6 caracteres.', 'error');
+  if (p1 !== p2) return showMsg('authMsg', 'Las contraseñas no coinciden.', 'error');
+  const { data, error } = await sb.auth.updateUser({ password: p1 });
+  if (error) return showMsg('authMsg', 'No se pudo cambiar la contraseña: ' + error.message, 'error');
+  enRecuperacion = false;
+  history.replaceState(null, '', window.location.pathname);
+  document.getElementById('recoveryForm').style.display = 'none';
+  document.querySelector('.tabs').style.display = '';
+  document.getElementById('loginForm').style.display = '';
+  showMsg('authMsg', '✅ Contraseña actualizada.', 'success');
+  if (data && data.user) await onLogin(data.user);
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    await onLogin(session.user);
-  }
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN') await onLogin(session.user);
+    if (event === 'PASSWORD_RECOVERY') { mostrarRecuperacion(); return; }
+    if (event === 'SIGNED_IN' && !enRecuperacion) await onLogin(session.user);
     if (event === 'SIGNED_OUT') showAuth();
   });
+  if (enRecuperacion) { mostrarRecuperacion(); return; }
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await onLogin(session.user);
 });
 
 // ── TABS ──
@@ -765,8 +802,16 @@ async function register() {
 async function forgotPassword() {
   const email = document.getElementById('loginEmail').value.trim();
   if (!email) return showMsg('authMsg', 'Escribí tu email primero.', 'error');
-  await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
-  showMsg('authMsg', '✅ Te enviamos un email para resetear tu contraseña.', 'success');
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://www.pilates.org.ar/miembros.html'
+  });
+  if (error) {
+    const limite = /rate|limit|seconds/i.test(error.message);
+    return showMsg('authMsg', limite
+      ? 'Se pidieron demasiados emails seguidos. Esperá unos minutos y volvé a intentar.'
+      : 'No pudimos enviar el email: ' + error.message, 'error');
+  }
+  showMsg('authMsg', '✅ Te enviamos un email para resetear tu contraseña. Revisá también la carpeta de spam.', 'success');
 }
 
 async function logout() {
