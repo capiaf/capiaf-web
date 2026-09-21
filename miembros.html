@@ -696,7 +696,9 @@ let currentUser = null;
 let estudioId = null;
 
 // ── INIT ──
-let enRecuperacion = /type=recovery/.test(window.location.hash);
+const qsRecuperacion = new URLSearchParams(window.location.search);
+const tokenHashRecuperacion = qsRecuperacion.get('type') === 'recovery' ? qsRecuperacion.get('token_hash') : null;
+let enRecuperacion = !!tokenHashRecuperacion || /type=recovery/.test(window.location.hash);
 
 function mostrarRecuperacion() {
   enRecuperacion = true;
@@ -712,6 +714,14 @@ async function guardarNuevaPassword() {
   const p2 = document.getElementById('newPassword2').value;
   if (p1.length < 6) return showMsg('authMsg', 'La contraseña debe tener al menos 6 caracteres.', 'error');
   if (p1 !== p2) return showMsg('authMsg', 'Las contraseñas no coinciden.', 'error');
+  if (tokenHashRecuperacion) {
+    const { error: eVer } = await sb.auth.verifyOtp({ token_hash: tokenHashRecuperacion, type: 'recovery' });
+    if (eVer) {
+      return showMsg('authMsg', /expired|invalid/i.test(eVer.message)
+        ? 'El enlace venció o ya fue usado. Pedí uno nuevo con "¿Olvidaste tu contraseña?".'
+        : 'No se pudo validar el enlace: ' + eVer.message, 'error');
+    }
+  }
   const { data, error } = await sb.auth.updateUser({ password: p1 });
   if (error) return showMsg('authMsg', 'No se pudo cambiar la contraseña: ' + error.message, 'error');
   enRecuperacion = false;
