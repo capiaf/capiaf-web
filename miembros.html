@@ -305,7 +305,12 @@
     .btn-aprobar { background: var(--ok); color: white; border: none; border-radius: 50px; padding: .32rem .85rem; font-size: .7rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; white-space: nowrap; }
     .btn-aprobar:hover { opacity: .85; }
     .btn-desaprobar { background: none; border: 1px solid var(--border); color: var(--mid); border-radius: 50px; padding: .32rem .85rem; font-size: .7rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif; white-space: nowrap; }
-    .col-contacto, .col-barrio { white-space: nowrap; }
+    .col-barrio { max-width: 220px; }
+    .admin-table .row-sub { overflow-wrap: anywhere; }
+    .col-estado { max-width: 190px; }
+    .estado-tags { display: flex; flex-wrap: wrap; gap: .25rem; }
+    .admin-table .row-actions { flex-direction: column; align-items: stretch; }
+    .admin-table .row-actions button { width: 100%; }
     @media (max-width: 640px) {
       .th-contacto, .col-contacto { display: none; }
       .admin-table td, .admin-table th { padding: .55rem .6rem; }
@@ -1509,18 +1514,18 @@ function cuotasImpagas(e) {
 function estadoCuota(e) {
   if (e.cuotas && e.cuotas.length) {
     const n = cuotasImpagas(e).length;
-    if (n >= 2) return { cls: 'tag-mora', txt: `🔴 Mora (${n})` };
-    if (n === 1) return { cls: 'tag-pending', txt: '🟡 1 cuota impaga' };
-    return { cls: 'tag-ok', txt: '🟢 Cuota al día' };
+    if (n >= 2) return { cls: 'tag-mora', txt: `Mora (${n})` };
+    if (n === 1) return { cls: 'tag-pending', txt: '1 cuota impaga' };
+    return { cls: 'tag-ok', txt: 'Cuota al día' };
   }
-  return e.cuota_al_dia === false ? { cls: 'tag-mora', txt: '🔴 Adeuda cuota' } : null;
+  return e.cuota_al_dia === false ? { cls: 'tag-mora', txt: 'Adeuda cuota' } : null;
 }
-const PARAM_LBL = { activo: '🚑 Paramedic', pendiente: 'Paramedic pendiente', transitorio: 'Transitorio', baja: 'Baja Paramedic' };
+const PARAM_LBL = { activo: 'Paramedic', pendiente: 'Paramedic pendiente', transitorio: 'Transitorio', baja: 'Baja Paramedic' };
 function tagParamedic(e) {
   const st = e.paramedic_estado || 'pendiente';
   const cls = st === 'activo' ? 'tag-param' : st === 'transitorio' ? 'tag-trans' : st === 'baja' ? 'tag-mora' : 'tag-inactivo';
   const extra = st === 'transitorio' && e.preaviso_vence ? ' · vence ' + fechaCorta(e.preaviso_vence) : '';
-  return `<span class="tag ${cls}" style="margin-top:.25rem">${PARAM_LBL[st]}${extra}</span>`;
+  return `<span class="tag ${cls}">${PARAM_LBL[st]}${extra}</span>`;
 }
 
 function setAdminFilter(filter) {
@@ -1624,13 +1629,12 @@ function renderAdmin() {
       <td><div class="row-sub" style="font-weight:600">${e.nro_socio || '—'}</div></td>
       <td>
         <div class="row-nombre">${e.nombre || '(sin nombre)'}</div>
-        <div class="row-sub">${e.email || ''}</div>
+        <div class="row-sub">${[e.email, contacto].filter(Boolean).join(' · ')}</div>
         ${e.cuit ? `<div class="row-sub" style="color:var(--pino)">CUIT ${fmtCuit(e.cuit)}${e.razon_social ? ' · ' + esc(e.razon_social) : ''}</div>` : ''}
         ${isIncompleto(e) ? `<div class="row-falta" title="${camposFaltantes(e).join(', ')}">Faltan ${camposFaltantes(e).length} dato${camposFaltantes(e).length > 1 ? 's' : ''}</div>` : ''}
       </td>
-      <td class="col-contacto"><div class="row-sub">${contacto || '—'}</div></td>
       <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div>${matafuegoProximo(e) ? '<div class="row-falta">Matafuego por vencer</div>' : ''}</td>
-      <td><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>${e.tipo === 'multisede' ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Multisede</span>' : ''}${e.comision_directiva ? '<br><span class="tag tag-multisede" style="margin-top:.25rem">Comisión Directiva</span>' : ''}${e.activo === false ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Inactivo</span>' : ''}${!e.user_id ? '<br><span class="tag tag-inactivo" style="margin-top:.25rem">Sin usuario</span>' : ''}${esSocio(e) ? '<br>' + tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<br><span class="tag ${c.cls}" style="margin-top:.25rem">${c.txt}</span>` : ''; })()}</td>
+      <td class="col-estado"><div class="estado-tags"><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? 'Aprobado' : 'Pendiente'}</span>${e.tipo === 'multisede' ? '<span class="tag tag-multisede">Multisede</span>' : ''}${e.comision_directiva ? '<span class="tag tag-multisede">Comisión Directiva</span>' : ''}${e.activo === false ? '<span class="tag tag-inactivo">Inactivo</span>' : ''}${!e.user_id ? '<span class="tag tag-inactivo">Sin usuario</span>' : ''}${esSocio(e) ? tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<span class="tag ${c.cls}">${c.txt}</span>` : ''; })()}</div></td>
       <td><div class="row-actions">
         <button class="btn-editar" onclick="abrirFicha('${e.id}')">Editar</button>
         ${!e.aprobado
@@ -1647,7 +1651,6 @@ function renderAdmin() {
         <th></th>
         <th>N°</th>
         <th>Estudio</th>
-        <th class="th-contacto">Contacto</th>
         <th>Ubicación</th>
         <th>Estado</th>
         <th></th>
