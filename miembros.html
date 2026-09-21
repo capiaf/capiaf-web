@@ -729,6 +729,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (event === 'SIGNED_IN' && !enRecuperacion) await onLogin(session.user);
     if (event === 'SIGNED_OUT') showAuth();
   });
+  if (/error_code=/.test(window.location.hash)) {
+    const vencido = /otp_expired/.test(window.location.hash);
+    history.replaceState(null, '', window.location.pathname);
+    showMsg('authMsg', vencido
+      ? 'El enlace venció o ya fue usado. Pedí uno nuevo con "¿Olvidaste tu contraseña?" y usá el del último mail que te llegue.'
+      : 'El enlace no es válido. Pedí uno nuevo con "¿Olvidaste tu contraseña?".', 'error');
+  }
   if (enRecuperacion) { mostrarRecuperacion(); return; }
   const { data: { session } } = await sb.auth.getSession();
   if (session) await onLogin(session.user);
