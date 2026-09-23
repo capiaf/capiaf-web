@@ -224,10 +224,8 @@ async function cargarEstudios() {
 
   try {
     const { data } = await sb
-      .from('estudios')
-      .select('nombre, descripcion, direccion, numero, barrio, lat, lng, sedes(nombre, direccion, numero, barrio, lat, lng)')
-      .eq('aprobado', true)
-      .eq('activo', true);
+      .from('mapa_publico')
+      .select('nombre, descripcion, direccion, numero, barrio, lat, lng, sedes');
 
     (data || []).forEach(e => {
       // Pin fijado por el propio estudio: reemplaza la ubicacion estimada
