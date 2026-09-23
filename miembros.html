@@ -119,6 +119,8 @@
 
     /* ── DASHBOARD ── */
     .dashboard { display: none; }
+    .check-linea { display: flex; align-items: flex-start; gap: .5rem; margin: .6rem 0 0; font-size: .82rem; color: var(--mid); line-height: 1.5; }
+    .check-linea input[type="checkbox"] { width: 17px; height: 17px; margin: 2px 0 0; accent-color: var(--salvia); flex-shrink: 0; cursor: pointer; }
     .chip-falta { display: inline-block; background: #fff; border: 1px solid #e7c988; color: #8a6d1f; border-radius: 50px; padding: .25rem .8rem; font-size: .75rem; margin: .25rem .3rem 0 0; cursor: pointer; transition: background .15s; }
     .chip-falta:hover { background: #f8efdc; }
     .alta-checklist.alta-ok { background: #f0faf5; border-color: var(--ok); color: #1d6b46; }
@@ -584,6 +586,10 @@
       <span class="pin-status" id="pinStatusPrincipal"></span>
       <div id="mapPrincipal" class="pin-map"></div>
       <button type="button" class="btn-ubicar" id="btnGuardarPinPrincipal" style="display:none" onclick="guardarPinPrincipal()">Guardar pin</button>
+      <label class="check-linea">
+        <input type="checkbox" id="fMostrarMapa" checked />
+        <span>Mostrar esta sede en el mapa público de pilates.org.ar. Si la destildás, tu estudio sigue apareciendo en el listado de socios, pero sin la dirección ni el pin.</span>
+      </label>
     </div>
 
     <div style="margin-top:1.4rem">
@@ -690,6 +696,10 @@
           <input type="text" id="sedeCuit" placeholder="20-12345678-3" inputmode="numeric" />
         </div>
         <div style="grid-column:1/-1">
+          <label class="check-linea" style="margin:0 0 .6rem">
+            <input type="checkbox" id="sedeMostrarMapa" checked />
+            <span>Mostrar esta sede en el mapa público</span>
+          </label>
           <p class="map-hint" style="margin:0 0 .5rem">Cada sede necesita el CUIT con el que está habilitada y el nombre del titular de ese CUIT: con ese dato la Cámara tramita el certificado de cobertura de emergencias médicas de la sede.</p>
           <button type="button" class="btn-editar" onclick="copiarTitularEstudio()">Usar los mismos datos del estudio</button>
         </div>
@@ -934,6 +944,7 @@ async function loadEstudio() {
     document.getElementById('fComision').value       = data.comision_directiva ? 'si' : 'no';
     document.getElementById('fWeb').value            = data.web || '';
     document.getElementById('fMatafuego').value      = data.matafuego_vto || '';
+    document.getElementById('fMostrarMapa').checked  = data.mostrar_mapa !== false;
     document.getElementById('fRazon').value          = data.razon_social || '';
     document.getElementById('fCuit').value           = fmtCuit(data.cuit);
     pintarChecklist(data);
@@ -975,6 +986,7 @@ async function saveDatos() {
     piso:        document.getElementById('fPiso').value.trim(),
     barrio:      document.getElementById('fBarrio').value.trim(),
     matafuego_vto: document.getElementById('fMatafuego').value || null,
+    mostrar_mapa: document.getElementById('fMostrarMapa').checked,
     tipo:        document.getElementById('fTipo').value,
     responsable:     document.getElementById('fResponsable').value.trim(),
     tel_responsable: document.getElementById('fTelResponsable').value.trim(),
@@ -1286,6 +1298,10 @@ function renderSedes() {
                  onchange="setTitularSede('${s.id}', 'cuit', this.value)" />
           ${(s.cuit && s.razon_social) ? '' : '<span style="color:var(--error)">falta para la cobertura</span>'}
         </small>
+        <label class="check-linea" style="margin-top:.2rem">
+          <input type="checkbox" ${s.mostrar_mapa === false ? '' : 'checked'} onchange="setMostrarSede('${s.id}', this.checked)" />
+          <span style="font-size:.75rem">Mostrar esta sede en el mapa público</span>
+        </label>
         <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem">Vto. matafuego:
           <input type="date" value="${s.matafuego_vto || ''}" style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto"
                  onchange="setVtoSede('${s.id}', this.value)" />
@@ -1335,6 +1351,16 @@ async function guardarPinPrincipal() {
   const ok = !error && data && data.length > 0;
   setPinStatus('pinStatusPrincipal', ok ? '✅ Pin guardado' : 'No se pudo guardar el pin.', ok ? 'ok' : 'err');
   if (ok) refrescarChecklist();
+}
+
+async function setMostrarSede(id, valor) {
+  const { data, error } = await sb.from('sedes').update({ mostrar_mapa: valor }).eq('id', id).select();
+  const ok = !error && data && data.length > 0;
+  if (ok) {
+    const s = sedes.find(x => x.id === id);
+    if (s) s.mostrar_mapa = valor;
+  }
+  setPinStatus('obleaSedeStatus', ok ? (valor ? '✓ La sede se muestra en el mapa' : '✓ La sede queda oculta en el mapa') : 'No se pudo guardar.', ok ? 'ok' : 'err');
 }
 
 async function setTitularSede(id, campo, valor) {
@@ -1395,6 +1421,7 @@ async function addSede() {
   if (!sede.cuit) return showSaveMsg('sedeMsg', 'El CUIT de la sede es obligatorio: lo necesitamos para la cobertura médica.', 'err');
   if (!cuitValido(sede.cuit)) return showSaveMsg('sedeMsg', 'El CUIT de la sede no es válido.', 'err');
   sede.matafuego_vto = document.getElementById('sedeMatafuego').value || null;
+  sede.mostrar_mapa = document.getElementById('sedeMostrarMapa').checked;
   const sc = coordsDe('sede');
   if (sc.lat) { sede.lat = sc.lat; sede.lng = sc.lng; }
 
@@ -1405,6 +1432,7 @@ async function addSede() {
   renderSedes();
   document.getElementById('sedeForm').classList.remove('open');
   ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero','sedeRazon','sedeCuit','sedeMatafuego'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sedeMostrarMapa').checked = true;
   document.getElementById('mapSede').classList.remove('visible');
   setPinStatus('pinStatusSede', '', '');
   showSaveMsg('sedeMsg', '✅ Sede agregada', 'ok');
@@ -1710,7 +1738,7 @@ function renderAdmin() {
         ${isIncompleto(e) ? `<div class="row-falta" title="${camposFaltantes(e).join(', ')}">Faltan ${camposFaltantes(e).length} dato${camposFaltantes(e).length > 1 ? 's' : ''}</div>` : ''}
       </td>
       <td class="col-barrio"><div class="row-sub">${ubic}${sedes}</div>${matafuegoProximo(e) ? '<div class="row-falta">Matafuego por vencer</div>' : ''}</td>
-      <td class="col-estado"><div class="estado-tags"><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? 'Aprobado' : 'Pendiente'}</span>${e.tipo === 'multisede' ? '<span class="tag tag-multisede">Multisede</span>' : ''}${e.comision_directiva ? '<span class="tag tag-multisede">Comisión Directiva</span>' : ''}${e.activo === false ? '<span class="tag tag-inactivo">Inactivo</span>' : ''}${!e.user_id ? '<span class="tag tag-inactivo">Sin usuario</span>' : ''}${esSocio(e) ? tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<span class="tag ${c.cls}">${c.txt}</span>` : ''; })()}</div></td>
+      <td class="col-estado"><div class="estado-tags"><span class="tag ${e.aprobado ? 'tag-ok' : 'tag-pending'}">${e.aprobado ? 'Aprobado' : 'Pendiente'}</span>${e.tipo === 'multisede' ? '<span class="tag tag-multisede">Multisede</span>' : ''}${e.comision_directiva ? '<span class="tag tag-multisede">Comisión Directiva</span>' : ''}${e.activo === false ? '<span class="tag tag-inactivo">Inactivo</span>' : ''}${!e.user_id ? '<span class="tag tag-inactivo">Sin usuario</span>' : ''}${e.mostrar_mapa === false ? '<span class="tag tag-inactivo">Oculto en el mapa</span>' : ''}${esSocio(e) ? tagParamedic(e) : ''}${(() => { const c = estadoCuota(e); return c ? `<span class="tag ${c.cls}">${c.txt}</span>` : ''; })()}</div></td>
       <td><div class="row-actions">
         <button class="btn-editar" onclick="abrirFicha('${e.id}')">Editar</button>
         ${!e.aprobado
@@ -1927,6 +1955,12 @@ async function aprobar(id, valor) {
         </select>
       </div>
       <div><label>Vto. carga matafuego</label><input type="date" id="mMatafuego" /></div>
+      <div><label>Mostrar en el mapa público</label>
+        <select id="mMostrarMapa">
+          <option value="true">Sí</option>
+          <option value="false">No (a pedido del socio)</option>
+        </select>
+      </div>
       <div class="full">
         <p class="map-hint" id="fichaPinLabel" style="margin:0 0 .4rem">Ubicación en el mapa: abrí el pin para verlo o corregirlo.</p>
         <button type="button" class="btn-ubicar" onclick="fichaUbicar('principal')">Ver / corregir pin</button>
@@ -1987,6 +2021,7 @@ function abrirFicha(id) {
   document.getElementById('mInstagram').value   = e.instagram || '';
   document.getElementById('mWeb').value            = e.web || '';
   document.getElementById('mMatafuego').value      = e.matafuego_vto || '';
+  document.getElementById('mMostrarMapa').value    = e.mostrar_mapa === false ? 'false' : 'true';
   document.getElementById('mDescripcion').value = e.descripcion || '';
   document.getElementById('mDireccion').value   = e.direccion || '';
   document.getElementById('mNumero').value      = e.numero || '';
@@ -2126,6 +2161,7 @@ async function guardarFicha() {
     instagram:   document.getElementById('mInstagram').value.trim(),
     web:         document.getElementById('mWeb').value.trim(),
     matafuego_vto: document.getElementById('mMatafuego').value || null,
+    mostrar_mapa: document.getElementById('mMostrarMapa').value === 'true',
     descripcion: document.getElementById('mDescripcion').value.trim(),
     direccion:   document.getElementById('mDireccion').value.trim(),
     numero:      document.getElementById('mNumero').value.trim(),
