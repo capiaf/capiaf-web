@@ -119,6 +119,13 @@
 
     /* ── DASHBOARD ── */
     .dashboard { display: none; }
+    .chip-falta { display: inline-block; background: #fff; border: 1px solid #e7c988; color: #8a6d1f; border-radius: 50px; padding: .25rem .8rem; font-size: .75rem; margin: .25rem .3rem 0 0; cursor: pointer; transition: background .15s; }
+    .chip-falta:hover { background: #f8efdc; }
+    .alta-checklist.alta-ok { background: #f0faf5; border-color: var(--ok); color: #1d6b46; }
+    .alta-checklist.alta-ok strong { color: #14502f; }
+    .campo-error { border-color: var(--error) !important; background: #fdf2f2 !important; }
+    .campo-foco { animation: focoCampo 1.8s ease; }
+    @keyframes focoCampo { 0%, 100% { box-shadow: none; } 15%, 65% { box-shadow: 0 0 0 3px rgba(110,144,128,.5); } }
     .alta-checklist { background: #fdf6ec; border: 1px solid #e7c988; border-radius: var(--radius); padding: .9rem 1.1rem; margin: 1rem 0 0; font-size: .82rem; color: #8a6d1f; line-height: 1.6; display: none; }
     .alta-checklist strong { color: #6e5613; }
     .welcome-card { background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--salvia); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(46,66,56,.05); }
@@ -571,7 +578,7 @@
     <button class="btn-save" id="btnSaveDatos" onclick="saveDatos()">Guardar datos</button>
 
     <div style="margin-top:1.4rem">
-      <label>Ubicación en el mapa</label>
+      <label id="mapPrincipalAncla">Ubicación en el mapa</label>
       <p class="map-hint">Completá calle y número arriba, tocá el botón y arrastrá el pin hasta la entrada exacta de tu estudio. Al terminar, tocá "Guardar pin".</p>
       <button type="button" class="btn-ubicar" onclick="ubicarPin('principal')">📍 Buscar dirección en el mapa</button>
       <span class="pin-status" id="pinStatusPrincipal"></span>
@@ -949,6 +956,10 @@ async function loadEstudio() {
 }
 
 // ── GUARDAR DATOS ──
+document.addEventListener('input', (ev) => {
+  if (ev.target.classList && ev.target.classList.contains('campo-error')) ev.target.classList.remove('campo-error');
+});
+
 async function saveDatos() {
   const btn = document.getElementById('btnSaveDatos');
   btn.disabled = true; btn.textContent = 'Guardando...';
@@ -975,26 +986,37 @@ async function saveDatos() {
   const coords = coordsDe('principal');
   if (coords.lat) { datos.lat = coords.lat; datos.lng = coords.lng; }
 
+  document.querySelectorAll('.campo-error').forEach(el => el.classList.remove('campo-error'));
+  const obligatorios = [
+    ['fNombre', datos.nombre, 'Nombre del estudio'],
+    ['fTelefono', datos.telefono, 'Teléfono / WhatsApp'],
+    ['fInstagram', datos.instagram, 'Instagram'],
+    ['fDescripcion', datos.descripcion, 'Descripción breve'],
+    ['fResponsable', datos.responsable, 'Responsable'],
+    ['fTelResponsable', datos.tel_responsable, 'Teléfono del responsable'],
+    ['fAgc', datos.agc, 'Habilitación AGC'],
+    ['fRazon', datos.razon_social, 'Razón social'],
+    ['fCuit', datos.cuit, 'CUIT'],
+    ['fDireccion', datos.direccion, 'Calle'],
+    ['fNumero', datos.numero, 'Número'],
+    ['fBarrio', datos.barrio, 'Barrio'],
+  ];
   const faltan = [];
-  if (!datos.nombre)          faltan.push('nombre');
-  if (!datos.telefono)        faltan.push('teléfono');
-  if (!datos.instagram)       faltan.push('Instagram');
-  if (!datos.descripcion)     faltan.push('descripción');
-  if (!datos.responsable)     faltan.push('responsable');
-  if (!datos.tel_responsable) faltan.push('teléfono del responsable');
-  if (!datos.agc)             faltan.push('respuesta sobre AGC');
-  if (!datos.direccion)       faltan.push('calle');
-  if (!datos.numero)          faltan.push('número');
-  if (!datos.barrio)          faltan.push('barrio');
-  if (!datos.razon_social)    faltan.push('razón social');
-  if (!datos.cuit)            faltan.push('CUIT');
-  else if (!cuitValido(datos.cuit)) {
+  obligatorios.forEach(([id, valor, label]) => {
+    if (!valor) { faltan.push({ id, label }); document.getElementById(id).classList.add('campo-error'); }
+  });
+  if (datos.cuit && !cuitValido(datos.cuit)) {
+    document.getElementById('fCuit').classList.add('campo-error');
     btn.disabled = false; btn.textContent = 'Guardar datos';
+    irACampo('fCuit');
     return showSaveMsg('datosOk', 'El CUIT no es válido: revisá los 11 dígitos.', 'err');
   }
   if (faltan.length) {
     btn.disabled = false; btn.textContent = 'Guardar datos';
-    return showSaveMsg('datosOk', 'Faltan campos obligatorios: ' + faltan.join(', ') + '.', 'err');
+    irACampo(faltan[0].id);
+    return showSaveMsg('datosOk', faltan.length === 1
+      ? 'Falta completar: ' + faltan[0].label + '. Te lo marcamos en rojo.'
+      : 'Faltan ' + faltan.length + ' campos, marcados en rojo: ' + faltan.map(x => x.label).join(', ') + '.', 'err');
   }
 
   const { data: upd, error } = await sb.from('estudios').update(datos).eq('id', estudioId).select();
@@ -1153,13 +1175,27 @@ async function descargarSello() {
   pdf.save('sello-socio-capiaf-' + nro + '.pdf');
 }
 
+function irACampo(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('campo-foco');
+  setTimeout(() => el.classList.remove('campo-foco'), 1900);
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) setTimeout(() => el.focus({ preventScroll: true }), 400);
+}
+
 function pintarChecklist(e) {
   const box = document.getElementById('altaChecklist');
-  const f = camposFaltantes(e);
-  if (f.length === 0) {
-    box.style.display = 'none';
+  const det = camposFaltantesDet(e);
+  if (det.length === 0) {
+    box.className = 'alta-checklist alta-ok';
+    box.innerHTML = '<strong>Tu ficha está completa.</strong> No falta ningún dato. La Cámara la revisa y te avisa cuando quede aprobada.';
+    box.style.display = 'block';
   } else {
-    box.innerHTML = '<strong>Para completar tu alta falta:</strong> ' + f.join(', ') + '.';
+    box.className = 'alta-checklist';
+    box.innerHTML = '<strong>Te falta' + (det.length > 1 ? 'n ' + det.length + ' datos' : ' 1 dato') +
+      ' para completar tu ficha.</strong> Tocá cada uno para ir directo al campo:<div style="margin-top:.5rem">' +
+      det.map(d => `<span class="chip-falta" onclick="irACampo('${d.target}')">${d.label}</span>`).join('') + '</div>';
     box.style.display = 'block';
   }
   const obleaReq = document.getElementById('obleaReq');
@@ -1589,27 +1625,32 @@ function matafuegoProximo(e) {
   return fechas.some(f => new Date(f + 'T00:00:00') <= limite);
 }
 
-function camposFaltantes(e) {
+function camposFaltantesDet(e) {
   const f = [];
-  if (!e.nombre)          f.push('nombre');
-  if (!e.telefono)        f.push('teléfono');
-  if (!e.instagram)       f.push('Instagram');
-  if (!e.descripcion)     f.push('descripción');
-  if (!e.responsable)     f.push('responsable');
-  if (!e.tel_responsable) f.push('tel. responsable');
-  if (!e.agc)             f.push('AGC');
-  if (!e.direccion)       f.push('dirección');
-  if (!e.numero)          f.push('número');
-  if (!e.barrio)          f.push('barrio');
-  if (!e.razon_social)    f.push('razón social');
-  if (!e.cuit)            f.push('CUIT');
-  if (!e.logo_url)        f.push('logo');
-  if (!e.lat)             f.push('ubicación en el mapa');
-  if (!(e.dni_url || (e.dni_frente_url && e.dni_dorso_url))) f.push('DNI responsable');
-  if (e.agc === 'si' && !e.oblea_url) f.push('oblea habilitación');
-  const sedesSinCuit = (e.sedes || []).filter(s => !s.cuit || !s.razon_social).length;
-  if (sedesSinCuit) f.push(`CUIT/titular de ${sedesSinCuit} sede${sedesSinCuit > 1 ? 's' : ''}`);
+  const add = (cond, label, target) => { if (cond) f.push({ label, target }); };
+  add(!e.nombre,          'Nombre del estudio',        'fNombre');
+  add(!e.telefono,        'Teléfono / WhatsApp',       'fTelefono');
+  add(!e.instagram,       'Instagram',                 'fInstagram');
+  add(!e.descripcion,     'Descripción breve',         'fDescripcion');
+  add(!e.responsable,     'Responsable',               'fResponsable');
+  add(!e.tel_responsable, 'Teléfono del responsable',  'fTelResponsable');
+  add(!e.agc,             'Habilitación AGC (sí/no)',  'fAgc');
+  add(!e.razon_social,    'Razón social',              'fRazon');
+  add(!e.cuit,            'CUIT',                      'fCuit');
+  add(!e.direccion,       'Calle',                     'fDireccion');
+  add(!e.numero,          'Número',                    'fNumero');
+  add(!e.barrio,          'Barrio',                    'fBarrio');
+  add(!e.lat,             'Ubicación en el mapa',      'mapPrincipalAncla');
+  add(!(e.dni_url || (e.dni_frente_url && e.dni_dorso_url)), 'Foto del DNI (frente y dorso)', 'fDniFrente');
+  add(e.agc === 'si' && !e.oblea_url, 'Oblea de habilitación', 'fOblea');
+  add(!e.logo_url,        'Logo del estudio',          'logoFile');
+  const sinCuit = (e.sedes || []).filter(s => !s.cuit || !s.razon_social).length;
+  add(sinCuit > 0, `CUIT y titular de ${sinCuit} sede${sinCuit > 1 ? 's' : ''}`, 'sedesList');
   return f;
+}
+
+function camposFaltantes(e) {
+  return camposFaltantesDet(e).map(d => d.label);
 }
 
 function isIncompleto(e) {
