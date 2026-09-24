@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Tesorería — CAPIAF</title>
+<link rel="icon" href="favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Jost:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="tesoreria-core.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --pino: #2E4238; --slate: #3F5A4C; --salvia: #6E9080; --agua: #7FB3AE;
+    --lino: #F3F0E9; --sage-bg: #EDF3F0; --tinta: #232A26; --mid: #7A8A82;
+    --border: #DDD8CE; --alerta: #B5533C; --ok: #3F7A5A;
+  }
+  body { font-family: 'Jost', system-ui, sans-serif; background: var(--lino); color: var(--tinta); -webkit-font-smoothing: antialiased; }
+  button, input, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--agua); outline-offset: 2px; }
+
+  nav { background: var(--pino); height: 64px; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; color: #fff; }
+  nav a { color: #fff; text-decoration: none; display: flex; align-items: center; gap: .75rem; }
+  nav img { height: 38px; }
+  nav .n1 { font-family: 'DM Serif Display', serif; font-size: 1.15rem; }
+  nav .n2 { font-size: .8rem; opacity: .75; }
+  nav .volver { font-size: .9rem; opacity: .85; }
+
+  main { max-width: 1320px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: 360px 1fr; gap: 2rem; align-items: start; }
+  h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 2rem; color: var(--pino); grid-column: 1 / -1; }
+  h1 + p { grid-column: 1 / -1; color: var(--mid); margin-top: -1.5rem; max-width: 70ch; }
+
+  .panel { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.4rem; }
+  .paso { padding-bottom: 1.2rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
+  .paso:last-of-type { border-bottom: 0; margin-bottom: .6rem; padding-bottom: 0; }
+  .paso h2 { font-size: 1rem; font-weight: 600; color: var(--pino); margin-bottom: .6rem; display: flex; gap: .5rem; align-items: baseline; }
+  .paso h2 span { color: var(--agua); font-family: 'DM Serif Display', serif; font-size: 1.2rem; }
+  label { display: block; font-size: .85rem; color: var(--mid); margin: .6rem 0 .25rem; }
+  input[type=month], input[type=text], textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: .55rem .7rem; background: #fff; }
+  textarea { resize: vertical; min-height: 2.4rem; }
+  .fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+  .ayuda { font-size: .8rem; color: var(--mid); margin-top: .35rem; }
+
+  .drop { border: 1.5px dashed var(--salvia); border-radius: 10px; padding: 1rem; text-align: center; cursor: pointer; background: var(--sage-bg); transition: background .15s; }
+  .drop.over { background: #dfece6; }
+  .drop strong { color: var(--pino); }
+  .slots { list-style: none; margin-top: .7rem; font-size: .88rem; }
+  .slots li { display: flex; justify-content: space-between; gap: .5rem; padding: .35rem 0; border-bottom: 1px dotted var(--border); }
+  .slots li:last-child { border: 0; }
+  .slots .st { color: var(--mid); text-align: right; font-size: .82rem; }
+  .slots .st.ok { color: var(--ok); }
+  .slots .st.err { color: var(--alerta); }
+
+  .btn { border: 0; border-radius: 999px; padding: .7rem 1.3rem; cursor: pointer; font-weight: 500; }
+  .btn-main { background: var(--pino); color: #fff; width: 100%; }
+  .btn-main:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-sec { background: #fff; border: 1px solid var(--pino); color: var(--pino); }
+  .acciones { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .estado { font-size: .88rem; margin-top: .6rem; color: var(--mid); }
+
+  .vacio { border: 1px dashed var(--border); border-radius: 14px; padding: 3rem 2rem; text-align: center; color: var(--mid); background: #fff; }
+  .controles { margin-top: 1.2rem; }
+  .controles h3 { font-size: 1rem; color: var(--pino); margin-bottom: .5rem; }
+  .controles li { list-style: none; padding: .45rem .7rem; border-left: 3px solid var(--border); background: #fff; margin-bottom: .35rem; font-size: .9rem; border-radius: 0 6px 6px 0; }
+  .controles li.error { border-color: var(--alerta); }
+  .controles li.aviso { border-color: #C9A227; }
+  .controles li.info { border-color: var(--agua); }
+
+  .historial { grid-column: 1 / -1; }
+  .historial h2 { font-family: 'DM Serif Display', serif; font-weight: 400; color: var(--pino); font-size: 1.4rem; margin-bottom: .6rem; }
+  table.h { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; font-size: .92rem; }
+  table.h th, table.h td { padding: .6rem .9rem; text-align: right; border-bottom: 1px solid var(--border); }
+  table.h th:first-child, table.h td:first-child { text-align: left; }
+  table.h th { font-weight: 500; color: var(--mid); background: var(--sage-bg); }
+  table.h button { background: none; border: 0; color: var(--pino); text-decoration: underline; cursor: pointer; }
+
+  .bloqueo { max-width: 520px; margin: 4rem auto; text-align: center; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem; }
+  .bloqueo a { color: var(--pino); }
+
+  /* ---------- Informe (A4) ---------- */
+  .hoja-wrap { overflow-x: auto; }
+  .hoja { width: 210mm; min-height: 297mm; background: #fff; box-shadow: 0 1px 3px rgba(35,42,38,.12); position: relative; font-size: 9.5pt; color: var(--tinta); }
+  .hoja .cab { background: var(--slate); color: #fff; height: 27.5mm; display: flex; align-items: center; padding: 0 12.7mm 0 10mm; gap: 3mm; }
+  .hoja .cab img { width: 22mm; height: 22mm; }
+  .hoja .cab .t { flex: 1; }
+  .hoja .cab .t b { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 21pt; display: block; line-height: 1.1; }
+  .hoja .cab .t span, .hoja .cab .m span { color: #DCE7E1; font-size: 10pt; }
+  .hoja .cab .m { text-align: right; }
+  .hoja .cab .m b { font-weight: 600; font-size: 15pt; display: block; }
+  .hoja .cuerpo { padding: 6mm 12.7mm 20mm; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3.5mm; margin-bottom: 7mm; }
+  .kpi { background: var(--sage-bg); border-radius: 2mm; padding: 3mm 3.5mm; position: relative; }
+  .kpi small { color: var(--mid); font-size: 8pt; letter-spacing: .03em; }
+  .kpi b { display: block; font-weight: 600; font-size: 15pt; margin-top: 1.5mm; }
+  .kpi.fin { background: var(--slate); color: #fff; }
+  .kpi.fin small { color: #DCE7E1; }
+  .kpi .op { position: absolute; right: -3mm; top: 50%; transform: translate(50%, -50%); color: var(--mid); font-size: 13pt; }
+  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; margin-bottom: 5mm; }
+  .sec h4 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 13pt; color: var(--slate); border-bottom: 1.2pt solid var(--agua); padding-bottom: 1mm; margin-bottom: 1.5mm; }
+  .tb { width: 100%; border-collapse: collapse; }
+  .tb td, .tb th { padding: 1.15mm 1.3mm; border-bottom: .5pt solid var(--border); text-align: right; white-space: nowrap; }
+  .tb td:first-child, .tb th:first-child { text-align: left; white-space: normal; }
+  .tb th { font-weight: 400; color: var(--mid); font-size: 7.5pt; border-bottom: 0; }
+  .tb tr.t td { background: var(--lino); font-weight: 600; }
+  .tb tr.sp td { border: 0; padding: .8mm; background: none; }
+  .inds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3.5mm; margin: 3mm 0 7mm; }
+  .ind { border: .8pt solid var(--border); border-radius: 2mm; padding: 2.5mm 3.5mm; }
+  .ind small { color: var(--mid); font-size: 8pt; }
+  .ind b { display: block; font-weight: 600; font-size: 14pt; margin: 1mm 0 .5mm; }
+  .ind span { color: var(--mid); font-size: 7.5pt; }
+  .ind.alerta { border: 1.2pt solid var(--alerta); }
+  .ind.alerta b { color: var(--alerta); }
+  .obs li { margin: 0 0 1.5mm 4mm; }
+  .obs p { color: var(--mid); }
+  .pie { position: absolute; left: 12.7mm; right: 12.7mm; bottom: 10mm; border-top: .6pt solid var(--border); padding-top: 2.5mm; display: flex; justify-content: space-between; color: var(--mid); font-size: 8pt; }
+
+  #print { display: none; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; padding: 1.2rem; } }
+  @media print {
+    @page { size: A4; margin: 0; }
+    body { background: #fff; }
+    body > *:not(#print) { display: none !important; }
+    #print { display: block !important; }
+    .hoja { box-shadow: none; height: 297mm; overflow: hidden; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html"><img src="capiaf-isologo-reverso-1024.png" alt="" /><span><span class="n1">CAPIAF</span><br><span class="n2">Tesorería</span></span></a>
+  <a class="volver" href="miembros.html">Volver al panel</a>
+</nav>
+
+<div id="bloqueo" class="bloqueo" style="display:none">
+  <p>Esta sección es solo para la cuenta de administración de CAPIAF.</p>
+  <p style="margin-top:.8rem"><a href="miembros.html">Ingresá desde el portal de miembros</a> con info@pilates.org.ar y volvé a esta página.</p>
+</div>
+
+<main id="app" style="display:none">
+  <h1>Informe de Tesorería</h1>
+  <p>Los archivos se leen en este navegador y no se suben a ningún servidor. Al guardar el cierre se registran solo los saldos y el resumen del informe.</p>
+
+  <section class="panel">
+    <div class="paso">
+      <h2><span>1</span>Mes a informar</h2>
+      <input type="month" id="mes" />
+      <p class="ayuda" id="prevInfo">—</p>
+    </div>
+    <div class="paso">
+      <h2><span>2</span>Archivos</h2>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Elegir archivos">
+        <strong>Arrastrá los 4 archivos</strong><br><span class="ayuda">o hacé clic para elegirlos</span>
+        <input type="file" id="files" multiple accept=".xlsx,.pdf" hidden />
+      </div>
+      <ul class="slots">
+        <li><span>Pagos (Siguefit)</span><span class="st" id="st-pagos">Falta</span></li>
+        <li><span>Egresos (Siguefit)</span><span class="st" id="st-egresos">Falta</span></li>
+        <li><span>Resumen de cuenta Galicia</span><span class="st" id="st-cuenta">Falta</span></li>
+        <li><span>Extracto de inversiones Galicia</span><span class="st" id="st-inv">Falta</span></li>
+      </ul>
+    </div>
+    <div class="paso">
+      <h2><span>3</span>Datos del cierre</h2>
+      <div class="fila2">
+        <div><label for="mpDisp">Mercado Pago disponible</label><input type="text" inputmode="decimal" id="mpDisp" placeholder="0,00" /></div>
+        <div><label for="mpAcred">MP a acreditar</label><input type="text" inputmode="decimal" id="mpAcred" placeholder="0,00" /></div>
+        <div><label for="aPagar">Facturas a pagar</label><input type="text" inputmode="decimal" id="aPagar" placeholder="0,00" /></div>
+        <div><label for="sedesAd">Sedes adicionales</label><input type="text" inputmode="numeric" id="sedesAd" placeholder="0" /></div>
+      </div>
+      <label for="obs">Observaciones para la CD (una por línea, hasta 3)</label>
+      <textarea id="obs" rows="3"></textarea>
+    </div>
+    <button class="btn btn-main" id="btnGenerar" disabled>Generar informe</button>
+    <p class="estado" id="estado"></p>
+  </section>
+
+  <section>
+    <div class="acciones" id="acciones" style="display:none">
+      <button class="btn btn-sec" id="btnPdf">Descargar PDF</button>
+      <button class="btn btn-main" style="width:auto" id="btnGuardar">Guardar cierre del mes</button>
+    </div>
+    <div class="hoja-wrap"><div id="informe"><div class="vacio">Elegí el mes, cargá los archivos y generá el informe para verlo acá.</div></div></div>
+    <div class="controles" id="controles"></div>
+  </section>
+
+  <section class="historial">
+    <h2>Cierres guardados</h2>
+    <div id="historial"><p class="ayuda">Cargando…</p></div>
+  </section>
+</main>
+<div id="print"></div>
+
+<script>
+const SUPABASE_URL = 'https://rpxckpqptdgkkwaqtgzz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_QqQ4vWOitcfzNREsG3SoHA_rJAkTMDQ';
+const ADMIN_EMAIL = 'info@pilates.org.ar';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const C = window.TesoreriaCore;
+const $ = id => document.getElementById(id);
+
+const datos = { pagos: null, egresos: null, cuenta: null, inv: null };
+let cierres = [];     // filas de tesoreria_cierres
+let ultimo = null;    // último informe generado
+
+// ---------- formato ----------
+const money = x => { if (x == null || Math.abs(x) < .5) return '—'; const s = Math.abs(Math.round(x)).toLocaleString('es-AR'); return x < 0 ? `($${s})` : `$${s}`; };
+const num = x => x == null ? '—' : Math.round(x).toLocaleString('es-AR');
+const pct = x => x == null ? '—' : (x * 100).toFixed(1).replace('.', ',') + '%';
+const parseMonto = s => { s = String(s || '').trim(); if (!s) return null; if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); const n = Number(s.replace(/[^\d.-]/g, '')); return isNaN(n) ? null : n; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- acceso ----------
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session || session.user.email !== ADMIN_EMAIL) { $('bloqueo').style.display = 'block'; return; }
+  $('app').style.display = 'grid';
+  const hoy = new Date(); const m = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+  $('mes').value = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`;
+  await cargarCierres();
+})();
+
+async function cargarCierres() {
+  const { data, error } = await sb.from('tesoreria_cierres').select('*').order('periodo', { ascending: false });
+  if (error) { $('historial').innerHTML = `<p class="ayuda">No se pudieron leer los cierres: ${esc(error.message)}</p>`; return; }
+  cierres = data || [];
+  pintarHistorial(); pintarPrev();
+}
+const periodoPrev = p => { const [y, m] = p.split('-').map(Number); const d = new Date(y, m - 2, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+function pintarPrev() {
+  const p = $('mes').value; if (!p) return;
+  const prev = cierres.find(c => c.periodo === periodoPrev(p));
+  $('prevInfo').innerHTML = prev
+    ? `Arranca del cierre de ${periodoPrev(p).split('-').reverse().join('/')}: saldo ${money(Number(prev.saldo_fin))}.`
+    : `<span style="color:var(--alerta)">No hay cierre guardado de ${periodoPrev(p).split('-').reverse().join('/')}. El informe va a salir sin saldo inicial.</span>`;
+}
+$('mes').addEventListener('change', () => { pintarPrev(); habilitar(); });
+
+// ---------- archivos ----------
+const drop = $('drop');
+drop.addEventListener('click', () => $('files').click());
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('files').click(); } });
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); leerArchivos(e.dataTransfer.files); });
+$('files').addEventListener('change', e => leerArchivos(e.target.files));
+
+function marcar(slot, txt, cls) { const el = $('st-' + slot); el.textContent = txt; el.className = 'st ' + (cls || ''); }
+async function pdfTexto(buf) {
+  const doc = await pdfjsLib.getDocument({ data: buf }).promise; const out = [];
+  for (let i = 1; i <= doc.numPages; i++) { const c = await (await doc.getPage(i)).getTextContent(); out.push(c.items.map(x => x.str).join(' ')); }
+  return out.join('\n');
+}
+async function leerArchivos(files) {
+  for (const f of files) {
+    try {
+      const buf = await f.arrayBuffer();
+      if (/\.xlsx$/i.test(f.name)) {
+        const wb = XLSX.read(buf, { type: 'array', cellDates: false });
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true });
+        const tipo = C.tipoExporte(rows);
+        if (!tipo) throw new Error(`${f.name}: no reconozco el exporte de Siguefit`);
+        datos[tipo] = C.leerSiguefit(rows);
+        marcar(tipo, `${datos[tipo].length} registros`, 'ok');
+      } else if (/\.pdf$/i.test(f.name)) {
+        const txt = await pdfTexto(new Uint8Array(buf));
+        if (/Cuenta Corriente en Pesos/i.test(txt)) {
+          datos.cuenta = C.leerCuentaGalicia(txt);
+          marcar('cuenta', `Saldo ${money(datos.cuenta.saldoFinal)} al ${datos.cuenta.hasta.toLocaleDateString('es-AR')}`, 'ok');
+        } else if (/Posicion al/i.test(txt)) {
+          datos.inv = C.leerInversionesGalicia(txt);
+          marcar('inv', `FCI ${money(datos.inv.valuacion)} al ${datos.inv.fecha.toLocaleDateString('es-AR')}`, 'ok');
+        } else throw new Error(`${f.name}: no reconozco el PDF`);
+      }
+    } catch (err) { $('estado').textContent = err.message; }
+  }
+  habilitar();
+}
+function habilitar() { $('btnGenerar').disabled = !(datos.pagos && datos.egresos && $('mes').value); }
+
+// ---------- generar ----------
+$('btnGenerar').addEventListener('click', () => {
+  const [anio, mes] = $('mes').value.split('-').map(Number);
+  const prevRow = cierres.find(c => c.periodo === periodoPrev($('mes').value));
+  const prev = prevRow ? { saldo_fin: Number(prevRow.saldo_fin), fondos: prevRow.fondos } : null;
+  const manual = {
+    mp_disp: parseMonto($('mpDisp').value), mp_acred: parseMonto($('mpAcred').value) || 0,
+    a_pagar: parseMonto($('aPagar').value) || 0, sedes_adicionales: parseMonto($('sedesAd').value) || 0,
+    observaciones: $('obs').value.split('\n').map(s => s.trim()).filter(Boolean),
+  };
+  try {
+    ultimo = C.calcular({ pagos: datos.pagos, egresos: datos.egresos, anio, mes, prev, cuenta: datos.cuenta, inversiones: datos.inv, manual });
+  } catch (err) { $('estado').textContent = 'Error al calcular: ' + err.message; return; }
+  $('informe').innerHTML = htmlInforme(ultimo);
+  pintarControles(ultimo.controles);
+  $('acciones').style.display = 'flex';
+  $('btnGuardar').disabled = !(ultimo.fondosCompletos && ultimo.saldoFin != null);
+  $('btnGuardar').title = $('btnGuardar').disabled ? 'Para guardar el cierre hacen falta los extractos, el saldo de MP y el cierre del mes anterior.' : '';
+  $('estado').textContent = '';
+});
+
+function pintarControles(ctrl) {
+  if (!ctrl || !ctrl.length) { $('controles').innerHTML = '<h3>Controles</h3><p class="ayuda">Sin observaciones: todo cruza.</p>'; return; }
+  const orden = { error: 0, aviso: 1, info: 2 };
+  $('controles').innerHTML = '<h3>Controles</h3><ul>' + [...ctrl].sort((a, b) => orden[a.nivel] - orden[b.nivel])
+    .map(c => `<li class="${c.nivel}">${esc(c.txt)}</li>`).join('') + '</ul>';
+}
+
+// ---------- informe ----------
+function htmlInforme(R) {
+  const fila = (lab, vals, total) => `<tr${total ? ' class="t"' : ''}><td>${esc(lab)}</td>${vals.map(v => `<td>${v}</td>`).join('')}</tr>`;
+  const ing = C.LINEAS_ING.filter(k => ['Cuotas del período', 'Cuotas atrasadas', 'Rendimientos FCI', 'Otros ingresos'].includes(k) || R.ingAcu[k]);
+  const f = R.fondos || {};
+  const disp = R.fondosCompletos ? f.galicia + f.fci + f.mp_disp : null;
+  const fondos = R.fondosCompletos ? R.totalFondos : R.saldoFin;
+  const neto = fondos == null ? null : fondos + R.aCobrar - R.adelantadas - (R.aPagar || 0);
+  const tol = C.CONFIG.toleranciaConciliacion;
+  const mn = C.CONFIG.paramedicMinimo, falt = Math.max(0, mn - R.sedesPm);
+  const pd = C.CONFIG.paramedicDesde;
+  const inds = [
+    ['Cobranza del mes', pct(R.cobranza), 'socios que pagaron el mes', false],
+    ['Margen neto por socio', money(R.margen), R.objetivo ? `objetivo ${money(R.objetivo)}` : `objetivo $30.000 desde ${pd.slice(5)}/${pd.slice(0, 4)}`, !!(R.objetivo && R.margen != null && R.margen < R.objetivo)],
+    ['Sedes Paramedic', `${num(R.sedesPm)} / ${mn}`, R.paramedicActivo ? (falt ? `faltan ${falt}` : 'mínimo cubierto') : `convenio desde ${pd.slice(5)}/${pd.slice(0, 4)}`, R.paramedicActivo && falt > 0],
+    ['Conciliación', R.conc == null ? '—' : Math.abs(R.conc) < tol ? 'OK' : money(R.conc),
+      R.conc == null ? 'sin extractos completos' : 'Siguefit vs. extractos' + (Math.abs(R.conc) >= 1 ? ` (dif. ${money(R.conc)})` : ''), R.conc != null && Math.abs(R.conc) >= tol],
+  ];
+  const kp = [['Saldo inicial', R.saldoIni], ['Ingresos', R.totIng], ['Egresos', R.totEgr], ['Saldo final', R.saldoFin]];
+  return `<div class="hoja">
+    <div class="cab"><img src="capiaf-isologo-reverso-1024.png" alt="CAPIAF" />
+      <div class="t"><b>Informe de Tesorería</b><span>Cámara de Pilates de la Ciudad de Buenos Aires · Comisión Directiva</span></div>
+      <div class="m"><b>${esc(R.titulo)}</b><span>Criterio: cobrado según Siguefit</span></div></div>
+    <div class="cuerpo">
+      <div class="kpis">${kp.map(([l, v], i) => `<div class="kpi${i === 3 ? ' fin' : ''}"><small>${l}</small><b>${v === 0 ? '$0' : money(v)}</b>${i < 3 ? `<span class="op">${['+', '−', '='][i]}</span>` : ''}</div>`).join('')}</div>
+      <div class="dos">
+        <div class="sec"><h4>Ingresos</h4><table class="tb"><tr><th></th><th>Mes</th><th>Acumulado</th></tr>
+          ${ing.map(k => fila(k, [money(R.ingMes[k]), money(R.ingAcu[k])])).join('')}
+          ${fila('Total ingresos', [money(R.totIng), money(R.totIngAcu)], true)}
+          <tr class="sp"><td colspan="3"></td></tr>
+          ${fila('Resultado', [money(R.totIng - R.totEgr), money(R.totIngAcu - R.totEgrAcu)], true)}</table></div>
+        <div class="sec"><h4>Egresos</h4><table class="tb"><tr><th></th><th>Mes</th><th>Acumulado</th></tr>
+          ${C.LINEAS_EGR.map(k => fila(k, [money(R.egrMes[k]), money(R.egrAcu[k])])).join('')}
+          ${fila('Total egresos', [money(R.totEgr), money(R.totEgrAcu)], true)}</table></div>
+      </div>
+      <div class="dos">
+        <div class="sec"><h4>Fondos al cierre</h4><table class="tb">
+          ${R.fondosCompletos ? [
+            fila('Banco Galicia (cuenta)', [money(f.galicia)]), fila('FCI Galicia', [money(f.fci)]),
+            fila('Mercado Pago disponible', [money(f.mp_disp)]), fila('Disponible', [money(disp)], true),
+            fila('Mercado Pago a acreditar', [money(f.mp_acred)]), fila('Total fondos', [money(fondos)], true)].join('')
+            : fila('Saldo según Siguefit', [money(fondos)], true)}
+          ${fila('Cuotas a cobrar', [money(R.aCobrar)])}
+          ${fila('Cuotas cobradas por adelantado', [R.adelantadas ? money(-R.adelantadas) : '—'])}
+          ${fila('Facturas a pagar', [R.aPagar ? money(-R.aPagar) : '—'])}
+          ${fila('Saldo neto', [money(neto)], true)}</table></div>
+        <div class="sec"><h4>Socios</h4><table class="tb">
+          ${fila('Activos al inicio', [num(R.socIni)])}${fila('Altas', [num(R.altas)])}${fila('Bajas', [num(R.bajas)])}
+          ${fila('Activos al cierre', [num(R.socFin)], true)}${fila('Pagaron la cuota del mes', [num(R.alDia)])}
+          ${fila('Con 1 cuota vencida impaga', [num(R.mora1)])}${fila('Con 2 o más cuotas vencidas', [num(R.mora2)])}</table></div>
+      </div>
+      <div class="inds">${inds.map(([l, v, s, a]) => `<div class="ind${a ? ' alerta' : ''}"><small>${l}</small><b>${v}</b><span>${esc(s)}</span></div>`).join('')}</div>
+      <div class="sec obs"><h4>Observaciones y temas para decidir</h4>
+        ${R.observaciones && R.observaciones.length ? '<ul>' + R.observaciones.map(o => `<li>${esc(o)}</li>`).join('') + '</ul>' : '<p>Sin observaciones.</p>'}</div>
+    </div>
+    <div class="pie"><span>Tesorería CAPIAF · Marcelo César Pérez, Tesorero · Fuente: Siguefit</span><span>pilates.org.ar · Emitido el ${new Date().toLocaleDateString('es-AR')}</span></div>
+  </div>`;
+}
+
+// ---------- PDF ----------
+$('btnPdf').addEventListener('click', () => {
+  const t = document.title; document.title = `Informe Tesoreria CAPIAF ${ultimo ? ultimo.periodo : ''}`;
+  $('print').innerHTML = $('informe').innerHTML;
+  window.print(); setTimeout(() => { document.title = t; }, 500);
+});
+
+// ---------- guardar ----------
+$('btnGuardar').addEventListener('click', async () => {
+  if (!ultimo) return;
+  const errores = ultimo.controles.filter(c => c.nivel === 'error').length;
+  const existe = cierres.some(c => c.periodo === ultimo.periodo);
+  let msg = `¿Guardar el cierre de ${ultimo.titulo}? El mes siguiente va a arrancar de este saldo.`;
+  if (existe) msg += '\n\nYa hay un cierre guardado para este mes: se va a reemplazar.';
+  if (errores) msg += `\n\nHay ${errores} control(es) en rojo sin resolver.`;
+  if (!confirm(msg)) return;
+  const { controles, ...informe } = ultimo;
+  const { error } = await sb.from('tesoreria_cierres').upsert({
+    periodo: ultimo.periodo, saldo_fin: ultimo.saldoFin, fondos: ultimo.fondos,
+    informe, controles, updated_at: new Date().toISOString(),
+  });
+  if (error) { $('estado').textContent = 'No se pudo guardar: ' + error.message; return; }
+  $('estado').textContent = `Cierre de ${ultimo.titulo} guardado.`;
+  await cargarCierres();
+});
+
+// ---------- historial ----------
+function pintarHistorial() {
+  if (!cierres.length) { $('historial').innerHTML = '<p class="ayuda">Todavía no hay cierres guardados.</p>'; return; }
+  $('historial').innerHTML = `<table class="h"><tr><th>Mes</th><th>Ingresos</th><th>Egresos</th><th>Saldo final</th><th>Conciliación</th><th></th></tr>
+    ${cierres.map(c => { const i = c.informe || {}; return `<tr><td>${c.periodo.split('-').reverse().join('/')}</td>
+      <td>${money(i.totIng)}</td><td>${money(i.totEgr)}</td><td>${money(Number(c.saldo_fin))}</td>
+      <td>${i.conc == null ? '—' : Math.abs(i.conc) < C.CONFIG.toleranciaConciliacion ? 'OK' : money(i.conc)}</td>
+      <td>${i.titulo ? `<button data-p="${c.periodo}">Ver informe</button>` : '<span class="ayuda">arranque</span>'}</td></tr>`; }).join('')}</table>`;
+  $('historial').querySelectorAll('button[data-p]').forEach(b => b.addEventListener('click', () => {
+    const c = cierres.find(x => x.periodo === b.dataset.p);
+    ultimo = Object.assign({}, c.informe, { controles: c.controles || [] });
+    $('informe').innerHTML = htmlInforme(ultimo); pintarControles(ultimo.controles);
+    $('acciones').style.display = 'flex'; $('btnGuardar').disabled = true;
+    $('informe').scrollIntoView({ behavior: 'smooth' });
+  }));
+}
+</script>
+</body>
+</html>
