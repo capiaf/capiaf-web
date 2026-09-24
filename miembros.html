@@ -594,18 +594,16 @@
 
     <div style="margin-top:1.4rem">
       <label>DNI del responsable *</label>
-      <p class="map-hint">Sacá una foto de cada cara con el celular (el selector ofrece la cámara) o subí un archivo. Solo lo ven la Cámara y vos.</p>
+      <p class="map-hint">Sacá una foto de cada cara con el celular (el selector ofrece la cámara) o subí un archivo. <strong>Se guarda solo al elegirlo</strong>, no hace falta tocar Guardar datos. Solo lo ven la Cámara y vos.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem">
         <div>
           <label style="font-size:.7rem">Frente</label>
-          <input type="file" id="fDniFrente" accept="image/*,.pdf" />
-          <button type="button" class="btn-ubicar" onclick="subirDoc('dni_frente')">Subir frente</button>
+          <input type="file" id="fDniFrente" accept="image/*,.pdf" onchange="subirDoc('dni_frente')" />
           <span class="pin-status" id="dniFrenteStatus"></span>
         </div>
         <div>
           <label style="font-size:.7rem">Dorso</label>
-          <input type="file" id="fDniDorso" accept="image/*,.pdf" />
-          <button type="button" class="btn-ubicar" onclick="subirDoc('dni_dorso')">Subir dorso</button>
+          <input type="file" id="fDniDorso" accept="image/*,.pdf" onchange="subirDoc('dni_dorso')" />
           <span class="pin-status" id="dniDorsoStatus"></span>
         </div>
       </div>
@@ -613,9 +611,8 @@
 
     <div style="margin-top:1.4rem">
       <label>Oblea de habilitación AGC — sede principal<span id="obleaReq" style="display:none"> *</span></label>
-      <p class="map-hint">El PDF o foto de la oblea con el código QR que emite la AGC.</p>
-      <input type="file" id="fOblea" accept=".pdf,image/*" />
-      <button type="button" class="btn-ubicar" onclick="subirDoc('oblea')">Subir oblea</button>
+      <p class="map-hint">El PDF o foto de la oblea con el código QR que emite la AGC. <strong>Se guarda solo al elegirla.</strong></p>
+      <input type="file" id="fOblea" accept=".pdf,image/*" onchange="subirDoc('oblea')" />
       <span class="pin-status" id="obleaStatus"></span>
     </div>
     <span class="save-msg" id="datosOk"></span>
@@ -629,7 +626,7 @@
     </div>
 
     <div class="logo-upload-area" id="logoArea">
-      <input type="file" accept="image/*" id="logoFile" onchange="previewLogo(this)" />
+      <input type="file" accept="image/*" id="logoFile" onchange="previewLogo(this); uploadLogo();" />
       <img class="logo-preview" id="logoPreview" alt="Preview" />
       <div class="logo-upload-icon">🖼️</div>
       <div class="logo-upload-text">
@@ -638,7 +635,7 @@
       </div>
     </div>
     <div class="msg" id="logoMsg"></div>
-    <button class="btn-save" id="btnSubirLogo" onclick="uploadLogo()">Subir logo</button>
+    <button class="btn-save" id="btnSubirLogo" onclick="uploadLogo()" style="display:none">Subir logo</button>
     <span class="save-msg" id="logoOk"></span>
   </div>
 
@@ -1060,7 +1057,7 @@ function previewLogo(input) {
 async function uploadLogo() {
   const file = document.getElementById('logoFile').files[0];
   if (!file) return showSaveMsg('logoOk', 'Seleccioná un archivo primero.', 'err');
-  if (file.size > 2 * 1024 * 1024) return showSaveMsg('logoOk', 'El archivo supera los 2MB.', 'err');
+  if (file.size > 2 * 1024 * 1024) return showSaveMsg('logoOk', 'La imagen supera los 2 MB: probá con una más liviana.', 'err');
 
   const btn = document.getElementById('btnSubirLogo');
   btn.disabled = true; btn.textContent = 'Subiendo...';
@@ -1072,14 +1069,18 @@ async function uploadLogo() {
 
   if (upErr) {
     btn.disabled = false; btn.textContent = 'Subir logo';
-    return showSaveMsg('logoOk', 'Error al subir.', 'err');
+    return showSaveMsg('logoOk', 'No se pudo subir: ' + upErr.message, 'err');
   }
 
   const { data: { publicUrl } } = sb.storage.from('logos').getPublicUrl(path);
-  await sb.from('estudios').update({ logo_url: publicUrl }).eq('id', estudioId);
+  const { data: upd, error: eUpd } = await sb.from('estudios').update({ logo_url: publicUrl }).eq('id', estudioId).select();
 
   btn.disabled = false; btn.textContent = 'Subir logo';
-  showSaveMsg('logoOk', '✅ Logo actualizado', 'ok');
+  if (eUpd || !upd || upd.length === 0) {
+    return showSaveMsg('logoOk', 'El archivo se subió pero no se pudo guardar en tu ficha. Avisá a CAPIAF.', 'err');
+  }
+  showSaveMsg('logoOk', '✅ Logo guardado', 'ok');
+  refrescarChecklist();
 }
 
 // ── SEDES ──
