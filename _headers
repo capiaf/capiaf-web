@@ -24,3 +24,9 @@
 
 /tesoreria-core.js
   Cache-Control: no-cache
+
+/asociate
+  Cache-Control: no-cache
+
+/proveedores
+  Cache-Control: no-cache
