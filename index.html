@@ -574,6 +574,17 @@
       .wa-float { bottom: 5rem; right: 1.2rem; width: 52px; height: 52px; }
     }
 
+  
+    /* NAV v2: menú Servicios + menú móvil con scroll */
+    .nav-more { position:relative; }
+    .nav-more > button { background:none; border:0; cursor:pointer; font-family:'Jost',sans-serif; font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; font-weight:500; color:rgba(255,255,255,.72); padding:.4rem 0; }
+    .nav-more > button:hover { color:var(--white); }
+    .nav-drop { display:none; position:absolute; top:100%; right:-1rem; min-width:220px; background:var(--slate-dk); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:.5rem 0; box-shadow:0 14px 40px rgba(0,0,0,.25); list-style:none; }
+    .nav-more:hover .nav-drop, .nav-more:focus-within .nav-drop { display:block; }
+    .nav-drop a { display:block; padding:.6rem 1.2rem; }
+    .mobile-menu { justify-content:flex-start !important; overflow-y:auto; padding:6.5rem 1.5rem 3rem; gap:1rem !important; }
+    .mobile-menu a { font-size:1.45rem !important; }
+    .mm-group { font-family:'Jost',sans-serif; font-size:.68rem; letter-spacing:.22em; text-transform:uppercase; font-weight:700; color:var(--sage-lt); margin-top:1rem; }
   </style>
 
   <!-- Schema.org structured data -->
@@ -639,16 +650,21 @@
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Menú de navegación">
   <button class="mobile-close" id="mobileClose" aria-label="Cerrar menú">✕</button>
-  <a href="#quienes"    class="mobile-link">Quiénes somos</a>
+  <span class="mm-group">La Cámara</span>
+  <a href="#quienes" class="mobile-link">Quiénes somos</a>
   <a href="#beneficios" class="mobile-link">Beneficios</a>
-  <a href="#testimonios" class="mobile-link">Miembros</a>
-  <a href="#socios"     class="mobile-link">Estudios</a>
-  <a href="#mapa"      class="mobile-link">Mapa</a>
-  <a href="#formaciones" class="mobile-link">Formaciones</a>
+  <a href="#socios" class="mobile-link">Estudios</a>
+  <a href="/mapa" class="mobile-link">Mapa de estudios</a>
+  <span class="mm-group">Servicios</span>
+  <a href="/formaciones" class="mobile-link">Formaciones</a>
+  <a href="/bolsa-de-trabajo" class="mobile-link">Bolsa de trabajo</a>
+  <a href="/asesoramiento" class="mobile-link">Asesoramiento</a>
+  <a href="/aliados" class="mobile-link">Aliados</a>
   <a href="#recursos" class="mobile-link">Recursos</a>
-  <a href="#contacto"   class="mobile-link">Contacto</a>
-  <a href="miembros.html" class="mobile-link">Acceso miembros</a>
-  <a href="#asociarse"  class="mobile-link" style="color:var(--sage-lt)">Asociate →</a>
+  <span class="mm-group">Contacto</span>
+  <a href="#contacto" class="mobile-link">Contacto</a>
+  <a href="/miembros.html" class="mobile-link">Acceso miembros</a>
+  <a href="/asociate" class="mobile-link" style="color:var(--sage-lt)">Asociate →</a>
 </div>
 
 <!-- NAV -->
@@ -666,12 +682,19 @@
     <li><a href="#quienes">Quiénes somos</a></li>
     <li><a href="#beneficios">Beneficios</a></li>
     <li><a href="#socios">Estudios</a></li>
-    <li><a href="#mapa">Mapa</a></li>
-    <li><a href="#formaciones">Formaciones</a></li>
-    <li><a href="#recursos">Recursos</a></li>
-      <li><a href="#contacto">Contacto</a></li>
-    <li><a href="miembros.html" class="nav-login">Acceso miembros</a></li>
-    <li><a href="#asociarse" class="nav-cta">Asociate</a></li>
+    <li><a href="/formaciones">Formaciones</a></li>
+    <li><a href="/bolsa-de-trabajo">Bolsa de trabajo</a></li>
+    <li class="nav-more"><button type="button" aria-haspopup="true">Servicios ▾</button>
+      <ul class="nav-drop">
+        <li><a href="/asesoramiento">Asesoramiento</a></li>
+        <li><a href="/aliados">Aliados</a></li>
+        <li><a href="/mapa">Mapa de estudios</a></li>
+        <li><a href="#recursos">Recursos</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </li>
+    <li><a href="/miembros.html" class="nav-login">Acceso miembros</a></li>
+    <li><a href="/asociate" class="nav-cta">Asociate</a></li>
   </ul>
   <div class="nav-hamburger" id="hamburger" role="button" tabindex="0" aria-label="Abrir menú">
     <span></span><span></span><span></span>
