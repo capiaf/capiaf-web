@@ -1,2 +1,4 @@
 # URLs viejas del sitio anterior que Google todavía tiene indexadas
 /pricing-plans/*  /asociate  301
+/proveedores  /aliados  301
+/proveedores.html  /aliados  301
