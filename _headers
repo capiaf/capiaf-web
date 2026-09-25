@@ -28,5 +28,8 @@
 /asociate
   Cache-Control: no-cache
 
-/proveedores
+/aliados
+  Cache-Control: no-cache
+
+/formaciones
   Cache-Control: no-cache
