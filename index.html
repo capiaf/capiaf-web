@@ -287,6 +287,14 @@
     .pillar-text p { font-size:.82rem; color:var(--mid); line-height:1.55; }
 
     /* ── BENEFICIOS ── */
+    .incluido { margin-top:3rem; background:var(--slate-dk); border-radius:var(--radius); padding:2.2rem 2rem; color:var(--white); }
+    .incluido-tag { display:inline-block; font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; font-weight:700; color:var(--sage-lt); margin-bottom:1.4rem; }
+    .incluido-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+    .incluido-item { display:flex; gap:1.1rem; align-items:flex-start; }
+    .incluido-item .beneficio-svg { color:var(--sage-lt); width:44px; height:44px; flex-shrink:0; }
+    .incluido-item h3 { font-family:'DM Serif Display',Georgia,serif; font-size:1.2rem; font-weight:400; margin-bottom:.45rem; }
+    .incluido-item p { font-size:.86rem; line-height:1.7; color:rgba(255,255,255,.78); }
+    @media (max-width:700px) { .incluido { padding:1.8rem 1.4rem; } .incluido-grid { grid-template-columns:1fr; gap:1.6rem; } }
     .beneficios-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3.5rem; }
     .beneficio { background:var(--white); border-radius:var(--radius); padding:2.2rem 1.8rem; transition:transform .3s,box-shadow .3s; position:relative; overflow:hidden; }
     .beneficio::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--sage) 0%,var(--sage-lt) 100%); border-radius:var(--radius) var(--radius) 0 0; transform:scaleX(0); transform-origin:left; transition:transform .4s ease; }
@@ -746,11 +754,24 @@
   <div class="section-inner">
     <p class="eyebrow reveal">Por qué asociarse</p>
     <h2 class="section-title reveal reveal-delay-1">Beneficios <em>concretos</em> para tu estudio</h2>
+    <div class="incluido reveal reveal-delay-1">
+      <span class="incluido-tag">Incluido en la cuota social</span>
+      <div class="incluido-grid">
+        <div class="incluido-item"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <path d="M24 40s-14-8.5-14-19a8 8 0 0 1 14-5.3A8 8 0 0 1 38 21c0 10.5-14 19-14 19z"/>
+  <path d="M24 20v10M19 25h10"/>
+</svg><div><h3>Cobertura de emergencias médicas</h3><p>Tu estudio es área protegida Paramedic: cobertura de emergencias y urgencias para quienes estén en tu estudio, con certificado por sede.</p></div></div>
+        <div class="incluido-item"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <rect x="17" y="16" width="14" height="24" rx="5"/>
+  <path d="M21 16v-4h6v4M27 12h6l3 3M24 22v5"/>
+</svg><div><h3>Recarga anual de matafuegos</h3><p>Una recarga anual sin costo adicional con Matafuegos Domer. Un requisito de la habilitación, resuelto dentro de la cuota.</p></div></div>
+      </div>
+    </div>
     <div class="beneficios-grid">
       <div class="beneficio reveal reveal-delay-1"><span class="beneficio-icon"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
   <circle cx="24" cy="24" r="18"/>
   <path d="M24 12v4M24 32v4M18 20c0-2.2 2.7-4 6-4s6 1.8 6 4-2.7 4-6 4-6 1.8-6 4 2.7 4 6 4 6-1.8 6-4"/>
-</svg></span><h3>Descuentos y proveedores</h3><p>Acceso a tarifas preferenciales en equipamiento, seguros e insumos. El poder de negociación de 70 estudios trabajando para cada uno.</p></div>
+</svg></span><h3>Descuentos y proveedores</h3><p>Tarifas preferenciales en servicio técnico de equipos con GR Services Pilates y Pilates OK, y cupones exclusivos de proveedores desde el portal de socios.</p></div>
       <div class="beneficio reveal reveal-delay-2"><span class="beneficio-icon"><svg class="beneficio-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
   <path d="M24 38C24 38 10 32 10 20V13l14-5 14 5v7c0 12-14 18-14 18z"/>
   <path d="M24 18v10M19 22l5-4 5 4"/>
@@ -820,7 +841,7 @@
       </div>
       <div class="pasos-cta reveal reveal-delay-2">
         <h3>¿Tu estudio todavía no forma <em>parte</em>?</h3>
-        <p>En Buenos Aires hay más de 600 estudios de Pilates. Solo 70 están organizados. Cada estudio que se suma fortalece a todos.</p>
+        <p>En Buenos Aires hay más de 600 estudios de Pilates. Solo 75 están organizados. Cada estudio que se suma fortalece a todos.</p>
         <a href="https://wa.me/5491153588840" target="_blank" rel="noopener" class="btn-wa">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.103 1.504 5.833L.057 23.077l5.34-1.399A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.814 9.814 0 01-4.966-1.344l-.356-.211-3.692.968.985-3.6-.232-.37A9.818 9.818 0 012.182 12c0-5.421 4.397-9.818 9.818-9.818S21.818 6.579 21.818 12 17.421 21.818 12 21.818z"/></svg>
           Escribinos por WhatsApp
