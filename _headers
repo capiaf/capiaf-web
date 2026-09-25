@@ -33,3 +33,9 @@
 
 /formaciones
   Cache-Control: no-cache
+
+/bolsa-de-trabajo
+  Cache-Control: no-cache
+
+/asesoramiento
+  Cache-Control: no-cache
