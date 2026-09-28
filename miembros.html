@@ -502,17 +502,22 @@
         </select>
       </div>
       <div>
-        <label>Razón social (titular de la habilitación) *</label>
+        <label>Titular de la sede principal *</label>
         <input type="text" id="fRazon" placeholder="Ej: María García / Pilates SRL" />
       </div>
       <div>
-        <label>CUIT *</label>
+        <label>CUIT de la sede principal *</label>
         <input type="text" id="fCuit" placeholder="20-12345678-9" inputmode="numeric" />
-        <p class="map-hint" style="margin:.25rem 0 0">Lo necesitamos para el certificado de cobertura Paramedic.</p>
+        <p class="map-hint" style="margin:.25rem 0 0">El CUIT con el que está habilitada la sede. Es el que va en el certificado de cobertura Paramedic.</p>
       </div>
       <div>
         <label>Responsable (nombre y apellido) *</label>
         <input type="text" id="fResponsable" placeholder="Ej: María García" />
+      </div>
+      <div>
+        <label>CUIT del responsable</label>
+        <input type="text" id="fCuitResp" placeholder="20-12345678-9" inputmode="numeric" />
+        <p class="map-hint" style="margin:.25rem 0 0">El que usan para cobrar (Mercado Pago). Si es el mismo de la sede, dejalo vacío.</p>
       </div>
       <div>
         <label>Teléfono del responsable *</label>
@@ -944,6 +949,7 @@ async function loadEstudio() {
     document.getElementById('fMostrarMapa').checked  = data.mostrar_mapa !== false;
     document.getElementById('fRazon').value          = data.razon_social || '';
     document.getElementById('fCuit').value           = fmtCuit(data.cuit);
+    document.getElementById('fCuitResp').value       = (data.cuit_responsable && data.cuit_responsable !== data.cuit) ? fmtCuit(data.cuit_responsable) : '';
     pintarChecklist(data);
     if (data.dni_frente_url || data.dni_url) setPinStatus('dniFrenteStatus', '✓ Cargado', 'ok');
     if (data.dni_dorso_url || data.dni_url)  setPinStatus('dniDorsoStatus', '✓ Cargado', 'ok');
@@ -991,6 +997,7 @@ async function saveDatos() {
     comision_directiva: document.getElementById('fComision').value === 'si',
     razon_social:    document.getElementById('fRazon').value.trim(),
     cuit:            normCuit(document.getElementById('fCuit').value),
+    cuit_responsable: normCuit(document.getElementById('fCuitResp').value) || normCuit(document.getElementById('fCuit').value),
   };
   const coords = coordsDe('principal');
   if (coords.lat) { datos.lat = coords.lat; datos.lng = coords.lng; }
@@ -1014,6 +1021,13 @@ async function saveDatos() {
   obligatorios.forEach(([id, valor, label]) => {
     if (!valor) { faltan.push({ id, label }); document.getElementById(id).classList.add('campo-error'); }
   });
+  const cuitResp = normCuit(document.getElementById('fCuitResp').value);
+  if (cuitResp && !cuitValido(cuitResp)) {
+    document.getElementById('fCuitResp').classList.add('campo-error');
+    btn.disabled = false; btn.textContent = 'Guardar datos';
+    irACampo('fCuitResp');
+    return showSaveMsg('datosOk', 'El CUIT del responsable no es válido: revisá los 11 dígitos.', 'err');
+  }
   if (datos.cuit && !cuitValido(datos.cuit)) {
     document.getElementById('fCuit').classList.add('campo-error');
     btn.disabled = false; btn.textContent = 'Guardar datos';
@@ -1956,8 +1970,9 @@ async function aprobar(id, valor) {
       <div><label>Teléfono del responsable</label><input type="text" id="mTelResponsable" /></div>
 
       <div class="full ficha-sec">Datos fiscales</div>
-      <div><label>Razón social</label><input type="text" id="mRazon" /></div>
-      <div><label>CUIT</label><input type="text" id="mCuit" inputmode="numeric" /></div>
+      <div><label>Titular sede principal</label><input type="text" id="mRazon" /></div>
+      <div><label>CUIT sede principal (Paramedic)</label><input type="text" id="mCuit" inputmode="numeric" /></div>
+      <div><label>CUIT del responsable (Mercado Pago)</label><input type="text" id="mCuitResp" inputmode="numeric" /></div>
 
       <div class="full ficha-sec">Sede principal</div>
       <div><label>Calle</label><input type="text" id="mDireccion" /></div>
@@ -2055,6 +2070,7 @@ function abrirFicha(id) {
   document.getElementById('mComision').value       = e.comision_directiva ? 'si' : 'no';
   document.getElementById('mRazon').value          = e.razon_social || '';
   document.getElementById('mCuit').value           = fmtCuit(e.cuit);
+  document.getElementById('mCuitResp').value       = fmtCuit(e.cuit_responsable);
   document.getElementById('mParamedic').value      = e.paramedic_estado || 'pendiente';
   document.getElementById('mParamAlta').value      = e.paramedic_alta || '';
   document.getElementById('mParamBaja').value      = e.paramedic_baja || '';
@@ -2195,6 +2211,7 @@ async function guardarFicha() {
     comision_directiva: document.getElementById('mComision').value === 'si',
     razon_social:     document.getElementById('mRazon').value.trim() || null,
     cuit:             normCuit(document.getElementById('mCuit').value) || null,
+    cuit_responsable: normCuit(document.getElementById('mCuitResp').value) || normCuit(document.getElementById('mCuit').value) || null,
     paramedic_estado: document.getElementById('mParamedic').value,
     paramedic_alta:   document.getElementById('mParamAlta').value || null,
     paramedic_baja:   document.getElementById('mParamBaja').value || null,
