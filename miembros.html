@@ -1622,14 +1622,19 @@ function updateStats() {
     `${activos.length} principales + ${sedesExtra} adicionales (${multisede} multisede)`;
   document.getElementById('statAprobados').textContent = activos.filter(e => e.aprobado).length;
   document.getElementById('statPendientes').textContent = activos.filter(e => !e.aprobado).length;
-  const act = allEstudios.filter(e => e.paramedic_estado === 'activo' && esSocio(e));
-  const domicilios = act.reduce((n, e) => n + 1 + (e.sedes ? e.sedes.length : 0), 0);
-  document.getElementById('statParamedic').textContent = act.length;
-  document.getElementById('statParamedicSub').textContent = `${domicilios} domicilio${domicilios === 1 ? '' : 's'} cubierto${domicilios === 1 ? '' : 's'}`;
+  const cubiertos = activos.filter(e => conParamedic(e) && esSocio(e));
+  const enConvenio = cubiertos.filter(e => e.paramedic_estado === 'activo').length;
+  const previos = cubiertos.length - enConvenio;
+  const domicilios = cubiertos.reduce((n, e) => n + 1 + (e.sedes ? e.sedes.length : 0), 0);
+  document.getElementById('statParamedic').textContent = cubiertos.length;
+  document.getElementById('statParamedicSub').textContent =
+    `${domicilios} domicilio${domicilios === 1 ? '' : 's'}` +
+    (previos ? ` · ${enConvenio} en convenio + ${previos} régimen anterior` : '');
 }
 
 // ── Cuotas / mora ──
 function esSocio(e) { return e.activo !== false && !!e.cuit; }
+function conParamedic(e) { return e.paramedic_estado === 'activo' || e.paramedic_estado === 'transitorio'; }
 function mesActual() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); }
 function cuotasImpagas(e) {
   return (e.cuotas || []).filter(c => c.estado === 'pendiente' && new Date(c.periodo + 'T00:00:00') < mesActual());
@@ -1731,8 +1736,8 @@ function renderAdmin() {
   if (adminFilter === 'individual') list = list.filter(e => e.tipo !== 'multisede');
   if (adminFilter === 'multisede') list = list.filter(e => e.tipo === 'multisede');
   if (adminFilter === 'matafuego') list = list.filter(e => matafuegoProximo(e));
-  if (adminFilter === 'param_activo') list = list.filter(e => e.paramedic_estado === 'activo');
-  if (adminFilter === 'param_no') list = list.filter(e => esSocio(e) && e.paramedic_estado !== 'activo');
+  if (adminFilter === 'param_activo') list = list.filter(e => conParamedic(e));
+  if (adminFilter === 'param_no') list = list.filter(e => esSocio(e) && !conParamedic(e));
   if (adminFilter === 'sinusuario') list = list.filter(e => !e.user_id);
   if (adminFilter === 'mora') list = list.filter(e => { const c = estadoCuota(e); return c && c.cls === 'tag-mora'; });
 

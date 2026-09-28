@@ -1704,6 +1704,14 @@ const FORMACIONES = [
         grid.insertBefore(card, siguiente || null);
       }
     });
+
+    // Estudios dados de baja: se quitan de la grilla aunque tengan tarjeta histórica
+    const { data: bajas } = await sbSocios.from('socios_baja').select('nombre');
+    (bajas || []).forEach(b => {
+      grid.querySelectorAll('.socio-logo-card').forEach(c => {
+        if (mismo(c.dataset.name, b.nombre)) c.remove();
+      });
+    });
   } catch (err) {
     // si la base no responde, la grilla histórica queda tal cual
   }
