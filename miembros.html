@@ -327,7 +327,7 @@
       .th-contacto, .col-contacto { display: none; }
       .admin-table td, .admin-table th { padding: .55rem .6rem; }
     }
-    .admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
     .stat-card { background: var(--white); border-radius: var(--radius); padding: 1.2rem; text-align: center; box-shadow: 0 2px 8px rgba(46,66,56,.06); }
     .stat-card .num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; color: var(--pino); line-height: 1; }
     .stat-card .lbl { font-size: .7rem; color: var(--mid); text-transform: uppercase; letter-spacing: .1em; margin-top: .3rem; }
@@ -1601,6 +1601,11 @@ function updateStats() {
   document.getElementById('statTotalSub').textContent = inactivos
     ? `+ ${inactivos} inactivo${inactivos === 1 ? '' : 's'}`
     : 'ninguno inactivo';
+  const sedesExtra = activos.reduce((n, e) => n + (e.sedes ? e.sedes.length : 0), 0);
+  const multisede = activos.filter(e => e.sedes && e.sedes.length).length;
+  document.getElementById('statSedes').textContent = activos.length + sedesExtra;
+  document.getElementById('statSedesSub').textContent =
+    `${activos.length} principales + ${sedesExtra} adicionales (${multisede} multisede)`;
   document.getElementById('statAprobados').textContent = activos.filter(e => e.aprobado).length;
   document.getElementById('statPendientes').textContent = activos.filter(e => !e.aprobado).length;
   const act = allEstudios.filter(e => e.paramedic_estado === 'activo' && esSocio(e));
@@ -1803,6 +1808,11 @@ async function aprobar(id, valor) {
       <div class="num" id="statTotal">—</div>
       <div class="lbl">Estudios activos</div>
       <div class="lbl" id="statTotalSub" style="text-transform:none;letter-spacing:0;margin-top:.15rem">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="statSedes">—</div>
+      <div class="lbl">Sedes totales</div>
+      <div class="lbl" id="statSedesSub" style="text-transform:none;letter-spacing:0;margin-top:.15rem">—</div>
     </div>
     <div class="stat-card">
       <div class="num" id="statAprobados">—</div>
