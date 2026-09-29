@@ -910,7 +910,7 @@ async function onLogin(user) {
 async function loadEstudio() {
   // Si CAPIAF precargó la ficha de este estudio (mismo mail, sin usuario), la reclama antes de crear una nueva
   try { await sb.rpc('reclamar_ficha'); } catch (_) {}
-  const { data: rows } = await sb.from('estudios').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: true });
+  const { data: rows } = await sb.from('estudios').select('*, sedes(cuit, razon_social, lat)').eq('user_id', currentUser.id).order('created_at', { ascending: true });
   const data = rows && rows.length ? rows[0] : null;
 
   if (data) {
@@ -1252,7 +1252,7 @@ function pintarChecklist(e) {
 
 async function refrescarChecklist() {
   if (!estudioId) return;
-  const { data } = await sb.from('estudios').select('*').eq('id', estudioId).limit(1);
+  const { data } = await sb.from('estudios').select('*, sedes(cuit, razon_social, lat)').eq('id', estudioId).limit(1);
   if (data && data[0]) pintarChecklist(data[0]);
 }
 
@@ -1333,7 +1333,7 @@ function renderSedes() {
           <input type="text" value="${fmtCuit(s.cuit)}" placeholder="20-12345678-3" inputmode="numeric"
                  style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:120px"
                  onchange="setTitularSede('${s.id}', 'cuit', this.value)" />
-          ${(s.cuit && s.razon_social) ? '' : '<span style="color:var(--error)">falta para la cobertura</span>'}
+          ${(s.cuit && s.razon_social) ? '' : '<span style="color:var(--error);font-weight:600">obligatorio para la cobertura</span>'}
         </small>
         <label class="check-linea" style="margin-top:.2rem">
           <input type="checkbox" ${s.mostrar_mapa === false ? '' : 'checked'} onchange="setMostrarSede('${s.id}', this.checked)" />
@@ -1725,8 +1725,11 @@ function camposFaltantesDet(e) {
   add(e.agc === 'si' && !e.oblea_url, 'Oblea de habilitación', 'fOblea');
   add((e.agc === 'no' || e.agc === 'no_puede') && !e.comprobante_url, 'Comprobante de domicilio de la sede', 'fComprobante');
   add(!e.logo_url,        'Logo del estudio',          'logoFile');
-  const sinCuit = (e.sedes || []).filter(s => !s.cuit || !s.razon_social).length;
-  add(sinCuit > 0, `CUIT y titular de ${sinCuit} sede${sinCuit > 1 ? 's' : ''}`, 'sedesList');
+  const sedes = e.sedes || [];
+  const sinCuit = sedes.filter(s => !s.cuit || !s.razon_social).length;
+  add(sinCuit > 0, `CUIT y titular de ${sinCuit} sede${sinCuit > 1 ? 's' : ''} adicional${sinCuit > 1 ? 'es' : ''}`, 'sedesList');
+  const sinPin = sedes.filter(s => !s.lat).length;
+  add(sinPin > 0, `Ubicación en el mapa de ${sinPin} sede${sinPin > 1 ? 's' : ''} adicional${sinPin > 1 ? 'es' : ''}`, 'sedesList');
   return f;
 }
 
