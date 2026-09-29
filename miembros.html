@@ -614,11 +614,18 @@
       </div>
     </div>
 
-    <div style="margin-top:1.4rem">
-      <label>Oblea de habilitación AGC — sede principal<span id="obleaReq" style="display:none"> *</span></label>
+    <div style="margin-top:1.4rem;display:none" id="bloqueOblea">
+      <label>Oblea de habilitación AGC — sede principal *</label>
       <p class="map-hint">El PDF o foto de la oblea con el código QR que emite la AGC. <strong>Se guarda solo al elegirla.</strong></p>
       <input type="file" id="fOblea" accept=".pdf,image/*" onchange="subirDoc('oblea')" />
       <span class="pin-status" id="obleaStatus"></span>
+    </div>
+
+    <div style="margin-top:1.4rem;display:none" id="bloqueComprobante">
+      <label>Comprobante de domicilio de la sede *</label>
+      <p class="map-hint">Como tu espacio todavía no está habilitado, necesitamos una <strong>factura de un servicio</strong> (luz, gas, agua, internet o ABL) <strong>a nombre del titular y con la dirección de la sede</strong>. PDF o foto. Se guarda solo al elegirla.</p>
+      <input type="file" id="fComprobante" accept=".pdf,image/*" onchange="subirDoc('comprobante')" />
+      <span class="pin-status" id="comprobanteStatus"></span>
     </div>
     <span class="save-msg" id="datosOk"></span>
   </div>
@@ -954,6 +961,7 @@ async function loadEstudio() {
     if (data.dni_frente_url || data.dni_url) setPinStatus('dniFrenteStatus', '✓ Cargado', 'ok');
     if (data.dni_dorso_url || data.dni_url)  setPinStatus('dniDorsoStatus', '✓ Cargado', 'ok');
     if (data.oblea_url) setPinStatus('obleaStatus', '✓ Oblea cargada', 'ok');
+    if (data.comprobante_url) setPinStatus('comprobanteStatus', '✓ Comprobante cargado', 'ok');
     if (data.lat && data.lng) {
       mostrarPin('principal', data.lat, data.lng, 17);
       setPinStatus('pinStatusPrincipal', '✅ Ubicación guardada', 'ok');
@@ -972,6 +980,11 @@ async function loadEstudio() {
 // ── GUARDAR DATOS ──
 document.addEventListener('input', (ev) => {
   if (ev.target.classList && ev.target.classList.contains('campo-error')) ev.target.classList.remove('campo-error');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('fAgc');
+  if (sel) sel.addEventListener('change', () => aplicarAgc(sel.value));
 });
 
 async function saveDatos() {
@@ -1211,6 +1224,15 @@ function irACampo(id) {
   if (['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) setTimeout(() => el.focus({ preventScroll: true }), 400);
 }
 
+function aplicarAgc(valor) {
+  const habilitado = valor === 'si';
+  const noHabilitado = valor === 'no' || valor === 'no_puede';
+  const bo = document.getElementById('bloqueOblea');
+  const bc = document.getElementById('bloqueComprobante');
+  if (bo) bo.style.display = habilitado ? 'block' : 'none';
+  if (bc) bc.style.display = noHabilitado ? 'block' : 'none';
+}
+
 function pintarChecklist(e) {
   const box = document.getElementById('altaChecklist');
   const det = camposFaltantesDet(e);
@@ -1225,8 +1247,7 @@ function pintarChecklist(e) {
       det.map(d => `<span class="chip-falta" onclick="irACampo('${d.target}')">${d.label}</span>`).join('') + '</div>';
     box.style.display = 'block';
   }
-  const obleaReq = document.getElementById('obleaReq');
-  if (obleaReq) obleaReq.style.display = (e.agc === 'si') ? 'inline' : 'none';
+  aplicarAgc(e.agc);
 }
 
 async function refrescarChecklist() {
@@ -1240,6 +1261,7 @@ async function subirDoc(tipo) {
     dni_frente: { input: 'fDniFrente', status: 'dniFrenteStatus', col: 'dni_frente_url' },
     dni_dorso:  { input: 'fDniDorso',  status: 'dniDorsoStatus',  col: 'dni_dorso_url' },
     oblea:      { input: 'fOblea',     status: 'obleaStatus',     col: 'oblea_url' },
+    comprobante: { input: 'fComprobante', status: 'comprobanteStatus', col: 'comprobante_url' },
   }[tipo];
   const inp = document.getElementById(conf.input);
   const st  = conf.status;
@@ -1701,6 +1723,7 @@ function camposFaltantesDet(e) {
   add(!e.lat,             'Ubicación en el mapa',      'mapPrincipalAncla');
   add(!(e.dni_url || (e.dni_frente_url && e.dni_dorso_url)), 'Foto del DNI (frente y dorso)', 'fDniFrente');
   add(e.agc === 'si' && !e.oblea_url, 'Oblea de habilitación', 'fOblea');
+  add((e.agc === 'no' || e.agc === 'no_puede') && !e.comprobante_url, 'Comprobante de domicilio de la sede', 'fComprobante');
   add(!e.logo_url,        'Logo del estudio',          'logoFile');
   const sinCuit = (e.sedes || []).filter(s => !s.cuit || !s.razon_social).length;
   add(sinCuit > 0, `CUIT y titular de ${sinCuit} sede${sinCuit > 1 ? 's' : ''}`, 'sedesList');
@@ -2100,7 +2123,8 @@ function abrirFicha(id) {
       partes.push(await docLink(e.dni_frente_url, 'DNI frente'));
       partes.push(await docLink(e.dni_dorso_url, 'DNI dorso'));
     }
-    partes.push(await docLink(e.oblea_url, 'Oblea sede principal'));
+    if (e.agc === 'si' || e.oblea_url) partes.push(await docLink(e.oblea_url, 'Oblea sede principal'));
+    if (e.agc === 'no' || e.agc === 'no_puede' || e.comprobante_url) partes.push(await docLink(e.comprobante_url, 'Comprobante de domicilio'));
     for (const s of (e.sedes || [])) partes.push(await docLink(s.oblea_url, 'Oblea ' + (s.nombre || 'sede')));
     docsDiv.innerHTML = partes.join(' &nbsp;·&nbsp; ');
   })();
