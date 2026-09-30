@@ -576,7 +576,15 @@
         <input type="text" id="fBarrio" placeholder="Ej: Palermo Hollywood" />
       </div>
       <div>
-        <label>Vencimiento carga matafuego</label>
+        <label>¿Vas a usar el servicio de recarga de matafuegos de CAPIAF? *</label>
+        <select id="fMatafuegoServicio">
+          <option value="">Elegí una opción</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div id="bloqueMatafuegoVto" style="display:none">
+        <label>Próximo vencimiento de la carga *</label>
         <input type="date" id="fMatafuego" />
       </div>
 
@@ -685,7 +693,15 @@
           <input type="text" id="sedeBarrio" placeholder="Ej: Belgrano" />
         </div>
         <div>
-          <label>Vencimiento carga matafuego</label>
+          <label>¿Vas a usar el servicio de recarga de matafuegos en esta sede? *</label>
+          <select id="sedeMatafuegoServicio">
+            <option value="">Elegí una opción</option>
+            <option value="si">Sí</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div id="bloqueSedeMatafuegoVto" style="display:none">
+          <label>Próximo vencimiento de la carga *</label>
           <input type="date" id="sedeMatafuego" />
         </div>
         <div>
@@ -910,7 +926,7 @@ async function onLogin(user) {
 async function loadEstudio() {
   // Si CAPIAF precargó la ficha de este estudio (mismo mail, sin usuario), la reclama antes de crear una nueva
   try { await sb.rpc('reclamar_ficha'); } catch (_) {}
-  const { data: rows } = await sb.from('estudios').select('*, sedes(cuit, razon_social, lat)').eq('user_id', currentUser.id).order('created_at', { ascending: true });
+  const { data: rows } = await sb.from('estudios').select('*, sedes(cuit, razon_social, lat, matafuego_servicio, matafuego_vto)').eq('user_id', currentUser.id).order('created_at', { ascending: true });
   const data = rows && rows.length ? rows[0] : null;
 
   if (data) {
@@ -953,6 +969,8 @@ async function loadEstudio() {
     document.getElementById('fComision').value       = data.comision_directiva ? 'si' : 'no';
     document.getElementById('fWeb').value            = data.web || '';
     document.getElementById('fMatafuego').value      = data.matafuego_vto || '';
+    document.getElementById('fMatafuegoServicio').value = data.matafuego_servicio === true ? 'si' : data.matafuego_servicio === false ? 'no' : '';
+    aplicarMatafuego(document.getElementById('fMatafuegoServicio').value);
     document.getElementById('fMostrarMapa').checked  = data.mostrar_mapa !== false;
     document.getElementById('fRazon').value          = data.razon_social || '';
     document.getElementById('fCuit').value           = fmtCuit(data.cuit);
@@ -985,7 +1003,26 @@ document.addEventListener('input', (ev) => {
 document.addEventListener('DOMContentLoaded', () => {
   const sel = document.getElementById('fAgc');
   if (sel) sel.addEventListener('change', () => aplicarAgc(sel.value));
+  const mat = document.getElementById('fMatafuegoServicio');
+  if (mat) mat.addEventListener('change', () => aplicarMatafuego(mat.value));
+  const matSede = document.getElementById('sedeMatafuegoServicio');
+  if (matSede) matSede.addEventListener('change', () => aplicarMatafuegoSede(matSede.value));
 });
+
+// Muestra el vencimiento solo si el socio va a usar el servicio de recarga.
+function aplicarMatafuego(valor) {
+  const bloque = document.getElementById('bloqueMatafuegoVto');
+  if (!bloque) return;
+  bloque.style.display = valor === 'si' ? 'block' : 'none';
+  if (valor === 'no') document.getElementById('fMatafuego').value = '';
+}
+
+function aplicarMatafuegoSede(valor) {
+  const bloque = document.getElementById('bloqueSedeMatafuegoVto');
+  if (!bloque) return;
+  bloque.style.display = valor === 'si' ? 'block' : 'none';
+  if (valor === 'no') document.getElementById('sedeMatafuego').value = '';
+}
 
 async function saveDatos() {
   const btn = document.getElementById('btnSaveDatos');
@@ -1001,7 +1038,10 @@ async function saveDatos() {
     numero:      document.getElementById('fNumero').value.trim(),
     piso:        document.getElementById('fPiso').value.trim(),
     barrio:      document.getElementById('fBarrio').value.trim(),
-    matafuego_vto: document.getElementById('fMatafuego').value || null,
+    matafuego_servicio: document.getElementById('fMatafuegoServicio').value === 'si' ? true
+                      : document.getElementById('fMatafuegoServicio').value === 'no' ? false : null,
+    matafuego_vto: document.getElementById('fMatafuegoServicio').value === 'si'
+                     ? (document.getElementById('fMatafuego').value || null) : null,
     mostrar_mapa: document.getElementById('fMostrarMapa').checked,
     tipo:        document.getElementById('fTipo').value,
     responsable:     document.getElementById('fResponsable').value.trim(),
@@ -1029,7 +1069,11 @@ async function saveDatos() {
     ['fDireccion', datos.direccion, 'Calle'],
     ['fNumero', datos.numero, 'Número'],
     ['fBarrio', datos.barrio, 'Barrio'],
+    ['fMatafuegoServicio', document.getElementById('fMatafuegoServicio').value, 'Servicio de recarga de matafuegos'],
   ];
+  if (document.getElementById('fMatafuegoServicio').value === 'si' && !datos.matafuego_vto) {
+    obligatorios.push(['fMatafuego', '', 'Próximo vencimiento de la carga del matafuego']);
+  }
   const faltan = [];
   obligatorios.forEach(([id, valor, label]) => {
     if (!valor) { faltan.push({ id, label }); document.getElementById(id).classList.add('campo-error'); }
@@ -1252,7 +1296,7 @@ function pintarChecklist(e) {
 
 async function refrescarChecklist() {
   if (!estudioId) return;
-  const { data } = await sb.from('estudios').select('*, sedes(cuit, razon_social, lat)').eq('id', estudioId).limit(1);
+  const { data } = await sb.from('estudios').select('*, sedes(cuit, razon_social, lat, matafuego_servicio, matafuego_vto)').eq('id', estudioId).limit(1);
   if (data && data[0]) pintarChecklist(data[0]);
 }
 
@@ -1339,9 +1383,18 @@ function renderSedes() {
           <input type="checkbox" ${s.mostrar_mapa === false ? '' : 'checked'} onchange="setMostrarSede('${s.id}', this.checked)" />
           <span style="font-size:.75rem">Mostrar esta sede en el mapa público</span>
         </label>
-        <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem">Vto. matafuego:
+        <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem;flex-wrap:wrap">Servicio de matafuegos:
+          <select style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto"
+                  onchange="setServicioSede('${s.id}', this.value)">
+            <option value=""${s.matafuego_servicio === null || s.matafuego_servicio === undefined ? ' selected' : ''}>Elegir</option>
+            <option value="si"${s.matafuego_servicio === true ? ' selected' : ''}>Sí</option>
+            <option value="no"${s.matafuego_servicio === false ? ' selected' : ''}>No</option>
+          </select>
+          ${s.matafuego_servicio === true ? `Vto.:
           <input type="date" value="${s.matafuego_vto || ''}" style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto"
                  onchange="setVtoSede('${s.id}', this.value)" />
+          ${s.matafuego_vto ? '' : '<span style="color:var(--error);font-weight:600">falta la fecha</span>'}` : ''}
+          ${(s.matafuego_servicio === null || s.matafuego_servicio === undefined) ? '<span style="color:var(--error);font-weight:600">sin responder</span>' : ''}
         </small>
       </div>
       <button type="button" class="btn-editar" onclick="ubicarSedeExistente('${s.id}')">📍 Ubicar</button>
@@ -1416,6 +1469,20 @@ async function setTitularSede(id, campo, valor) {
   setPinStatus('obleaSedeStatus', ok ? '✓ Datos de la sede guardados' : 'No se pudo guardar.', ok ? 'ok' : 'err');
 }
 
+async function setServicioSede(id, valor) {
+  const usa = valor === 'si' ? true : valor === 'no' ? false : null;
+  const patch = { matafuego_servicio: usa };
+  if (usa !== true) patch.matafuego_vto = null;
+  const { data, error } = await sb.from('sedes').update(patch).eq('id', id).select();
+  const ok = !error && data && data.length > 0;
+  if (ok) {
+    const s = sedes.find(x => x.id === id);
+    if (s) { s.matafuego_servicio = usa; if (usa !== true) s.matafuego_vto = null; }
+    renderSedes();
+  }
+  setPinStatus('obleaSedeStatus', ok ? '✓ Guardado' : 'No se pudo guardar.', ok ? 'ok' : 'err');
+}
+
 async function setVtoSede(id, valor) {
   const { data, error } = await sb.from('sedes').update({ matafuego_vto: valor || null }).eq('id', id).select();
   const ok = !error && data && data.length > 0;
@@ -1457,7 +1524,12 @@ async function addSede() {
   if (!sede.razon_social) return showSaveMsg('sedeMsg', 'Indicá el titular de esta sede (nombre y apellido o razón social).', 'err');
   if (!sede.cuit) return showSaveMsg('sedeMsg', 'El CUIT de la sede es obligatorio: lo necesitamos para la cobertura médica.', 'err');
   if (!cuitValido(sede.cuit)) return showSaveMsg('sedeMsg', 'El CUIT de la sede no es válido.', 'err');
-  sede.matafuego_vto = document.getElementById('sedeMatafuego').value || null;
+  const servSede = document.getElementById('sedeMatafuegoServicio').value;
+  if (!servSede) return showSaveMsg('sedeMsg', 'Indicá si vas a usar el servicio de recarga de matafuegos en esta sede.', 'err');
+  if (servSede === 'si' && !document.getElementById('sedeMatafuego').value)
+    return showSaveMsg('sedeMsg', 'Cargá el próximo vencimiento de la carga del matafuego de esta sede.', 'err');
+  sede.matafuego_servicio = servSede === 'si';
+  sede.matafuego_vto = servSede === 'si' ? (document.getElementById('sedeMatafuego').value || null) : null;
   sede.mostrar_mapa = document.getElementById('sedeMostrarMapa').checked;
   const sc = coordsDe('sede');
   if (sc.lat) { sede.lat = sc.lat; sede.lng = sc.lng; }
@@ -1468,7 +1540,8 @@ async function addSede() {
   sedes.push(data);
   renderSedes();
   document.getElementById('sedeForm').classList.remove('open');
-  ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero','sedeRazon','sedeCuit','sedeMatafuego'].forEach(id => document.getElementById(id).value = '');
+  ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero','sedeRazon','sedeCuit','sedeMatafuego','sedeMatafuegoServicio'].forEach(id => document.getElementById(id).value = '');
+  aplicarMatafuegoSede('');
   document.getElementById('sedeMostrarMapa').checked = true;
   document.getElementById('mapSede').classList.remove('visible');
   setPinStatus('pinStatusSede', '', '');
@@ -1701,7 +1774,11 @@ function irAFiltro(filter) {
 function matafuegoProximo(e) {
   const limite = new Date();
   limite.setDate(limite.getDate() + 30);
-  const fechas = [e.matafuego_vto, ...((e.sedes || []).map(s => s.matafuego_vto))].filter(Boolean);
+  // Solo miran vencimiento los domicilios que adhirieron al servicio de recarga.
+  const fechas = [
+    e.matafuego_servicio === true ? e.matafuego_vto : null,
+    ...((e.sedes || []).map(s => s.matafuego_servicio === true ? s.matafuego_vto : null)),
+  ].filter(Boolean);
   return fechas.some(f => new Date(f + 'T00:00:00') <= limite);
 }
 
@@ -1725,11 +1802,19 @@ function camposFaltantesDet(e) {
   add(e.agc === 'si' && !e.oblea_url, 'Oblea de habilitación', 'fOblea');
   add((e.agc === 'no' || e.agc === 'no_puede') && !e.comprobante_url, 'Comprobante de domicilio de la sede', 'fComprobante');
   add(!e.logo_url,        'Logo del estudio',          'logoFile');
+  add(e.matafuego_servicio === null || e.matafuego_servicio === undefined,
+      'Servicio de recarga de matafuegos (sí/no)', 'fMatafuegoServicio');
+  add(e.matafuego_servicio === true && !e.matafuego_vto,
+      'Vencimiento de la carga del matafuego', 'fMatafuego');
   const sedes = e.sedes || [];
   const sinCuit = sedes.filter(s => !s.cuit || !s.razon_social).length;
   add(sinCuit > 0, `CUIT y titular de ${sinCuit} sede${sinCuit > 1 ? 's' : ''} adicional${sinCuit > 1 ? 'es' : ''}`, 'sedesList');
   const sinPin = sedes.filter(s => !s.lat).length;
   add(sinPin > 0, `Ubicación en el mapa de ${sinPin} sede${sinPin > 1 ? 's' : ''} adicional${sinPin > 1 ? 'es' : ''}`, 'sedesList');
+  const sinServ = sedes.filter(s => s.matafuego_servicio === null || s.matafuego_servicio === undefined).length;
+  add(sinServ > 0, `Servicio de matafuegos de ${sinServ} sede${sinServ > 1 ? 's' : ''} adicional${sinServ > 1 ? 'es' : ''}`, 'sedesList');
+  const sinVto = sedes.filter(s => s.matafuego_servicio === true && !s.matafuego_vto).length;
+  add(sinVto > 0, `Vencimiento del matafuego de ${sinVto} sede${sinVto > 1 ? 's' : ''} adicional${sinVto > 1 ? 'es' : ''}`, 'sedesList');
   return f;
 }
 
@@ -2018,6 +2103,9 @@ async function aprobar(id, valor) {
           <option value="no_puede">No puede habilitarlo</option>
         </select>
       </div>
+      <div><label>Servicio de matafuegos</label><select id="mMatafuegoServicio" onchange="document.getElementById('mMatafuego').disabled = this.value !== 'si'">
+        <option value="">Sin responder</option><option value="si">Sí</option><option value="no">No</option>
+      </select></div>
       <div><label>Vto. carga matafuego</label><input type="date" id="mMatafuego" /></div>
       <div><label>Mostrar en el mapa público</label>
         <select id="mMostrarMapa">
@@ -2085,6 +2173,8 @@ function abrirFicha(id) {
   document.getElementById('mInstagram').value   = e.instagram || '';
   document.getElementById('mWeb').value            = e.web || '';
   document.getElementById('mMatafuego').value      = e.matafuego_vto || '';
+  document.getElementById('mMatafuegoServicio').value = e.matafuego_servicio === true ? 'si' : e.matafuego_servicio === false ? 'no' : '';
+  document.getElementById('mMatafuego').disabled   = e.matafuego_servicio !== true;
   document.getElementById('mMostrarMapa').value    = e.mostrar_mapa === false ? 'false' : 'true';
   document.getElementById('mDescripcion').value = e.descripcion || '';
   document.getElementById('mDireccion').value   = e.direccion || '';
@@ -2136,7 +2226,7 @@ function abrirFicha(id) {
   sedesDiv.innerHTML = (e.sedes && e.sedes.length)
     ? e.sedes.map(s => `
         <div class="ficha-sede">
-          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) + (s.razon_social ? ' · ' + esc(s.razon_social) : '') : ' · SIN CUIT'}${s.matafuego_vto ? ' · matafuego vence ' + s.matafuego_vto.split('-').reverse().join('/') : ''}</span>
+          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) + (s.razon_social ? ' · ' + esc(s.razon_social) : '') : ' · SIN CUIT'}${s.matafuego_servicio === true ? (s.matafuego_vto ? ' · matafuego vence ' + s.matafuego_vto.split('-').reverse().join('/') : ' · matafuego SIN FECHA') : s.matafuego_servicio === false ? ' · sin servicio de matafuegos' : ' · matafuego SIN RESPONDER'}</span>
           <button type="button" class="btn-editar" onclick="fichaUbicar('sede','${s.id}')">📍 Pin</button>
         </div>`).join('')
     : '<p class="map-hint" style="margin:0">Sin sedes adicionales.</p>';
@@ -2226,7 +2316,10 @@ async function guardarFicha() {
     telefono:    document.getElementById('mTelefono').value.trim(),
     instagram:   document.getElementById('mInstagram').value.trim(),
     web:         document.getElementById('mWeb').value.trim(),
-    matafuego_vto: document.getElementById('mMatafuego').value || null,
+    matafuego_servicio: document.getElementById('mMatafuegoServicio').value === 'si' ? true
+                      : document.getElementById('mMatafuegoServicio').value === 'no' ? false : null,
+    matafuego_vto: document.getElementById('mMatafuegoServicio').value === 'si'
+                     ? (document.getElementById('mMatafuego').value || null) : null,
     mostrar_mapa: document.getElementById('mMostrarMapa').value === 'true',
     descripcion: document.getElementById('mDescripcion').value.trim(),
     direccion:   document.getElementById('mDireccion').value.trim(),
