@@ -2371,10 +2371,16 @@ async function guardarFicha() {
 // ── EXPORTS PARAMEDIC / CUOTAS ──
 function filasDomicilios(e) {
   const base = { 'N° socio': e.nro_socio || '', 'Estudio': e.nombre || '', 'Teléfono': e.telefono || '', 'Email': e.email || '' };
-  const filas = [{ ...base, 'Sede': 'Sede principal', 'Razón social': e.razon_social || '', 'CUIT': fmtCuit(e.cuit),
+  const filas = [{ ...base, 'Sede': 'Sede principal',
+    'Razón social': e.razon_social || '⚠ FALTA',
+    'CUIT': e.cuit ? fmtCuit(e.cuit) : '⚠ FALTA',
     'Dirección': `${e.direccion || ''} ${e.numero || ''}${e.piso ? ' ' + e.piso : ''}`.trim(), 'Barrio': e.barrio || '' }];
-  for (const s of (e.sedes || [])) filas.push({ ...base, 'Sede': s.nombre || 'Sede', 'Razón social': s.razon_social || e.razon_social || '',
-    'CUIT': fmtCuit(s.cuit || e.cuit), 'Dirección': `${s.direccion || ''} ${s.numero || ''}`.trim(), 'Barrio': s.barrio || '' });
+  // Cada sede se certifica con SU propio CUIT. Si falta, se marca: heredar el del
+  // estudio hacía que Paramedic emitiera el certificado a nombre equivocado.
+  for (const s of (e.sedes || [])) filas.push({ ...base, 'Sede': s.nombre || 'Sede',
+    'Razón social': s.razon_social || '⚠ FALTA',
+    'CUIT': s.cuit ? fmtCuit(s.cuit) : '⚠ FALTA',
+    'Dirección': `${s.direccion || ''} ${s.numero || ''}`.trim(), 'Barrio': s.barrio || '' });
   return filas;
 }
 function descargarXlsx(filas, hoja, nombre) {
@@ -2395,6 +2401,12 @@ function exportNomina() {
     .filter(e => esSocio(e) && e.paramedic_estado === 'activo')
     .sort((a, b) => (parseInt(a.nro_socio) || 9999) - (parseInt(b.nro_socio) || 9999))
     .flatMap(e => filasDomicilios(e).map(f => ({ ...f, 'Alta': e.paramedic_alta || '' })));
+  // Aviso antes de mandarlo: una fila sin CUIT propio = un certificado mal emitido.
+  const incompletas = filas.filter(f => f.CUIT.includes('FALTA') || f['Razón social'].includes('FALTA'));
+  if (incompletas.length && !confirm(
+      `Atención: ${incompletas.length} domicilio${incompletas.length > 1 ? 's' : ''} sin CUIT o titular propio.\n\n` +
+      incompletas.map(f => `• ${f.Estudio} — ${f.Sede}`).join('\n') +
+      `\n\nParamedic no va a poder emitir esos certificados. ¿Descargo igual?`)) return;
   descargarXlsx(filas, 'Nómina', `CAPIAF_Paramedic_nomina_${hoy}.xlsx`);
 }
 function exportNovedades() {
