@@ -1436,6 +1436,7 @@ function renderPedidos(lista) {
         <strong>${p.cantidad} matafuego${p.cantidad > 1 ? 's' : ''} — ${esc(p.sede_nombre || '')}</strong>
         <small>${PEDIDO_LBL[p.estado]} · ${fecha}</small>
         ${p.nota ? `<small>${esc(p.nota)}</small>` : ''}
+        ${p.origen === 'admin' ? '<small>Lo cargó CAPIAF a tu pedido.</small>' : ''}
         ${p.estado === 'solicitado'
           ? '<small style="color:var(--ok)">Ya podés comunicarte con el proveedor: tiene el descuento habilitado.</small>' : ''}
         ${p.nota_proveedor ? `<small>${esc(p.nota_proveedor)}</small>` : ''}
@@ -2190,8 +2191,18 @@ async function aprobar(id, valor) {
       <div class="card-title">Descuentos de compra pedidos por los socios</div>
       <p class="map-hint" style="margin:0 0 .8rem">
         El socio pide el descuento desde su usuario y el proveedor lo ve habilitado al instante.
-        No pasa por acá: esta vista es para seguimiento.
+        Si te lo pide por teléfono o WhatsApp, cargalo vos acá.
       </p>
+      <div class="admin-export" style="margin-bottom:.4rem">
+        <select id="pedEstudio" onchange="pedCargarSedes()" style="width:auto;min-width:200px">
+          <option value="">Elegí el estudio…</option>
+        </select>
+        <select id="pedSede" style="width:auto"><option value="">Sede principal</option></select>
+        <input type="number" id="pedCantidad" value="1" min="1" max="20" style="width:80px" title="Cantidad" />
+        <input type="text" id="pedNota" placeholder="Aclaraciones (opcional)" style="width:auto;min-width:180px" />
+        <button class="btn-editar" onclick="altaPedidoAdmin()">Cargar pedido</button>
+      </div>
+      <span class="save-msg" id="pedMsg"></span>
       <div class="admin-table-wrap">
         <table class="admin-table" id="pedTabla"></table>
       </div>
@@ -2570,7 +2581,45 @@ async function cargarRecargas() {
   pedidosAdmin = p.data || [];
   recargasCargadas = true;
   renderRecargas();
+  pedCargarEstudios();
   renderPedidosAdmin();
+}
+
+function pedCargarEstudios() {
+  const sel = document.getElementById('pedEstudio');
+  if (!sel) return;
+  const activos = allEstudios.filter(e => e.activo !== false)
+    .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+  sel.innerHTML = '<option value="">Elegí el estudio…</option>' +
+    activos.map(e => `<option value="${e.id}">${esc(e.nombre || 'Sin nombre')}${e.nro_socio ? ' (N° ' + esc(e.nro_socio) + ')' : ''}</option>`).join('');
+  pedCargarSedes();
+}
+
+function pedCargarSedes() {
+  const est = allEstudios.find(e => e.id === document.getElementById('pedEstudio').value);
+  const sel = document.getElementById('pedSede');
+  sel.innerHTML = '<option value="">Sede principal</option>' +
+    ((est && est.sedes) || []).map(x => `<option value="${x.id}">${esc(x.nombre || 'Sede')}</option>`).join('');
+}
+
+async function altaPedidoAdmin() {
+  const estudioId = document.getElementById('pedEstudio').value;
+  if (!estudioId) return showSaveMsg('pedMsg', 'Elegí el estudio.', 'err');
+  const cant = parseInt(document.getElementById('pedCantidad').value, 10);
+  if (!cant || cant < 1) return showSaveMsg('pedMsg', 'Indicá la cantidad.', 'err');
+
+  const { error } = await sb.rpc('pedir_matafuego_admin', {
+    p_estudio_id: estudioId,
+    p_sede_id: document.getElementById('pedSede').value || null,
+    p_cantidad: cant,
+    p_nota: document.getElementById('pedNota').value.trim() || null,
+  });
+  if (error) return showSaveMsg('pedMsg', error.message, 'err');
+
+  showSaveMsg('pedMsg', 'Pedido cargado. El proveedor ya lo ve habilitado.', 'ok');
+  document.getElementById('pedNota').value = '';
+  document.getElementById('pedCantidad').value = '1';
+  await cargarRecargas();
 }
 
 function renderPedidosAdmin() {
@@ -2582,13 +2631,14 @@ function renderPedidosAdmin() {
   const f = (d) => d ? d.split('-').reverse().join('/') : '—';
   t.innerHTML = `
     <thead><tr><th>N°</th><th>Estudio</th><th>Domicilio</th><th>Cant.</th>
-      <th>Pedido</th><th>Estado</th><th>Cerrado</th><th>Detalle</th></tr></thead>
+      <th>Pedido</th><th>Origen</th><th>Estado</th><th>Cerrado</th><th>Detalle</th></tr></thead>
     <tbody>${pedidosAdmin.map(p => `<tr>
       <td>${esc(p.nro_socio || '—')}</td>
       <td><strong>${esc(p.estudio_nombre || '')}</strong></td>
       <td><div class="row-sub">${esc(p.sede_nombre || '')}<br>${esc(p.direccion || '')}</div></td>
       <td>${p.cantidad}</td>
       <td>${f(p.solicitado_el)}</td>
+      <td>${p.origen === 'admin' ? '<span class="row-sub">cargado por CAPIAF</span>' : 'el socio'}</td>
       <td>${PEDIDO_LBL[p.estado] || p.estado}</td>
       <td>${f(p.comprado_el || p.anulado_el)}</td>
       <td><div class="row-sub">${esc(p.nota || '')}${p.nota_proveedor ? '<br>' + esc(p.nota_proveedor) : ''}${p.motivo_anulacion ? '<br>' + esc(p.motivo_anulacion) : ''}</div></td>
