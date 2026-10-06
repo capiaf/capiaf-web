@@ -2624,15 +2624,18 @@ async function altaPedidoAdmin() {
 
 function renderPedidosAdmin() {
   const t = document.getElementById('pedTabla');
-  if (!pedidosAdmin.length) {
-    t.innerHTML = '<tr><td style="padding:1.5rem;color:var(--mid)">Todavía no hay pedidos de descuento.</td></tr>';
+  const lista = pedidosAdmin.filter(deActivo);
+  const ocultos = pedidosAdmin.length - lista.length;
+  if (!lista.length) {
+    t.innerHTML = '<tr><td style="padding:1.5rem;color:var(--mid)">Todavía no hay pedidos de descuento' +
+      (ocultos ? ` (${ocultos} de estudios inactivos, no se muestran)` : '') + '.</td></tr>';
     return;
   }
   const f = (d) => d ? d.split('-').reverse().join('/') : '—';
   t.innerHTML = `
     <thead><tr><th>N°</th><th>Estudio</th><th>Domicilio</th><th>Cant.</th>
       <th>Pedido</th><th>Origen</th><th>Estado</th><th>Cerrado</th><th>Detalle</th></tr></thead>
-    <tbody>${pedidosAdmin.map(p => `<tr>
+    <tbody>${lista.map(p => `<tr>
       <td>${esc(p.nro_socio || '—')}</td>
       <td><strong>${esc(p.estudio_nombre || '')}</strong></td>
       <td><div class="row-sub">${esc(p.sede_nombre || '')}<br>${esc(p.direccion || '')}</div></td>
@@ -2650,8 +2653,9 @@ function renderPedidosAdmin() {
 function recargasVisibles() {
   const mes = document.getElementById('mfMes').value || new Date().toISOString().slice(0, 7);
   const estado = document.getElementById('mfEstado').value;
-  const delMes = recargas.filter(r => r.periodo === mes);
-  const atrasadas = recargas.filter(r => r.periodo < mes && r.estado === 'pendiente');
+  const vivas = recargas.filter(deActivo);
+  const delMes = vivas.filter(r => r.periodo === mes);
+  const atrasadas = vivas.filter(r => r.periodo < mes && r.estado === 'pendiente');
   let filas = [...atrasadas, ...delMes];
   if (estado) filas = filas.filter(r => r.estado === estado);
   const paga = document.getElementById('mfPaga').value;
@@ -2664,6 +2668,13 @@ function recargasVisibles() {
 // (01/11/2026 para socios al 01/11/2025, 01/03/2027 para los posteriores).
 // Si el matafuego vence antes, esa recarga no entra en la cuota.
 function sinBeneficio(r) { return r.elegible_desde && r.vencimiento < r.elegible_desde; }
+
+// Las filas de estudios dados de baja se conservan en la base para el
+// historial, pero no entran en el control del mes ni en la factura.
+function deActivo(r) {
+  const e = allEstudios.find(x => x.id === r.estudio_id);
+  return !e || e.activo !== false;
+}
 
 function renderRecargas() {
   const { filas, delMes, atrasadas } = recargasVisibles();
