@@ -307,10 +307,16 @@ function setFiltro(f) {
 
 function vencido(r) { return r.estado === 'pendiente' && r.vencimiento < new Date().toISOString().slice(0,10); }
 
-// El beneficio de recarga incluida arranca en distinta fecha segun la
-// antiguedad del socio. Si el matafuego vence antes, la recarga no entra
-// en la cuota: la paga el estudio.
-function sinBeneficio(r) { return r.elegible_desde && r.vencimiento < r.elegible_desde; }
+// Quien paga la recarga. El estudio tiene UNA incluida por ano, sin
+// importar cuantas sedes tenga, y recien desde que arranca su beneficio.
+function sinBeneficio(r) { return r.cubierta !== true; }
+
+function motivoPago(r) {
+  if (r.cubierta === true) return null;
+  if (r.elegible_desde && r.vencimiento < r.elegible_desde)
+    return `La recarga incluida de este socio arranca el ${fdate(r.elegible_desde)}.`;
+  return 'Este socio ya tiene asignada su recarga incluida del año en otra sede.';
+}
 
 function render() {
   const mes = document.getElementById('mes').value || hoyMes();
@@ -361,7 +367,7 @@ function render() {
           ${r.fecha_recarga ? `<span>Recargado el ${fdate(r.fecha_recarga)}</span>` : ''}
           ${r.factura_nro ? `<span>Factura ${esc(r.factura_nro)}</span>` : ''}
         </div>
-        ${fuera ? `<div class="nota-benef">La recarga de este socio queda incluida en su cuota recién desde el ${fdate(r.elegible_desde)}. Hasta entonces la abona el estudio, con el descuento acordado con CAPIAF.</div>` : ''}
+        ${fuera ? `<div class="nota-benef">${motivoPago(r)} Esta la abona el estudio, con el descuento acordado con CAPIAF.</div>` : ''}
         ${r.observaciones ? `<div class="meta"><span>${esc(r.observaciones)}</span></div>` : ''}
       </div>
       <div class="acciones">

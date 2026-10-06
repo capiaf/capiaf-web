@@ -2622,6 +2622,17 @@ async function altaPedidoAdmin() {
   await cargarRecargas();
 }
 
+async function fijarCubierta(id) {
+  const r = recargas.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`¿Asignar la recarga incluida del año de ${r.estudio_nombre} a ${r.sede_nombre}?\n\n` +
+               'La que estaba marcada pasa a abonarla el socio.')) return;
+  const { error } = await sb.rpc('fijar_recarga_cubierta', { p_id: id });
+  if (error) return showSaveMsg('mfMsg', error.message, 'err');
+  showSaveMsg('mfMsg', 'Listo: esa es ahora la recarga incluida del año.', 'ok');
+  await cargarRecargas();
+}
+
 function renderPedidosAdmin() {
   const t = document.getElementById('pedTabla');
   const lista = pedidosAdmin.filter(deActivo);
@@ -2664,10 +2675,16 @@ function recargasVisibles() {
   return { filas, delMes, atrasadas };
 }
 
-// El beneficio arranca en distinta fecha segun la antiguedad del socio
-// (01/11/2026 para socios al 01/11/2025, 01/03/2027 para los posteriores).
-// Si el matafuego vence antes, esa recarga no entra en la cuota.
-function sinBeneficio(r) { return r.elegible_desde && r.vencimiento < r.elegible_desde; }
+// Quien paga: el estudio tiene UNA recarga incluida por ano, sin importar
+// cuantas sedes tenga, y recien desde que arranca su beneficio.
+function sinBeneficio(r) { return r.cubierta !== true; }
+
+function motivoPago(r) {
+  if (r.cubierta === true) return 'Incluida en la cuota';
+  if (r.elegible_desde && r.vencimiento < r.elegible_desde)
+    return 'beneficio desde ' + r.elegible_desde.split('-').reverse().join('/');
+  return 'ya usó la incluida del año';
+}
 
 // Las filas de estudios dados de baja se conservan en la base para el
 // historial, pero no entran en el control del mes ni en la factura.
@@ -2710,10 +2727,11 @@ function renderRecargas() {
         <td>${r.vencimiento.split('-').reverse().join('/')}${atrasada ? '<div class="row-falta">atrasada</div>' : ''}</td>
         <td>${MF_LBL[r.estado] || r.estado}</td>
         <td>${sinBeneficio(r)
-              ? `<span class="tag" style="background:#efecf7;color:#6b5b95">Abona el cliente</span><div class="row-sub">incluida desde ${r.elegible_desde.split('-').reverse().join('/')}</div>`
-              : (r.elegible_desde
-                  ? `<span class="tag" style="background:#eef4f1;color:var(--pino)">Abona CAPIAF</span>`
-                  : '<span class="row-falta">sin fecha de alta</span>')}</td>
+              ? `<span class="tag" style="background:#efecf7;color:#6b5b95">Abona el cliente</span><div class="row-sub">${motivoPago(r)}</div>` +
+                (r.estado === 'pendiente' && r.anio_beneficio !== null
+                  ? `<button class="btn-editar" style="margin-top:.3rem" onclick="fijarCubierta('${r.id}')">Usar la gratuita acá</button>` : '')
+              : `<span class="tag" style="background:#eef4f1;color:var(--pino)">Abona CAPIAF</span>${
+                  r.cubierta_manual ? '<div class="row-sub">fijada a mano</div>' : ''}`}</td>
         <td>${r.fecha_recarga ? r.fecha_recarga.split('-').reverse().join('/') : '—'}</td>
         <td>${esc(r.factura_nro || '—')}${r.importe ? '<div class="row-sub">$' + Number(r.importe).toLocaleString('es-AR') + '</div>' : ''}</td>
         <td>${r.estado === 'pendiente'
@@ -2763,7 +2781,7 @@ function exportRecargas() {
     'Teléfono': r.telefono || '', 'Vencimiento': r.vencimiento,
     'Estado': MF_LBL[r.estado] || r.estado,
     'Beneficio': sinBeneficio(r) ? 'Abona el cliente con descuento' : 'Abona CAPIAF (incluida en la cuota)',
-    'Beneficio desde': r.elegible_desde || '', 'Fecha de recarga': r.fecha_recarga || '',
+    'Motivo': motivoPago(r), 'Beneficio desde': r.elegible_desde || '', 'Fecha de recarga': r.fecha_recarga || '',
     'Factura': r.factura_nro || '', 'Importe': r.importe || '', 'Observaciones': r.observaciones || '',
   }));
   const mes = document.getElementById('mfMes').value;
