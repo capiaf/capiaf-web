@@ -2034,7 +2034,7 @@ async function aprobar(id, valor) {
           <option value="no_corresponde">No corresponde</option>
         </select>
         <label class="check-linea" style="margin:0"><input type="checkbox" id="mfSoloFuera" onchange="renderRecargas()" />
-          <span style="font-size:.8rem">Solo fuera del beneficio</span></label>
+          <span style="font-size:.8rem">Solo las que abona el cliente</span></label>
         <button class="btn-editar" onclick="cargarRecargas()">Actualizar</button>
         <button class="btn-editar" onclick="exportRecargas()">Exportar mes (Excel)</button>
       </div>
@@ -2458,7 +2458,7 @@ function renderRecargas() {
     `<strong>${delMes.length}</strong> en el mes · ${cuenta('pendiente')} por recargar · ` +
     `<strong>${cuenta('recargado')}</strong> a facturar · ${cuenta('pagado')} facturados` +
     (atrasadas.length ? ` · <span style="color:var(--error)"><strong>${atrasadas.length}</strong> atrasadas de meses anteriores</span>` : '') +
-    (fuera ? ` · <span style="color:#6b5b95"><strong>${fuera}</strong> fuera del beneficio (las paga el estudio)</span>` : '');
+    (fuera ? ` · <span style="color:#6b5b95"><strong>${fuera}</strong> las abona el cliente con descuento</span>` : '');
 
   const t = document.getElementById('mfTabla');
   if (!filas.length) {
@@ -2482,7 +2482,7 @@ function renderRecargas() {
         <td>${r.vencimiento.split('-').reverse().join('/')}${atrasada ? '<div class="row-falta">atrasada</div>' : ''}</td>
         <td>${MF_LBL[r.estado] || r.estado}</td>
         <td>${sinBeneficio(r)
-              ? `<span class="tag" style="background:#efecf7;color:#6b5b95">Desde ${r.elegible_desde.split('-').reverse().join('/')}</span>`
+              ? `<span class="tag" style="background:#efecf7;color:#6b5b95">Abona el cliente</span><div class="row-sub">incluida desde ${r.elegible_desde.split('-').reverse().join('/')}</div>`
               : (r.elegible_desde ? 'Incluida' : '<span class="row-falta">sin fecha de alta</span>')}</td>
         <td>${r.fecha_recarga ? r.fecha_recarga.split('-').reverse().join('/') : '—'}</td>
         <td>${esc(r.factura_nro || '—')}${r.importe ? '<div class="row-sub">$' + Number(r.importe).toLocaleString('es-AR') + '</div>' : ''}</td>
@@ -2532,7 +2532,7 @@ function exportRecargas() {
     'Dirección': r.direccion || '', 'Barrio': r.barrio || '', 'Contacto': r.contacto || '',
     'Teléfono': r.telefono || '', 'Vencimiento': r.vencimiento,
     'Estado': MF_LBL[r.estado] || r.estado,
-    'Beneficio': sinBeneficio(r) ? 'Fuera del beneficio (paga el estudio)' : 'Incluida en la cuota',
+    'Beneficio': sinBeneficio(r) ? 'Abona el cliente con descuento' : 'Incluida en la cuota',
     'Beneficio desde': r.elegible_desde || '', 'Fecha de recarga': r.fecha_recarga || '',
     'Factura': r.factura_nro || '', 'Importe': r.importe || '', 'Observaciones': r.observaciones || '',
   }));

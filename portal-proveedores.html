@@ -266,7 +266,7 @@ function render() {
     <div class="item ${clase}">
       <div class="info">
         <div class="nom">${esc(r.estudio_nombre || '')} <span class="chip ${chip}">${etiqueta}</span>${
-          fuera ? ' <span class="chip sinbenef">Fuera del beneficio</span>' : ''}</div>
+          fuera ? ' <span class="chip sinbenef">Abona el cliente con descuento</span>' : ''}</div>
         <div class="dir">${esc(r.sede_nombre || '')} — ${esc(r.direccion || '')}${r.barrio ? ', ' + esc(r.barrio) : ''}</div>
         <div class="meta">
           <span>Vence: <strong>${fdate(r.vencimiento)}</strong></span>
@@ -275,7 +275,7 @@ function render() {
           ${r.fecha_recarga ? `<span>Recargado el ${fdate(r.fecha_recarga)}</span>` : ''}
           ${r.factura_nro ? `<span>Factura ${esc(r.factura_nro)}</span>` : ''}
         </div>
-        ${fuera ? `<div class="nota-benef">Este socio tiene la recarga incluida recién desde el ${fdate(r.elegible_desde)}. Consultá con CAPIAF antes de hacerla.</div>` : ''}
+        ${fuera ? `<div class="nota-benef">La recarga de este socio queda incluida en su cuota recién desde el ${fdate(r.elegible_desde)}. Hasta entonces la abona el estudio, con el descuento acordado con CAPIAF.</div>` : ''}
         ${r.observaciones ? `<div class="meta"><span>${esc(r.observaciones)}</span></div>` : ''}
       </div>
       <div class="acciones">
