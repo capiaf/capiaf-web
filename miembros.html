@@ -2033,8 +2033,11 @@ async function aprobar(id, valor) {
           <option value="pagado">Facturados</option>
           <option value="no_corresponde">No corresponde</option>
         </select>
-        <label class="check-linea" style="margin:0"><input type="checkbox" id="mfSoloFuera" onchange="renderRecargas()" />
-          <span style="font-size:.8rem">Solo las que abona el cliente</span></label>
+        <select id="mfPaga" onchange="renderRecargas()" style="width:auto">
+          <option value="">Las pague quien las pague</option>
+          <option value="capiaf">Las que abona CAPIAF</option>
+          <option value="cliente">Las que abona el cliente</option>
+        </select>
         <button class="btn-editar" onclick="cargarRecargas()">Actualizar</button>
         <button class="btn-editar" onclick="exportRecargas()">Exportar mes (Excel)</button>
       </div>
@@ -2441,7 +2444,9 @@ function recargasVisibles() {
   const atrasadas = recargas.filter(r => r.periodo < mes && r.estado === 'pendiente');
   let filas = [...atrasadas, ...delMes];
   if (estado) filas = filas.filter(r => r.estado === estado);
-  if (document.getElementById('mfSoloFuera').checked) filas = filas.filter(sinBeneficio);
+  const paga = document.getElementById('mfPaga').value;
+  if (paga === 'cliente') filas = filas.filter(sinBeneficio);
+  else if (paga === 'capiaf') filas = filas.filter(r => r.elegible_desde && !sinBeneficio(r));
   return { filas, delMes, atrasadas };
 }
 
@@ -2453,11 +2458,13 @@ function sinBeneficio(r) { return r.elegible_desde && r.vencimiento < r.elegible
 function renderRecargas() {
   const { filas, delMes, atrasadas } = recargasVisibles();
   const cuenta = (e) => delMes.filter(r => r.estado === e).length;
-  const fuera = delMes.filter(sinBeneficio).length;
+  const fuera  = delMes.filter(sinBeneficio).length;
+  const nuestras = delMes.filter(r => r.elegible_desde && !sinBeneficio(r)).length;
   document.getElementById('mfResumen').innerHTML =
     `<strong>${delMes.length}</strong> en el mes · ${cuenta('pendiente')} por recargar · ` +
     `<strong>${cuenta('recargado')}</strong> a facturar · ${cuenta('pagado')} facturados` +
     (atrasadas.length ? ` · <span style="color:var(--error)"><strong>${atrasadas.length}</strong> atrasadas de meses anteriores</span>` : '') +
+    (nuestras ? ` · <strong>${nuestras}</strong> las abona CAPIAF` : '') +
     (fuera ? ` · <span style="color:#6b5b95"><strong>${fuera}</strong> las abona el cliente con descuento</span>` : '');
 
   const t = document.getElementById('mfTabla');
