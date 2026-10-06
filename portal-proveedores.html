@@ -75,6 +75,15 @@
     .chip.sinbenef   { background:#efecf7; color:#6b5b95; }
     .chip.capiaf     { background:#eef4f1; color:var(--pino); border:1px solid #cfe0d7; }
     .nota-benef { font-size:.78rem; color:#6b5b95; margin-top:.35rem; }
+    .form-recarga { width:100%; margin-top:.9rem; padding-top:.9rem; border-top:1px solid var(--border);
+                    display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap; }
+    .form-recarga > div { display:flex; flex-direction:column; gap:.25rem; }
+    .form-recarga label { margin:0; }
+    .form-recarga input { width:auto; min-width:150px; }
+    .form-recarga .obs { flex:1; min-width:200px; }
+    .form-recarga .obs input { width:100%; }
+    @media (max-width:600px) { .form-recarga > div, .form-recarga .obs { width:100%; }
+                               .form-recarga input { width:100%; } }
     .item .info { flex:1; min-width:240px; }
     .item .nom { font-weight:600; font-size:1rem; }
     .item .dir { font-size:.85rem; color:var(--mid); margin-top:.2rem; }
@@ -372,35 +381,72 @@ function render() {
       </div>
       <div class="acciones">
         ${r.estado === 'pendiente'
-          ? `<button class="btn" onclick="marcar('${r.id}')">Marcar recargado</button>`
+          ? `<button class="btn" onclick="abrirForm('${r.id}')">Marcar recargado</button>`
           : ''}
+        ${r.estado === 'recargado'
+          ? `<button class="btn-sec" onclick="abrirForm('${r.id}')">Corregir fecha</button>
+             <button class="btn-sec" onclick="deshacer('${r.id}')">Deshacer</button>`
+          : ''}
+      </div>
+
+      <div class="form-recarga" id="form-${r.id}" style="display:none">
+        <div>
+          <label for="fecha-${r.id}">Fecha de la recarga</label>
+          <input type="date" id="fecha-${r.id}" value="${r.fecha_recarga || hoyISO()}" max="${hoyISO()}" />
+        </div>
+        <div class="obs">
+          <label for="obs-${r.id}">Observaciones (opcional)</label>
+          <input type="text" id="obs-${r.id}" value="${esc(r.observaciones || '')}" placeholder="Cambio de carta, equipo adicional…" />
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <div style="display:flex;gap:.5rem">
+            <button class="btn" onclick="guardarRecarga('${r.id}', ${r.estado === 'recargado'})">Guardar</button>
+            <button class="btn-sec" onclick="cerrarForm('${r.id}')">Cancelar</button>
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
 }
 
-async function marcar(id) {
-  const r = recargas.find(x => x.id === id);
-  if (!r) return;
-  const fecha = prompt(
-    `Recarga de ${r.estudio_nombre} — ${r.sede_nombre}\n\n` +
-    `Fecha en que se hizo la recarga (dd/mm/aaaa):`,
-    new Date().toLocaleDateString('es-AR'));
-  if (!fecha) return;
+const hoyISO = () => new Date().toISOString().slice(0, 10);
 
-  const m = fecha.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return aviso('panelMsg', 'La fecha tiene que ser dd/mm/aaaa.', 'err');
-  const iso = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-  if (iso > new Date().toISOString().slice(0,10))
-    return aviso('panelMsg', 'La fecha de recarga no puede ser futura.', 'err');
+function abrirForm(id) {
+  document.querySelectorAll('[id^="form-"]').forEach(f => { f.style.display = 'none'; });
+  const f = document.getElementById('form-' + id);
+  f.style.display = 'flex';
+  document.getElementById('fecha-' + id).focus();
+}
 
-  const obs = prompt('Observaciones (opcional). Por ejemplo: cambio de carta, equipo adicional.', '') || null;
+function cerrarForm(id) { document.getElementById('form-' + id).style.display = 'none'; }
 
-  const { error } = await sb.rpc('marcar_recargado', { p_id: id, p_fecha: iso, p_obs: obs });
+async function guardarRecarga(id, yaEstaba) {
+  const fecha = document.getElementById('fecha-' + id).value;
+  const obs = document.getElementById('obs-' + id).value.trim() || null;
+  if (!fecha) return aviso('panelMsg', 'Elegí la fecha en que se hizo la recarga.', 'err');
+  if (fecha > hoyISO()) return aviso('panelMsg', 'La fecha de recarga no puede ser futura.', 'err');
+
+  const { error } = yaEstaba
+    ? await sb.rpc('corregir_fecha_recarga', { p_id: id, p_fecha: fecha, p_obs: obs })
+    : await sb.rpc('marcar_recargado',       { p_id: id, p_fecha: fecha, p_obs: obs });
   if (error) return aviso('panelMsg', 'No se pudo guardar: ' + error.message, 'err');
-  aviso('panelMsg', 'Recarga registrada. El próximo vencimiento se movió un año.', 'ok');
+
+  aviso('panelMsg', yaEstaba ? 'Fecha corregida.' : 'Recarga registrada. El próximo vencimiento se movió un año.', 'ok');
   await cargar();
 }
+
+async function deshacer(id) {
+  const r = recargas.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`¿Deshacer la recarga de ${r.estudio_nombre} — ${r.sede_nombre}?\n\n` +
+               'Vuelve a quedar pendiente y el vencimiento se restituye al original.')) return;
+  const { error } = await sb.rpc('desmarcar_recargado', { p_id: id });
+  if (error) return aviso('panelMsg', 'No se pudo deshacer: ' + error.message, 'err');
+  aviso('panelMsg', 'Listo, volvió a quedar pendiente.', 'ok');
+  await cargar();
+}
+
 </script>
 </body>
 </html>
