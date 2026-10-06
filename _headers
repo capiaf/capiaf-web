@@ -10,6 +10,12 @@
 /miembros.html
   Cache-Control: no-cache
 
+/matafuegos
+  Cache-Control: no-cache
+
+/matafuegos.html
+  Cache-Control: no-cache
+
 /mapa
   Cache-Control: no-cache
 

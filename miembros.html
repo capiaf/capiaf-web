@@ -1763,7 +1763,9 @@ function setAdminTab(tab) {
   document.querySelectorAll('.admin-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.getElementById('tabEstudios').style.display   = tab === 'estudios'   ? '' : 'none';
   document.getElementById('tabCuotas').style.display     = tab === 'cuotas'     ? '' : 'none';
+  document.getElementById('tabMatafuegos').style.display = tab === 'matafuegos' ? '' : 'none';
   document.getElementById('tabBeneficios').style.display = tab === 'beneficios' ? '' : 'none';
+  if (tab === 'matafuegos' && !recargasCargadas) cargarRecargas();
 }
 
 function irAFiltro(filter) {
@@ -1962,6 +1964,7 @@ async function aprobar(id, valor) {
   <div class="admin-tabs">
     <button class="admin-tab active" data-tab="estudios" onclick="setAdminTab('estudios')">Estudios</button>
     <button class="admin-tab" data-tab="cuotas" onclick="setAdminTab('cuotas')">Cuotas y Paramedic</button>
+    <button class="admin-tab" data-tab="matafuegos" onclick="setAdminTab('matafuegos')">Matafuegos</button>
     <button class="admin-tab" data-tab="beneficios" onclick="setAdminTab('beneficios')">Beneficios</button>
   </div>
 
@@ -2009,6 +2012,50 @@ async function aprobar(id, valor) {
         <button class="btn-editar" onclick="irAFiltro('param_activo')">Con Paramedic</button>
         <button class="btn-editar" onclick="irAFiltro('matafuego')">Matafuegos ≤30 días</button>
         <button class="btn-editar" onclick="irAFiltro('sinusuario')">Sin usuario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATAFUEGOS -->
+  <div id="tabMatafuegos" style="display:none">
+    <div class="card">
+      <div class="card-title">Recargas de matafuegos</div>
+      <p class="map-hint" style="margin:0 0 .8rem">
+        El proveedor marca cada recarga desde <strong>pilates.org.ar/matafuegos</strong>.
+        A fin de mes controlás acá, le pedís la factura y marcás los pagados.
+      </p>
+      <div class="admin-export">
+        <input type="month" id="mfMes" onchange="renderRecargas()" />
+        <select id="mfEstado" onchange="renderRecargas()" style="width:auto">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Por recargar</option>
+          <option value="recargado">Recargados (a facturar)</option>
+          <option value="pagado">Facturados</option>
+          <option value="no_corresponde">No corresponde</option>
+        </select>
+        <button class="btn-editar" onclick="cargarRecargas()">Actualizar</button>
+        <button class="btn-editar" onclick="exportRecargas()">Exportar mes (Excel)</button>
+      </div>
+      <div id="mfResumen" class="map-hint" style="margin:.8rem 0 0"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Liquidación del mes</div>
+      <p class="map-hint" style="margin:0 0 .8rem">
+        Seleccioná las recargas que entran en la factura, cargá el número y el importe total, y quedan marcadas como pagadas.
+      </p>
+      <div class="admin-export">
+        <input type="text" id="mfFactura" placeholder="N° de factura" style="width:auto" />
+        <input type="date" id="mfFactFecha" style="width:auto" />
+        <input type="number" id="mfImporte" placeholder="Importe total" style="width:auto" step="0.01" />
+        <button class="btn-editar" onclick="liquidarRecargas()">Marcar seleccionadas como pagadas</button>
+      </div>
+      <span class="save-msg" id="mfMsg"></span>
+    </div>
+
+    <div class="card">
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="mfTabla"></table>
       </div>
     </div>
   </div>
@@ -2366,6 +2413,116 @@ async function guardarFicha() {
     renderAdmin();
     cerrarFicha();
   }
+}
+
+// ── MATAFUEGOS: RECARGAS ──
+let recargas = [], recargasCargadas = false;
+const MF_LBL = { pendiente:'Por recargar', recargado:'Recargado', pagado:'Facturado', no_corresponde:'No corresponde' };
+
+async function cargarRecargas() {
+  const mes = document.getElementById('mfMes');
+  if (!mes.value) mes.value = new Date().toISOString().slice(0, 7);
+  try { await sb.rpc('asegurar_recargas'); } catch (_) {}
+  const { data, error } = await sb.from('recargas_matafuego').select('*').order('vencimiento');
+  if (error) { showSaveMsg('mfMsg', 'No se pudo cargar: ' + error.message, 'err'); return; }
+  recargas = data || [];
+  recargasCargadas = true;
+  renderRecargas();
+}
+
+// El mes elegido más todo lo atrasado que siga pendiente: una carta vencida
+// no deja de necesitar recarga porque pasó el mes.
+function recargasVisibles() {
+  const mes = document.getElementById('mfMes').value || new Date().toISOString().slice(0, 7);
+  const estado = document.getElementById('mfEstado').value;
+  const delMes = recargas.filter(r => r.periodo === mes);
+  const atrasadas = recargas.filter(r => r.periodo < mes && r.estado === 'pendiente');
+  let filas = [...atrasadas, ...delMes];
+  if (estado) filas = filas.filter(r => r.estado === estado);
+  return { filas, delMes, atrasadas };
+}
+
+function renderRecargas() {
+  const { filas, delMes, atrasadas } = recargasVisibles();
+  const cuenta = (e) => delMes.filter(r => r.estado === e).length;
+  document.getElementById('mfResumen').innerHTML =
+    `<strong>${delMes.length}</strong> en el mes · ${cuenta('pendiente')} por recargar · ` +
+    `<strong>${cuenta('recargado')}</strong> a facturar · ${cuenta('pagado')} facturados` +
+    (atrasadas.length ? ` · <span style="color:var(--error)"><strong>${atrasadas.length}</strong> atrasadas de meses anteriores</span>` : '');
+
+  const t = document.getElementById('mfTabla');
+  if (!filas.length) {
+    t.innerHTML = '<tr><td style="padding:1.5rem;color:var(--mid)">No hay recargas para este mes.</td></tr>';
+    return;
+  }
+  const hoy = new Date().toISOString().slice(0, 10);
+  t.innerHTML = `
+    <thead><tr>
+      <th style="width:32px"><input type="checkbox" onchange="mfTodos(this.checked)" /></th>
+      <th>N°</th><th>Estudio</th><th>Sede / Dirección</th><th>Vence</th>
+      <th>Estado</th><th>Recargado</th><th>Factura</th><th></th>
+    </tr></thead>
+    <tbody>${filas.map(r => {
+      const atrasada = r.estado === 'pendiente' && r.vencimiento < hoy;
+      return `<tr>
+        <td>${r.estado === 'recargado' ? `<input type="checkbox" class="mf-check" value="${r.id}" />` : ''}</td>
+        <td>${esc(r.nro_socio || '—')}</td>
+        <td><strong>${esc(r.estudio_nombre || '')}</strong></td>
+        <td><div class="row-sub">${esc(r.sede_nombre || '')}<br>${esc(r.direccion || '')}${r.barrio ? ', ' + esc(r.barrio) : ''}</div></td>
+        <td>${r.vencimiento.split('-').reverse().join('/')}${atrasada ? '<div class="row-falta">atrasada</div>' : ''}</td>
+        <td>${MF_LBL[r.estado] || r.estado}</td>
+        <td>${r.fecha_recarga ? r.fecha_recarga.split('-').reverse().join('/') : '—'}</td>
+        <td>${esc(r.factura_nro || '—')}${r.importe ? '<div class="row-sub">$' + Number(r.importe).toLocaleString('es-AR') + '</div>' : ''}</td>
+        <td>${r.estado === 'pendiente'
+              ? `<button class="btn-editar" onclick="mfNoCorresponde('${r.id}')">No corresponde</button>` : ''}</td>
+      </tr>`;
+    }).join('')}</tbody>`;
+}
+
+function mfTodos(v) { document.querySelectorAll('.mf-check').forEach(c => { c.checked = v; }); }
+
+async function liquidarRecargas() {
+  const ids = [...document.querySelectorAll('.mf-check:checked')].map(c => c.value);
+  if (!ids.length) return showSaveMsg('mfMsg', 'Seleccioná al menos una recarga ya hecha.', 'err');
+  const factura = document.getElementById('mfFactura').value.trim();
+  const fecha   = document.getElementById('mfFactFecha').value;
+  const importe = document.getElementById('mfImporte').value;
+  if (!factura) return showSaveMsg('mfMsg', 'Cargá el número de factura.', 'err');
+  if (!fecha)   return showSaveMsg('mfMsg', 'Cargá la fecha de la factura.', 'err');
+  if (!confirm(`Marcar ${ids.length} recarga${ids.length > 1 ? 's' : ''} como pagadas con la factura ${factura}?`)) return;
+
+  const { data, error } = await sb.rpc('marcar_pagado', {
+    p_ids: ids, p_factura: factura, p_factura_fecha: fecha,
+    p_importe: importe ? Number(importe) : null,
+  });
+  if (error) return showSaveMsg('mfMsg', 'No se pudo guardar: ' + error.message, 'err');
+  showSaveMsg('mfMsg', `${data} recarga${data === 1 ? '' : 's'} marcada${data === 1 ? '' : 's'} como pagada${data === 1 ? '' : 's'}.`, 'ok');
+  document.getElementById('mfFactura').value = '';
+  document.getElementById('mfImporte').value = '';
+  await cargarRecargas();
+}
+
+async function mfNoCorresponde(id) {
+  const motivo = prompt('¿Por qué no corresponde esta recarga? (queda registrado)');
+  if (motivo === null) return;
+  const { error } = await sb.from('recargas_matafuego')
+    .update({ estado: 'no_corresponde', observaciones: motivo || null })
+    .eq('id', id).select();
+  if (error) return showSaveMsg('mfMsg', 'No se pudo guardar: ' + error.message, 'err');
+  await cargarRecargas();
+}
+
+function exportRecargas() {
+  const { filas } = recargasVisibles();
+  const datos = filas.map(r => ({
+    'N° socio': r.nro_socio || '', 'Estudio': r.estudio_nombre || '', 'Sede': r.sede_nombre || '',
+    'Dirección': r.direccion || '', 'Barrio': r.barrio || '', 'Contacto': r.contacto || '',
+    'Teléfono': r.telefono || '', 'Vencimiento': r.vencimiento,
+    'Estado': MF_LBL[r.estado] || r.estado, 'Fecha de recarga': r.fecha_recarga || '',
+    'Factura': r.factura_nro || '', 'Importe': r.importe || '', 'Observaciones': r.observaciones || '',
+  }));
+  const mes = document.getElementById('mfMes').value;
+  descargarXlsx(datos, 'Recargas', `CAPIAF_matafuegos_${mes}.xlsx`);
 }
 
 // ── EXPORTS PARAMEDIC / CUOTAS ──

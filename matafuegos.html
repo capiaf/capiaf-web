@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Recargas de Matafuegos — CAPIAF</title>
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --pino:#2E4238; --salvia:#6E9080; --lino:#F3F0E9; --tinta:#232A26;
+      --mid:#7A8A82; --white:#fff; --border:#DDD8CE; --radius:16px;
+      --error:#c0392b; --ok:#27ae60; --alerta:#b7791f;
+    }
+    body { font-family:'Jost',system-ui,sans-serif; background:var(--lino); color:var(--tinta);
+           min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+    nav { background:var(--pino); color:#fff; padding:.9rem 1.5rem; display:flex;
+          align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+    nav .marca { display:flex; align-items:center; gap:.7rem; font-weight:600; letter-spacing:3px; font-size:.95rem; }
+    nav .marca img { width:34px; height:34px; }
+    nav .derecha { display:flex; align-items:center; gap:1rem; font-size:.82rem; }
+    nav button { background:transparent; border:1px solid rgba(255,255,255,.4); color:#fff;
+                 padding:.35rem .9rem; border-radius:50px; font-family:inherit; font-size:.8rem; cursor:pointer; }
+    nav button:hover { background:rgba(255,255,255,.12); }
+
+    .wrap { max-width:1100px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+    h1 { font-family:'Playfair Display',Georgia,serif; font-weight:400; font-size:2rem; color:var(--pino); }
+    .sub { color:var(--mid); font-size:.9rem; margin-top:.3rem; }
+
+    /* login */
+    .auth { min-height:80vh; display:flex; align-items:center; justify-content:center; padding:1.5rem; }
+    .auth-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius);
+                 padding:2.2rem; width:100%; max-width:400px; }
+    label { display:block; font-size:.78rem; font-weight:500; color:var(--mid);
+            text-transform:uppercase; letter-spacing:1px; margin-bottom:.35rem; }
+    input, select, textarea { width:100%; padding:.7rem .9rem; border:1px solid var(--border);
+            border-radius:10px; font-family:inherit; font-size:.92rem; background:var(--white); color:var(--tinta); }
+    input:focus, select:focus, textarea:focus { outline:none; border-color:var(--salvia); }
+    .campo { margin-bottom:1rem; }
+    .btn { background:var(--pino); color:#fff; border:none; padding:.75rem 1.6rem; border-radius:50px;
+           font-family:inherit; font-size:.9rem; font-weight:500; cursor:pointer; }
+    .btn:hover { background:#24352c; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-sec { background:var(--white); color:var(--pino); border:1px solid var(--border);
+               padding:.45rem 1rem; border-radius:50px; font-family:inherit; font-size:.8rem; cursor:pointer; }
+    .btn-sec:hover { border-color:var(--salvia); }
+    .btn-sec[aria-pressed="true"] { background:var(--pino); color:#fff; border-color:var(--pino); }
+
+    .msg { padding:.7rem .9rem; border-radius:10px; font-size:.85rem; margin-top:.8rem; display:none; }
+    .msg.err { background:#fdecea; color:var(--error); display:block; }
+    .msg.ok  { background:#eafaf1; color:var(--ok); display:block; }
+
+    .barra { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; margin:1.5rem 0 1rem; }
+    .barra input[type="month"] { width:auto; }
+
+    .tarjetas { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+    .tarjeta { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:1.1rem 1.2rem; }
+    .tarjeta .n { font-family:'Playfair Display',serif; font-size:1.9rem; color:var(--pino); line-height:1; }
+    .tarjeta .t { font-size:.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--mid); margin-top:.4rem; }
+
+    .lista { display:flex; flex-direction:column; gap:.8rem; }
+    .item { background:var(--white); border:1px solid var(--border); border-left:4px solid var(--border);
+            border-radius:var(--radius); padding:1.1rem 1.2rem; display:flex; gap:1rem;
+            align-items:flex-start; flex-wrap:wrap; }
+    .item.pendiente  { border-left-color:var(--alerta); }
+    .item.vencido    { border-left-color:var(--error); }
+    .item.recargado  { border-left-color:var(--salvia); }
+    .item.pagado     { border-left-color:var(--ok); }
+    .item .info { flex:1; min-width:240px; }
+    .item .nom { font-weight:600; font-size:1rem; }
+    .item .dir { font-size:.85rem; color:var(--mid); margin-top:.2rem; }
+    .item .meta { font-size:.8rem; color:var(--mid); margin-top:.35rem; display:flex; gap:.9rem; flex-wrap:wrap; }
+    .item .acciones { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+
+    .chip { display:inline-block; font-size:.7rem; font-weight:600; text-transform:uppercase;
+            letter-spacing:.5px; padding:.2rem .6rem; border-radius:50px; }
+    .chip.pendiente { background:#fdf6ec; color:var(--alerta); }
+    .chip.vencido   { background:#fdecea; color:var(--error); }
+    .chip.recargado { background:#eef4f1; color:var(--pino); }
+    .chip.pagado    { background:#eafaf1; color:var(--ok); }
+
+    .vacio { background:var(--white); border:1px dashed var(--border); border-radius:var(--radius);
+             padding:2.5rem 1.5rem; text-align:center; color:var(--mid); font-size:.9rem; }
+    a.tel { color:var(--pino); text-decoration:none; border-bottom:1px solid var(--border); }
+    @media (max-width:600px) { .item .acciones { width:100%; } .wrap { padding:1.5rem 1rem 3rem; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="marca">
+    <img src="capiaf-isologo-reverso-1024.png" alt="CAPIAF" />
+    <span>CAPIAF</span>
+  </div>
+  <div class="derecha">
+    <span id="navUser"></span>
+    <button id="btnLogout" style="display:none" onclick="salir()">Salir</button>
+  </div>
+</nav>
+
+<!-- LOGIN -->
+<div class="auth" id="authScreen">
+  <div class="auth-card">
+    <h1 style="font-size:1.5rem">Recargas de matafuegos</h1>
+    <p class="sub" style="margin-bottom:1.5rem">Acceso para el proveedor del servicio.</p>
+    <div class="campo"><label>Email</label><input type="email" id="lEmail" autocomplete="username" /></div>
+    <div class="campo"><label>Contraseña</label><input type="password" id="lPass" autocomplete="current-password" /></div>
+    <button class="btn" style="width:100%" id="btnLogin" onclick="entrar()">Ingresar</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div class="wrap" id="panel" style="display:none">
+  <h1>Recargas de matafuegos</h1>
+  <p class="sub" id="panelSub"></p>
+
+  <div class="tarjetas">
+    <div class="tarjeta"><div class="n" id="cPend">—</div><div class="t">Por recargar</div></div>
+    <div class="tarjeta"><div class="n" id="cVenc">—</div><div class="t">Vencidos</div></div>
+    <div class="tarjeta"><div class="n" id="cRec">—</div><div class="t">Recargados</div></div>
+    <div class="tarjeta"><div class="n" id="cPag">—</div><div class="t">Facturados</div></div>
+  </div>
+
+  <div class="barra">
+    <label style="margin:0">Mes</label>
+    <input type="month" id="mes" onchange="render()" />
+    <button class="btn-sec" id="fTodos"     aria-pressed="true"  onclick="setFiltro('todos')">Todos</button>
+    <button class="btn-sec" id="fPendiente" aria-pressed="false" onclick="setFiltro('pendiente')">Por recargar</button>
+    <button class="btn-sec" id="fRecargado" aria-pressed="false" onclick="setFiltro('recargado')">Recargados</button>
+    <button class="btn-sec" id="fAtraso"    aria-pressed="false" onclick="setFiltro('atraso')">Atrasados</button>
+  </div>
+
+  <div class="msg" id="panelMsg"></div>
+  <div class="lista" id="lista"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://rpxckpqptdgkkwaqtgzz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_QqQ4vWOitcfzNREsG3SoHA_rJAkTMDQ';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let recargas = [], filtro = 'todos', proveedor = null;
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const fdate = (d) => d ? d.split('-').reverse().join('/') : '';
+const hoyMes = () => new Date().toISOString().slice(0, 7);
+
+function aviso(id, texto, clase) {
+  const el = document.getElementById(id);
+  el.textContent = texto; el.className = 'msg ' + clase;
+  if (clase === 'ok') setTimeout(() => { el.className = 'msg'; }, 4000);
+}
+
+// ── SESIÓN ──
+async function entrar() {
+  const b = document.getElementById('btnLogin');
+  b.disabled = true; b.textContent = 'Ingresando...';
+  const { error } = await sb.auth.signInWithPassword({
+    email: document.getElementById('lEmail').value.trim(),
+    password: document.getElementById('lPass').value,
+  });
+  b.disabled = false; b.textContent = 'Ingresar';
+  if (error) aviso('loginMsg', 'No pudimos ingresar. Revisá el email y la contraseña.', 'err');
+}
+
+async function salir() { await sb.auth.signOut(); location.reload(); }
+
+sb.auth.onAuthStateChange((_e, session) => {
+  if (session && session.user) iniciar(session.user);
+});
+
+async function iniciar(user) {
+  document.getElementById('navUser').textContent = user.email;
+
+  // Vincula la cuenta recién creada con la ficha del proveedor (por email).
+  try { await sb.rpc('vincular_proveedor'); } catch (_) {}
+
+  const { data: prov } = await sb.from('proveedores').select('*').eq('user_id', user.id).maybeSingle();
+  if (!prov || !prov.activo) {
+    aviso('loginMsg', 'Esta cuenta no está habilitada como proveedor. Escribinos a info@pilates.org.ar.', 'err');
+    await sb.auth.signOut();
+    return;
+  }
+  proveedor = prov;
+
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('panel').style.display = 'block';
+  document.getElementById('btnLogout').style.display = 'inline-block';
+  document.getElementById('panelSub').textContent = prov.nombre;
+  document.getElementById('mes').value = hoyMes();
+
+  await cargar();
+}
+
+// ── DATOS ──
+async function cargar() {
+  try { await sb.rpc('asegurar_recargas'); } catch (_) {}
+  const { data, error } = await sb.from('recargas_matafuego')
+    .select('*').order('vencimiento', { ascending: true });
+  if (error) return aviso('panelMsg', 'No pudimos cargar el listado.', 'err');
+  recargas = data || [];
+  render();
+}
+
+function setFiltro(f) {
+  filtro = f;
+  ['todos','pendiente','recargado','atraso'].forEach(k => {
+    const b = document.getElementById('f' + k.charAt(0).toUpperCase() + k.slice(1));
+    if (b) b.setAttribute('aria-pressed', String(k === f));
+  });
+  render();
+}
+
+function vencido(r) { return r.estado === 'pendiente' && r.vencimiento < new Date().toISOString().slice(0,10); }
+
+function render() {
+  const mes = document.getElementById('mes').value || hoyMes();
+
+  // El mes elegido, más todo lo atrasado que siga pendiente: una carta
+  // vencida no deja de necesitar recarga porque cambió el mes.
+  const delMes = recargas.filter(r => r.periodo === mes);
+  const atrasados = recargas.filter(r => r.periodo < mes && r.estado === 'pendiente');
+
+  document.getElementById('cPend').textContent = delMes.filter(r => r.estado === 'pendiente').length;
+  document.getElementById('cVenc').textContent = atrasados.length;
+  document.getElementById('cRec').textContent  = delMes.filter(r => r.estado === 'recargado').length;
+  document.getElementById('cPag').textContent  = delMes.filter(r => r.estado === 'pagado').length;
+
+  let filas;
+  if (filtro === 'atraso')          filas = atrasados;
+  else if (filtro === 'pendiente')  filas = [...atrasados, ...delMes.filter(r => r.estado === 'pendiente')];
+  else if (filtro === 'recargado')  filas = delMes.filter(r => r.estado === 'recargado');
+  else                              filas = [...atrasados, ...delMes];
+
+  const lista = document.getElementById('lista');
+  if (!filas.length) {
+    lista.innerHTML = '<div class="vacio">No hay recargas para mostrar en este mes.</div>';
+    return;
+  }
+
+  lista.innerHTML = filas.map(r => {
+    const venc = vencido(r);
+    const clase = venc ? 'vencido' : r.estado;
+    const chip = venc ? 'vencido' : r.estado;
+    const etiqueta = venc ? 'Vencido' : ({ pendiente:'Por recargar', recargado:'Recargado',
+                      pagado:'Facturado', no_corresponde:'No corresponde' }[r.estado] || r.estado);
+    const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono)}">${esc(r.telefono)}</a>` : '—';
+    return `
+    <div class="item ${clase}">
+      <div class="info">
+        <div class="nom">${esc(r.estudio_nombre || '')} <span class="chip ${chip}">${etiqueta}</span></div>
+        <div class="dir">${esc(r.sede_nombre || '')} — ${esc(r.direccion || '')}${r.barrio ? ', ' + esc(r.barrio) : ''}</div>
+        <div class="meta">
+          <span>Vence: <strong>${fdate(r.vencimiento)}</strong></span>
+          <span>Contacto: ${esc(r.contacto || '—')}</span>
+          <span>Tel: ${tel}</span>
+          ${r.fecha_recarga ? `<span>Recargado el ${fdate(r.fecha_recarga)}</span>` : ''}
+          ${r.factura_nro ? `<span>Factura ${esc(r.factura_nro)}</span>` : ''}
+        </div>
+        ${r.observaciones ? `<div class="meta"><span>${esc(r.observaciones)}</span></div>` : ''}
+      </div>
+      <div class="acciones">
+        ${r.estado === 'pendiente'
+          ? `<button class="btn" onclick="marcar('${r.id}')">Marcar recargado</button>`
+          : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function marcar(id) {
+  const r = recargas.find(x => x.id === id);
+  if (!r) return;
+  const fecha = prompt(
+    `Recarga de ${r.estudio_nombre} — ${r.sede_nombre}\n\n` +
+    `Fecha en que se hizo la recarga (dd/mm/aaaa):`,
+    new Date().toLocaleDateString('es-AR'));
+  if (!fecha) return;
+
+  const m = fecha.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return aviso('panelMsg', 'La fecha tiene que ser dd/mm/aaaa.', 'err');
+  const iso = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  if (iso > new Date().toISOString().slice(0,10))
+    return aviso('panelMsg', 'La fecha de recarga no puede ser futura.', 'err');
+
+  const obs = prompt('Observaciones (opcional). Por ejemplo: cambio de carta, equipo adicional.', '') || null;
+
+  const { error } = await sb.rpc('marcar_recargado', { p_id: id, p_fecha: iso, p_obs: obs });
+  if (error) return aviso('panelMsg', 'No se pudo guardar: ' + error.message, 'err');
+  aviso('panelMsg', 'Recarga registrada. El próximo vencimiento se movió un año.', 'ok');
+  await cargar();
+}
+</script>
+</body>
+</html>
