@@ -10,10 +10,10 @@
 /miembros.html
   Cache-Control: no-cache
 
-/proveedores
+/portal-proveedores
   Cache-Control: no-cache
 
-/proveedores.html
+/portal-proveedores.html
   Cache-Control: no-cache
 
 /mapa
