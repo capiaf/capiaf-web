@@ -307,15 +307,15 @@ function setFiltro(f) {
 
 function vencido(r) { return r.estado === 'pendiente' && r.vencimiento < new Date().toISOString().slice(0,10); }
 
-// Quien paga la recarga. El estudio tiene UNA incluida por ano, sin
-// importar cuantas sedes tenga, y recien desde que arranca su beneficio.
+// Quien paga la recarga. La cuota incluye una por SEDE y por ano, desde
+// que arranca el beneficio de ese socio.
 function sinBeneficio(r) { return r.cubierta !== true; }
 
 function motivoPago(r) {
   if (r.cubierta === true) return null;
   if (r.elegible_desde && r.vencimiento < r.elegible_desde)
     return `La recarga incluida de este socio arranca el ${fdate(r.elegible_desde)}.`;
-  return 'Este socio ya tiene asignada su recarga incluida del año en otra sede.';
+  return 'Esta sede ya usó su recarga incluida de este año.';
 }
 
 function render() {
