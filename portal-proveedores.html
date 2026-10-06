@@ -73,6 +73,7 @@
         .item.pagado     { border-left-color:var(--ok); }
     .item.sinbenef   { border-left-color:#9b8bbf; background:#faf9fd; }
     .chip.sinbenef   { background:#efecf7; color:#6b5b95; }
+    .chip.capiaf     { background:#eef4f1; color:var(--pino); border:1px solid #cfe0d7; }
     .nota-benef { font-size:.78rem; color:#6b5b95; margin-top:.35rem; }
     .item .info { flex:1; min-width:240px; }
     .item .nom { font-weight:600; font-size:1rem; }
@@ -256,7 +257,8 @@ function render() {
 
   lista.innerHTML = filas.map(r => {
     const venc = vencido(r);
-    const fuera = sinBeneficio(r) && r.estado === 'pendiente';
+    const pendiente = r.estado === 'pendiente';
+    const fuera = sinBeneficio(r) && pendiente;
     const clase = fuera ? 'sinbenef' : (venc ? 'vencido' : r.estado);
     const chip = venc ? 'vencido' : r.estado;
     const etiqueta = venc ? 'Vencido' : ({ pendiente:'Por recargar', recargado:'Recargado',
@@ -266,7 +268,9 @@ function render() {
     <div class="item ${clase}">
       <div class="info">
         <div class="nom">${esc(r.estudio_nombre || '')} <span class="chip ${chip}">${etiqueta}</span>${
-          fuera ? ' <span class="chip sinbenef">Abona el cliente con descuento</span>' : ''}</div>
+          pendiente ? (fuera
+            ? ' <span class="chip sinbenef">Abona el cliente con descuento</span>'
+            : ' <span class="chip capiaf">Abona CAPIAF</span>') : ''}</div>
         <div class="dir">${esc(r.sede_nombre || '')} — ${esc(r.direccion || '')}${r.barrio ? ', ' + esc(r.barrio) : ''}</div>
         <div class="meta">
           <span>Vence: <strong>${fdate(r.vencimiento)}</strong></span>

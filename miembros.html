@@ -2483,7 +2483,9 @@ function renderRecargas() {
         <td>${MF_LBL[r.estado] || r.estado}</td>
         <td>${sinBeneficio(r)
               ? `<span class="tag" style="background:#efecf7;color:#6b5b95">Abona el cliente</span><div class="row-sub">incluida desde ${r.elegible_desde.split('-').reverse().join('/')}</div>`
-              : (r.elegible_desde ? 'Incluida' : '<span class="row-falta">sin fecha de alta</span>')}</td>
+              : (r.elegible_desde
+                  ? `<span class="tag" style="background:#eef4f1;color:var(--pino)">Abona CAPIAF</span>`
+                  : '<span class="row-falta">sin fecha de alta</span>')}</td>
         <td>${r.fecha_recarga ? r.fecha_recarga.split('-').reverse().join('/') : '—'}</td>
         <td>${esc(r.factura_nro || '—')}${r.importe ? '<div class="row-sub">$' + Number(r.importe).toLocaleString('es-AR') + '</div>' : ''}</td>
         <td>${r.estado === 'pendiente'
@@ -2532,7 +2534,7 @@ function exportRecargas() {
     'Dirección': r.direccion || '', 'Barrio': r.barrio || '', 'Contacto': r.contacto || '',
     'Teléfono': r.telefono || '', 'Vencimiento': r.vencimiento,
     'Estado': MF_LBL[r.estado] || r.estado,
-    'Beneficio': sinBeneficio(r) ? 'Abona el cliente con descuento' : 'Incluida en la cuota',
+    'Beneficio': sinBeneficio(r) ? 'Abona el cliente con descuento' : 'Abona CAPIAF (incluida en la cuota)',
     'Beneficio desde': r.elegible_desde || '', 'Fecha de recarga': r.fecha_recarga || '',
     'Factura': r.factura_nro || '', 'Importe': r.importe || '', 'Observaciones': r.observaciones || '',
   }));
