@@ -129,9 +129,15 @@
     <div class="tarjeta"><div class="n" id="cVenc">—</div><div class="t">Vencidos</div></div>
     <div class="tarjeta"><div class="n" id="cRec">—</div><div class="t">Recargados</div></div>
     <div class="tarjeta"><div class="n" id="cPag">—</div><div class="t">Facturados</div></div>
+    <div class="tarjeta"><div class="n" id="cPed">—</div><div class="t">Descuentos de compra</div></div>
   </div>
 
-  <div class="barra">
+  <div class="barra" style="border-bottom:1px solid var(--border);padding-bottom:1rem">
+    <button class="btn-sec" id="secRecargas" aria-pressed="true"  onclick="setSeccion('recargas')">Recargas del mes</button>
+    <button class="btn-sec" id="secPedidos"  aria-pressed="false" onclick="setSeccion('pedidos')">Descuentos de compra <span id="secPedidosN"></span></button>
+  </div>
+
+  <div class="barra" id="barraRecargas">
     <label style="margin:0">Mes</label>
     <input type="month" id="mes" onchange="render()" />
     <button class="btn-sec" id="fTodos"     aria-pressed="true"  onclick="setFiltro('todos')">Todos</button>
@@ -142,6 +148,14 @@
 
   <div class="msg" id="panelMsg"></div>
   <div class="lista" id="lista"></div>
+
+  <div id="bloquePedidos" style="display:none">
+    <p class="sub" style="margin-bottom:1rem">
+      Estudios con el descuento de CAPIAF habilitado para comprar matafuegos nuevos.
+      Cuando concretes la venta, marcala acá.
+    </p>
+    <div class="lista" id="listaPedidos"></div>
+  </div>
 </div>
 
 <script>
@@ -150,7 +164,7 @@ const SUPABASE_KEY = 'sb_publishable_QqQ4vWOitcfzNREsG3SoHA_rJAkTMDQ';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let recargas = [], filtro = 'todos', proveedor = null;
+let recargas = [], pedidos = [], filtro = 'todos', seccion = 'recargas', proveedor = null;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
   ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -207,11 +221,79 @@ async function iniciar(user) {
 // ── DATOS ──
 async function cargar() {
   try { await sb.rpc('asegurar_recargas'); } catch (_) {}
-  const { data, error } = await sb.from('recargas_matafuego')
-    .select('*').order('vencimiento', { ascending: true });
-  if (error) return aviso('panelMsg', 'No pudimos cargar el listado.', 'err');
-  recargas = data || [];
+  const [r, p] = await Promise.all([
+    sb.from('recargas_matafuego').select('*').order('vencimiento', { ascending: true }),
+    sb.from('pedidos_matafuego').select('*').order('solicitado_el', { ascending: true }),
+  ]);
+  if (r.error) return aviso('panelMsg', 'No pudimos cargar el listado.', 'err');
+  recargas = r.data || [];
+  pedidos  = p.data || [];
   render();
+  renderPedidos();
+}
+
+function setSeccion(s) {
+  seccion = s;
+  document.getElementById('secRecargas').setAttribute('aria-pressed', String(s === 'recargas'));
+  document.getElementById('secPedidos').setAttribute('aria-pressed', String(s === 'pedidos'));
+  document.getElementById('barraRecargas').style.display = s === 'recargas' ? '' : 'none';
+  document.getElementById('lista').style.display         = s === 'recargas' ? '' : 'none';
+  document.getElementById('bloquePedidos').style.display = s === 'pedidos'  ? '' : 'none';
+  document.getElementById('panelTitulo').textContent =
+    s === 'recargas' ? 'Recargas de matafuegos' : 'Descuentos de compra habilitados';
+}
+
+function renderPedidos() {
+  const abiertos = pedidos.filter(p => p.estado === 'solicitado');
+  document.getElementById('cPed').textContent = abiertos.length;
+  document.getElementById('secPedidosN').textContent = abiertos.length ? `(${abiertos.length})` : '';
+
+  const cont = document.getElementById('listaPedidos');
+  if (!abiertos.length) {
+    cont.innerHTML = '<div class="vacio">No hay descuentos de compra pendientes.</div>';
+    return;
+  }
+  cont.innerHTML = abiertos.map(p => {
+    const tel = p.telefono ? `<a class="tel" href="tel:${esc(p.telefono)}">${esc(p.telefono)}</a>` : '—';
+    return `
+    <div class="item pendiente">
+      <div class="info">
+        <div class="nom">${esc(p.estudio_nombre || '')}
+          <span class="chip pendiente">${p.cantidad} matafuego${p.cantidad > 1 ? 's' : ''}</span>
+          <span class="chip capiaf">Descuento habilitado</span></div>
+        <div class="dir">${esc(p.sede_nombre || '')} — ${esc(p.direccion || '')}${p.barrio ? ', ' + esc(p.barrio) : ''}</div>
+        <div class="meta">
+          <span>Pedido el <strong>${fdate(p.solicitado_el)}</strong></span>
+          <span>Contacto: ${esc(p.contacto || '—')}</span>
+          <span>Tel: ${tel}</span>
+        </div>
+        ${p.nota ? `<div class="meta"><span>Pidió: ${esc(p.nota)}</span></div>` : ''}
+      </div>
+      <div class="acciones">
+        <button class="btn" onclick="marcarComprado('${p.id}')">Marcar vendido</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function marcarComprado(id) {
+  const p = pedidos.find(x => x.id === id);
+  if (!p) return;
+  const fecha = prompt(
+    `Venta a ${p.estudio_nombre} — ${p.sede_nombre}\n\nFecha de la venta (dd/mm/aaaa):`,
+    new Date().toLocaleDateString('es-AR'));
+  if (!fecha) return;
+  const m = fecha.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return aviso('panelMsg', 'La fecha tiene que ser dd/mm/aaaa.', 'err');
+  const iso = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  if (iso > new Date().toISOString().slice(0,10))
+    return aviso('panelMsg', 'La fecha no puede ser futura.', 'err');
+
+  const nota = prompt('Observaciones (opcional). Por ejemplo: tipo y capacidad del equipo.', '') || null;
+  const { error } = await sb.rpc('marcar_pedido_comprado', { p_id: id, p_fecha: iso, p_nota: nota });
+  if (error) return aviso('panelMsg', 'No se pudo guardar: ' + error.message, 'err');
+  aviso('panelMsg', 'Venta registrada.', 'ok');
+  await cargar();
 }
 
 function setFiltro(f) {

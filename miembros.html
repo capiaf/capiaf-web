@@ -741,6 +741,39 @@
     </div>
   </div>
 
+  <!-- COMPRA DE MATAFUEGOS CON DESCUENTO -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2h4v3H8z"/><path d="M7 5h6a3 3 0 0 1 3 3v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a3 3 0 0 1 3-3z"/><path d="M16 8h2a2 2 0 0 1 2 2v2"/></svg>
+      Comprar un matafuego con descuento
+    </div>
+    <p style="font-size:.85rem;color:var(--mid);margin-bottom:1rem">
+      Si necesitás comprar un matafuego nuevo, pedí acá el descuento de CAPIAF.
+      <strong>Esto no es la compra:</strong> una vez habilitado, te comunicás con el proveedor,
+      que ya va a ver el descuento aprobado a tu nombre. La recarga anual de los matafuegos
+      que ya tenés es otra cosa y está incluida en tu cuota.
+    </p>
+
+    <div id="pedidosList"></div>
+
+    <div class="form-grid" id="pedidoForm" style="margin-top:1rem">
+      <div>
+        <label>¿Para qué domicilio?</label>
+        <select id="pedidoSede"></select>
+      </div>
+      <div>
+        <label>¿Cuántos?</label>
+        <input type="number" id="pedidoCantidad" value="1" min="1" max="20" />
+      </div>
+      <div class="full">
+        <label>Aclaraciones (opcional)</label>
+        <input type="text" id="pedidoNota" placeholder="Ej: necesito uno de 5 kg ABC" />
+      </div>
+    </div>
+    <button class="btn-save" onclick="pedirMatafuego()">Pedir el descuento</button>
+    <span class="save-msg" id="pedidoMsg"></span>
+  </div>
+
 </div><!-- /dashboard -->
 
 <script>
@@ -1352,10 +1385,78 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ── PEDIDO DE COMPRA DE MATAFUEGO (descuento) ──
+const PEDIDO_LBL = { solicitado:'Descuento habilitado', comprado:'Comprado', anulado:'Anulado' };
+
+async function loadPedidos() {
+  const { data } = await sb.from('pedidos_matafuego')
+    .select('*').eq('estudio_id', estudioId).order('created_at', { ascending: false });
+  renderPedidos(data || []);
+
+  // Opciones de domicilio: la principal mas cada sede cargada
+  const sel = document.getElementById('pedidoSede');
+  if (sel) {
+    sel.innerHTML = '<option value="">Sede principal</option>' +
+      sedes.map(x => `<option value="${x.id}">${esc(x.nombre || 'Sede')}${x.direccion ? ' — ' + esc(x.direccion) : ''}</option>`).join('');
+  }
+}
+
+function renderPedidos(lista) {
+  const cont = document.getElementById('pedidosList');
+  if (!cont) return;
+  const abiertos = lista.filter(p => p.estado === 'solicitado');
+  const cerrados = lista.filter(p => p.estado !== 'solicitado').slice(0, 3);
+  if (!lista.length) { cont.innerHTML = ''; return; }
+
+  const fila = (p) => {
+    const fecha = (p.comprado_el || p.anulado_el || p.solicitado_el || '').split('-').reverse().join('/');
+    return `<div class="sede-item">
+      <div class="sede-item-info">
+        <strong>${p.cantidad} matafuego${p.cantidad > 1 ? 's' : ''} — ${esc(p.sede_nombre || '')}</strong>
+        <small>${PEDIDO_LBL[p.estado]} · ${fecha}</small>
+        ${p.nota ? `<small>${esc(p.nota)}</small>` : ''}
+        ${p.estado === 'solicitado'
+          ? '<small style="color:var(--ok)">Ya podés comunicarte con el proveedor: tiene el descuento habilitado.</small>' : ''}
+        ${p.nota_proveedor ? `<small>${esc(p.nota_proveedor)}</small>` : ''}
+      </div>
+      ${p.estado === 'solicitado'
+        ? `<button class="btn-remove" title="Anular el pedido" onclick="anularPedido('${p.id}')">✕</button>` : ''}
+    </div>`;
+  };
+
+  cont.innerHTML =
+    (abiertos.length ? abiertos.map(fila).join('') : '') +
+    (cerrados.length ? `<p class="map-hint" style="margin:.8rem 0 .3rem">Pedidos anteriores</p>` + cerrados.map(fila).join('') : '');
+}
+
+async function pedirMatafuego() {
+  const sedeId = document.getElementById('pedidoSede').value || null;
+  const cant = parseInt(document.getElementById('pedidoCantidad').value, 10);
+  const nota = document.getElementById('pedidoNota').value.trim() || null;
+  if (!cant || cant < 1) return showSaveMsg('pedidoMsg', 'Indicá cuántos matafuegos necesitás.', 'err');
+
+  const { error } = await sb.rpc('pedir_matafuego',
+    { p_sede_id: sedeId, p_cantidad: cant, p_nota: nota });
+  if (error) return showSaveMsg('pedidoMsg', error.message, 'err');
+
+  showSaveMsg('pedidoMsg', 'Descuento habilitado. Ya podés contactar al proveedor para comprarlo.', 'ok');
+  document.getElementById('pedidoNota').value = '';
+  document.getElementById('pedidoCantidad').value = '1';
+  await loadPedidos();
+}
+
+async function anularPedido(id) {
+  if (!confirm('¿Anulamos este pedido de descuento?')) return;
+  const { error } = await sb.rpc('anular_pedido_matafuego', { p_id: id, p_motivo: null });
+  if (error) return showSaveMsg('pedidoMsg', error.message, 'err');
+  await loadPedidos();
+}
+
 async function loadSedes() {
   const { data } = await sb.from('sedes').select('*').eq('estudio_id', estudioId);
   sedes = data || [];
   renderSedes();
+  if (typeof loadPedidos === 'function' && estudioId) loadPedidos();
 }
 
 function renderSedes() {
@@ -2063,6 +2164,17 @@ async function aprobar(id, valor) {
         <table class="admin-table" id="mfTabla"></table>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-title">Descuentos de compra pedidos por los socios</div>
+      <p class="map-hint" style="margin:0 0 .8rem">
+        El socio pide el descuento desde su usuario y el proveedor lo ve habilitado al instante.
+        No pasa por acá: esta vista es para seguimiento.
+      </p>
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="pedTabla"></table>
+      </div>
+    </div>
   </div>
 
   <!-- BENEFICIOS / CUPONES -->
@@ -2421,18 +2533,45 @@ async function guardarFicha() {
 }
 
 // ── MATAFUEGOS: RECARGAS ──
-let recargas = [], recargasCargadas = false;
+let recargas = [], pedidosAdmin = [], recargasCargadas = false;
 const MF_LBL = { pendiente:'Por recargar', recargado:'Recargado', pagado:'Facturado', no_corresponde:'No corresponde' };
 
 async function cargarRecargas() {
   const mes = document.getElementById('mfMes');
   if (!mes.value) mes.value = new Date().toISOString().slice(0, 7);
   try { await sb.rpc('asegurar_recargas'); } catch (_) {}
-  const { data, error } = await sb.from('recargas_matafuego').select('*').order('vencimiento');
-  if (error) { showSaveMsg('mfMsg', 'No se pudo cargar: ' + error.message, 'err'); return; }
-  recargas = data || [];
+  const [r, p] = await Promise.all([
+    sb.from('recargas_matafuego').select('*').order('vencimiento'),
+    sb.from('pedidos_matafuego').select('*').order('solicitado_el', { ascending: false }),
+  ]);
+  if (r.error) { showSaveMsg('mfMsg', 'No se pudo cargar: ' + r.error.message, 'err'); return; }
+  recargas = r.data || [];
+  pedidosAdmin = p.data || [];
   recargasCargadas = true;
   renderRecargas();
+  renderPedidosAdmin();
+}
+
+function renderPedidosAdmin() {
+  const t = document.getElementById('pedTabla');
+  if (!pedidosAdmin.length) {
+    t.innerHTML = '<tr><td style="padding:1.5rem;color:var(--mid)">Todavía no hay pedidos de descuento.</td></tr>';
+    return;
+  }
+  const f = (d) => d ? d.split('-').reverse().join('/') : '—';
+  t.innerHTML = `
+    <thead><tr><th>N°</th><th>Estudio</th><th>Domicilio</th><th>Cant.</th>
+      <th>Pedido</th><th>Estado</th><th>Cerrado</th><th>Detalle</th></tr></thead>
+    <tbody>${pedidosAdmin.map(p => `<tr>
+      <td>${esc(p.nro_socio || '—')}</td>
+      <td><strong>${esc(p.estudio_nombre || '')}</strong></td>
+      <td><div class="row-sub">${esc(p.sede_nombre || '')}<br>${esc(p.direccion || '')}</div></td>
+      <td>${p.cantidad}</td>
+      <td>${f(p.solicitado_el)}</td>
+      <td>${PEDIDO_LBL[p.estado] || p.estado}</td>
+      <td>${f(p.comprado_el || p.anulado_el)}</td>
+      <td><div class="row-sub">${esc(p.nota || '')}${p.nota_proveedor ? '<br>' + esc(p.nota_proveedor) : ''}${p.motivo_anulacion ? '<br>' + esc(p.motivo_anulacion) : ''}</div></td>
+    </tr>`).join('')}</tbody>`;
 }
 
 // El mes elegido más todo lo atrasado que siga pendiente: una carta vencida
