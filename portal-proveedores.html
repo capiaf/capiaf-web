@@ -392,8 +392,8 @@ function render() {
 
       <div class="form-recarga" id="form-${r.id}" style="display:none">
         <div>
-          <label for="fecha-${r.id}">Fecha de la recarga</label>
-          <input type="date" id="fecha-${r.id}" value="${r.fecha_recarga || hoyISO()}" max="${hoyISO()}" />
+          <label for="fecha-${r.id}">¿Qué día se hizo la recarga? *</label>
+          <input type="date" id="fecha-${r.id}" value="${r.fecha_recarga || ''}" max="${hoyISO()}" required />
         </div>
         <div class="obs">
           <label for="obs-${r.id}">Observaciones (opcional)</label>
@@ -425,7 +425,10 @@ function cerrarForm(id) { document.getElementById('form-' + id).style.display = 
 async function guardarRecarga(id, yaEstaba) {
   const fecha = document.getElementById('fecha-' + id).value;
   const obs = document.getElementById('obs-' + id).value.trim() || null;
-  if (!fecha) return aviso('panelMsg', 'Elegí la fecha en que se hizo la recarga.', 'err');
+  if (!fecha) {
+    document.getElementById('fecha-' + id).focus();
+    return aviso('panelMsg', 'Elegí el día en que se hizo la recarga. De esa fecha sale el próximo vencimiento.', 'err');
+  }
   if (fecha > hoyISO()) return aviso('panelMsg', 'La fecha de recarga no puede ser futura.', 'err');
 
   const { error } = yaEstaba
