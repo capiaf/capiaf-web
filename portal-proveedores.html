@@ -333,17 +333,18 @@ function render() {
   // El mes elegido, más todo lo atrasado que siga pendiente: una carta
   // vencida no deja de necesitar recarga porque cambió el mes.
   const delMes = recargas.filter(r => r.periodo === mes);
-  const atrasados = recargas.filter(r => r.periodo < mes && r.estado === 'pendiente');
+  const abierta = (r) => r.estado === 'pendiente' || r.estado === 'recargado';
+  const atrasados = recargas.filter(r => r.periodo < mes && abierta(r));
 
   document.getElementById('cPend').textContent = delMes.filter(r => r.estado === 'pendiente').length;
-  document.getElementById('cVenc').textContent = atrasados.length;
+  document.getElementById('cVenc').textContent = atrasados.filter(r => r.estado === 'pendiente').length;
   document.getElementById('cRec').textContent  = delMes.filter(r => r.estado === 'recargado').length;
   document.getElementById('cPag').textContent  = delMes.filter(r => r.estado === 'pagado').length;
 
   let filas;
   if (filtro === 'atraso')          filas = atrasados;
-  else if (filtro === 'pendiente')  filas = [...atrasados, ...delMes.filter(r => r.estado === 'pendiente')];
-  else if (filtro === 'recargado')  filas = delMes.filter(r => r.estado === 'recargado');
+  else if (filtro === 'pendiente')  filas = [...atrasados, ...delMes].filter(r => r.estado === 'pendiente');
+  else if (filtro === 'recargado')  filas = [...atrasados, ...delMes].filter(r => r.estado === 'recargado');
   else                              filas = [...atrasados, ...delMes];
 
   const lista = document.getElementById('lista');

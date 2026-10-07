@@ -2668,7 +2668,7 @@ function recargasVisibles() {
   const estado = document.getElementById('mfEstado').value;
   const vivas = recargas.filter(deActivo);
   const delMes = vivas.filter(r => r.periodo === mes);
-  const atrasadas = vivas.filter(r => r.periodo < mes && r.estado === 'pendiente');
+  const atrasadas = vivas.filter(r => r.periodo < mes && (r.estado === 'pendiente' || r.estado === 'recargado'));
   let filas = [...atrasadas, ...delMes];
   if (estado) filas = filas.filter(r => r.estado === estado);
   const paga = document.getElementById('mfPaga').value;
@@ -2703,7 +2703,8 @@ function renderRecargas() {
   document.getElementById('mfResumen').innerHTML =
     `<strong>${delMes.length}</strong> en el mes · ${cuenta('pendiente')} por recargar · ` +
     `<strong>${cuenta('recargado')}</strong> a facturar · ${cuenta('pagado')} facturados` +
-    (atrasadas.length ? ` · <span style="color:var(--error)"><strong>${atrasadas.length}</strong> atrasadas de meses anteriores</span>` : '') +
+    (atrasadas.filter(r => r.estado === 'pendiente').length
+      ? ` · <span style="color:var(--error)"><strong>${atrasadas.filter(r => r.estado === 'pendiente').length}</strong> atrasadas de meses anteriores</span>` : '') +
     (nuestras ? ` · <strong>${nuestras}</strong> las abona CAPIAF` : '') +
     (fuera ? ` · <span style="color:#6b5b95"><strong>${fuera}</strong> las abona el cliente con descuento</span>` : '');
 
