@@ -69,6 +69,7 @@
             align-items:flex-start; flex-wrap:wrap; }
     .item.pendiente  { border-left-color:var(--alerta); }
     .item.vencido    { border-left-color:var(--error); }
+    .item.vence      { border-left-color:var(--alerta); }
     .item.recargado  { border-left-color:var(--salvia); }
         .item.pagado     { border-left-color:var(--ok); }
     .item.sinbenef   { border-left-color:#9b8bbf; background:#faf9fd; }
@@ -94,6 +95,7 @@
             letter-spacing:.5px; padding:.2rem .6rem; border-radius:50px; }
     .chip.pendiente { background:#fdf6ec; color:var(--alerta); }
     .chip.vencido   { background:#fdecea; color:var(--error); }
+    .chip.vence     { background:#fdf6ec; color:var(--alerta); }
     .chip.recargado { background:#eef4f1; color:var(--pino); }
     .chip.pagado    { background:#eafaf1; color:var(--ok); }
 
@@ -322,7 +324,12 @@ function setFiltro(f) {
   render();
 }
 
-function vencido(r) { return r.estado === 'pendiente' && r.vencimiento < new Date().toISOString().slice(0,10); }
+function estadoVista(r, mes) {
+  if (r.estado !== 'pendiente') return r.estado;
+  if (r.periodo < mes)  return 'vencido';
+  if (r.periodo === mes) return 'vence';
+  return 'pendiente';
+}
 
 // Quien paga la recarga. La cuota incluye una por SEDE y por ano, desde
 // que arranca el beneficio de ese socio.
@@ -362,13 +369,14 @@ function render() {
   }
 
   lista.innerHTML = filas.map(r => {
-    const venc = vencido(r);
+    const vista = estadoVista(r, mes);
     const pendiente = r.estado === 'pendiente';
     const fuera = sinBeneficio(r) && pendiente;
-    const clase = fuera ? 'sinbenef' : (venc ? 'vencido' : r.estado);
-    const chip = venc ? 'vencido' : r.estado;
-    const etiqueta = venc ? 'Vencido' : ({ pendiente:'Por recargar', recargado:'Recargado',
-                      pagado:'Facturado', no_corresponde:'No corresponde' }[r.estado] || r.estado);
+    const clase = fuera ? 'sinbenef' : vista;
+    const chip = vista;
+    const etiqueta = { vencido:'Vencido', vence:'Vence este mes', pendiente:'Por recargar',
+                       recargado:'Recargado', pagado:'Facturado',
+                       no_corresponde:'No corresponde' }[vista] || vista;
     const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono)}">${esc(r.telefono)}</a>` : '—';
     return `
     <div class="item ${clase}">
