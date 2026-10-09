@@ -750,6 +750,19 @@
   </div><!-- /socioTabFicha -->
 
   <div id="socioTabProveedores" style="display:none">
+  <!-- ESTADO DE LAS RECARGAS -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+      Recargas de matafuegos
+    </div>
+    <p style="font-size:.85rem;color:var(--mid);margin-bottom:1rem">
+      Estado de la recarga de cada sede, según el vencimiento que cargaste en tu ficha.
+      Cuando llega la fecha, el proveedor lo ve y se comunica con vos.
+    </p>
+    <div id="recargasList"></div>
+  </div>
+
   <!-- COMPRA DE MATAFUEGOS CON DESCUENTO -->
   <div class="card">
     <div class="card-title">
@@ -1416,6 +1429,38 @@ function setSocioTab(tab) {
 // ── PEDIDO DE COMPRA DE MATAFUEGO (descuento) ──
 const PEDIDO_LBL = { solicitado:'Descuento habilitado', comprado:'Comprado', anulado:'Anulado' };
 
+async function loadRecargas() {
+  const cont = document.getElementById('recargasList');
+  if (!cont) return;
+  const { data } = await sb.from('recargas_matafuego')
+    .select('*').eq('estudio_id', estudioId).order('vencimiento');
+  const lista = (data || []).filter(r => r.estado !== 'no_corresponde');
+
+  if (!lista.length) {
+    cont.innerHTML = '<p class="map-hint" style="margin:0">Todavía no cargaste el vencimiento del matafuego de ninguna sede. Lo hacés en la pestaña <strong>Mi ficha</strong>.</p>';
+    return;
+  }
+
+  const hoyMes = new Date().toISOString().slice(0, 7);
+  cont.innerHTML = lista.map(r => {
+    const mes = r.vencimiento.slice(0, 7);
+    const hecha = r.estado === 'recargado' || r.estado === 'pagado';
+    const vencida = !hecha && mes <  hoyMes;
+    const enFecha = !hecha && mes === hoyMes;
+    const color = hecha ? 'var(--ok)' : vencida ? 'var(--error)' : enFecha ? '#b7791f' : 'var(--mid)';
+    const estado = hecha ? 'Recargada' : vencida ? 'Vencida — el proveedor la tiene en su lista'
+                 : enFecha ? 'Vence este mes — el proveedor se va a comunicar' : 'Al día';
+    return `<div class="sede-item">
+      <div class="sede-item-info">
+        <strong>${esc(r.sede_nombre || '')}</strong>
+        <small>Vence ${fmtVto(r.vencimiento)} · <span style="color:${color};font-weight:600">${estado}</span></small>
+        ${hecha ? `<small>Recargada el ${r.fecha_recarga ? r.fecha_recarga.split('-').reverse().join('/') : '—'}</small>` : ''}
+        <small>${r.cubierta ? 'Incluida en tu cuota.' : 'La abonás vos, con el descuento de la Cámara.'}</small>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 async function loadPedidos() {
   const { data } = await sb.from('pedidos_matafuego')
     .select('*').eq('estudio_id', estudioId).order('created_at', { ascending: false });
@@ -1485,7 +1530,7 @@ async function loadSedes() {
   const { data } = await sb.from('sedes').select('*').eq('estudio_id', estudioId);
   sedes = data || [];
   renderSedes();
-  if (typeof loadPedidos === 'function' && estudioId) loadPedidos();
+  if (typeof loadPedidos === 'function' && estudioId) { loadPedidos(); loadRecargas(); }
 }
 
 function renderSedes() {
