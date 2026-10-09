@@ -354,14 +354,18 @@
       background: var(--white);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      aspect-ratio: 3/2;
+      min-height: 136px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 1.2rem;
+      gap: .55rem;
+      padding: 1rem .8rem;
       transition: all .3s ease;
       position: relative;
       overflow: hidden;
+      text-decoration: none;
+      color: inherit;
     }
     .socio-logo-card::before {
       content: '';
@@ -382,7 +386,7 @@
       position: relative;
       z-index: 1;
       max-width: 100%;
-      max-height: 90px;
+      max-height: 62px;
       object-fit: contain;
       filter: grayscale(20%);
       transition: filter .3s, transform .3s;
@@ -405,7 +409,13 @@
       box-shadow: 0 2px 8px rgba(44,74,110,.1);
     }
     .socio-logo-card:hover .socio-initial { background: var(--sage); color: var(--white); }
-    .socio-name { font-size: .7rem; font-weight: 600; color: var(--mid); text-align: center; line-height: 1.3; transition: color .3s; }
+    .socio-name {
+      position: relative; z-index: 1;
+      font-size: .7rem; font-weight: 600; color: var(--mid);
+      text-align: center; line-height: 1.3; transition: color .3s;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
     .socio-logo-card:hover .socio-name { color: var(--slate-dk); }
 
     .socios-cta-bar { margin-top:2.5rem; padding:2rem 2.5rem; background:var(--sage-bg); border-radius:var(--radius); display:flex; align-items:center; justify-content:space-between; gap:2rem; flex-wrap:wrap; }
@@ -919,285 +929,287 @@
       <button class="filter-btn" data-filter="S-Z">S – Z</button>
     </div>
 
-        <!-- LOGOS DE ESTUDIOS ASOCIADOS — 40 estudios con logo real -->
+        <!-- LOGOS DE ESTUDIOS ASOCIADOS
+             Esta grilla es una copia estatica (para SEO y primer pintado).
+             Al cargar la pagina se reconstruye sola desde la vista
+             directorio_publico de Supabase, asi que NO hace falta editarla
+             a mano cuando entra o sale un socio. -->
     <div class="socios-logos-grid reveal reveal-delay-2" id="sociosGrid">
 
-      <div class="socio-logo-card" data-name="Âme Pilates Body Ballet" data-letter="A">
-        <img src="logos/ame_pilates.jpg" alt="Âme Pilates Body Ballet" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Aluminé Estudio De Pilates" data-letter="A">
-        <div class="socio-placeholder">
-          <div class="socio-initial">A</div>
-          <span class="socio-name">Aluminé Estudio De Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Aprile Pilates" data-letter="A">
-        <img src="logos/aprile_pilates.png" alt="Aprile Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Ayres De Barracas" data-letter="A">
-        <img src="logos/ayres_de_barracas.png" alt="Ayres De Barracas" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Bae Pilates" data-letter="B">
-        <img src="logos/bae_pilates.jpg" alt="Bae Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Bg Estudio Integral" data-letter="B">
-        <div class="socio-placeholder">
-          <div class="socio-initial">B</div>
-          <span class="socio-name">Bg Estudio Integral</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Bienestar En Equilibrio" data-letter="B">
-        <img src="logos/bienestar_en_equilibrio.png" alt="Bienestar En Equilibrio" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Bienestar En Movimiento" data-letter="B">
-        <div class="socio-placeholder">
-          <div class="socio-initial">B</div>
-          <span class="socio-name">Bienestar En Movimiento</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Bive Pilates" data-letter="B">
-        <img src="logos/bive_pilates.jpg" alt="Bive Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Body Life Pilates" data-letter="B">
-        <img src="logos/body_life_pilates.jpg" alt="Body Life Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Casa De Movimiento" data-letter="C">
-        <img src="logos/casa_de_movimiento.png" alt="Casa De Movimiento" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Casa Porasy" data-letter="C">
-        <div class="socio-placeholder">
-          <div class="socio-initial">C</div>
-          <span class="socio-name">Casa Porasy</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Centropilates" data-letter="C">
-        <img src="logos/centropilates.jpg" alt="Centropilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Cinesia Pilates" data-letter="C">
-        <div class="socio-placeholder">
-          <div class="socio-initial">C</div>
-          <span class="socio-name">Cinesia Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Club Palermo Pilates" data-letter="C">
-        <img src="logos/club_palermo_pilates.png" alt="Club Palermo Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Club Pilates" data-letter="C">
-        <div class="socio-placeholder">
-          <div class="socio-initial">C</div>
-          <span class="socio-name">Club Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Concepto Pilates" data-letter="C">
-        <img src="logos/concepto_pilates.jpg" alt="Concepto Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Corporal Centro De Bienestar Físico" data-letter="C">
-        <img src="logos/corporal_centro_de_bienestar_fisico.png" alt="Corporal Centro De Bienestar Físico" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Corpuspilates" data-letter="C">
-        <div class="socio-placeholder">
-          <div class="socio-initial">C</div>
-          <span class="socio-name">Corpuspilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Cuerpoespiral" data-letter="C">
-        <div class="socio-placeholder">
-          <div class="socio-initial">C</div>
-          <span class="socio-name">Cuerpoespiral</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Danez Pilates & Funcional" data-letter="D">
-        <img src="logos/danez_pilates_and_funcional.jpg" alt="Danez Pilates & Funcional" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Delbuono Pilates" data-letter="D">
-        <img src="logos/delbuono_pilates.jpg" alt="Delbuono Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Dhara Pilates" data-letter="D">
-        <img src="logos/dhara_pilates.png" alt="Dhara Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Dipfusion Pilates Lab" data-letter="D">
-        <img src="logos/dipfusion_pilates_lab.jpg" alt="Dipfusion Pilates Lab" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Dominio Pilates" data-letter="D">
-        <img src="logos/dominio_pilates.jpg" alt="Dominio Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Dyna-mov Pilates" data-letter="D">
-        <img src="logos/dyna-mov_pilates.jpg" alt="Dyna-mov Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="El Atelier Pilates" data-letter="E">
-        <img src="logos/el_atelier_pilates.jpg" alt="El Atelier Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Energia Vital Pilates" data-letter="E">
-        <img src="logos/energia_vital_pilates.png" alt="Energia Vital Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Esencia Pilates" data-letter="E">
-        <div class="socio-placeholder">
-          <div class="socio-initial">E</div>
-          <span class="socio-name">Esencia Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Espacio Balance" data-letter="E">
-        <img src="logos/espacio_balance.jpg" alt="Espacio Balance" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Espacio Luz Yoga Y Pilates" data-letter="E">
-        <div class="socio-placeholder">
-          <div class="socio-initial">E</div>
-          <span class="socio-name">Espacio Luz Yoga Y Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Estudio Core Ba Pilates" data-letter="E">
-        <div class="socio-placeholder">
-          <div class="socio-initial">E</div>
-          <span class="socio-name">Estudio Core Ba Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Fabiana Tallarico Pilates" data-letter="F">
-        <div class="socio-placeholder">
-          <div class="socio-initial">F</div>
-          <span class="socio-name">Fabiana Tallarico Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Fuentes Cufré" data-letter="F">
-        <div class="socio-placeholder">
-          <div class="socio-initial">F</div>
-          <span class="socio-name">Fuentes Cufré</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Genki Pilates" data-letter="G">
-        <div class="socio-placeholder">
-          <div class="socio-initial">G</div>
-          <span class="socio-name">Genki Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Ginkgo Pilates" data-letter="G">
-        <div class="socio-placeholder">
-          <div class="socio-initial">G</div>
-          <span class="socio-name">Ginkgo Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Gloss Fit" data-letter="G">
-        <img src="logos/gloss_fit.png" alt="Gloss Fit" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Health Studio Pilates" data-letter="H">
-        <img src="logos/health_studio_pilates.png" alt="Health Studio Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Holistica Yoga & Pilates" data-letter="H">
-        <img src="logos/holistica_yoga_and_pilates.jpg" alt="Holistica Yoga & Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Iluminar Pilates & Bienestar" data-letter="I">
-        <img src="logos/iluminar_pilates_and_bienestar.png" alt="Iluminar Pilates & Bienestar" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Indigo Pilates" data-letter="I">
-        <img src="logos/indigo_pilates.png" alt="Indigo Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Inspiración Pilates" data-letter="I">
-        <img src="logos/inspiracion_pilates.webp" alt="Inspiración Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Malvon Pilates" data-letter="M">
-        <img src="logos/malvon_pilates.jpg" alt="Malvon Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Mixtura Pilates" data-letter="M">
-        <img src="logos/mixtura_pilates.png" alt="Mixtura Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Movepilates" data-letter="M">
-        <img src="logos/movepilates.png" alt="Movepilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Mundo Pilates" data-letter="M">
-        <div class="socio-placeholder">
-          <div class="socio-initial">M</div>
-          <span class="socio-name">Mundo Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Munay Pilates" data-letter="M">
-        <div class="socio-placeholder">
-          <div class="socio-initial">M</div>
-          <span class="socio-name">Munay Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Naapura Cuerpo Y Equilibrio" data-letter="N">
-        <img src="logos/naapura_cuerpo_y_equilibrio.png" alt="Naapura Cuerpo Y Equilibrio" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Norma Novelino" data-letter="N">
-        <div class="socio-placeholder">
-          <div class="socio-initial">N</div>
-          <span class="socio-name">Norma Novelino</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Nuri Fit Pilates" data-letter="N">
-        <div class="socio-placeholder">
-          <div class="socio-initial">N</div>
-          <span class="socio-name">Nuri Fit Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Palace Pilates" data-letter="P">
-        <img src="logos/palace_pilates.jpg" alt="Palace Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Palermo Pilates" data-letter="P">
-        <img src="logos/palermo_pilates.png" alt="Palermo Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Pilates Bren" data-letter="P">
-        <img src="logos/pilates_bren.jpg" alt="Pilates Bren" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Pilates Studio Barracas" data-letter="P">
-        <div class="socio-placeholder">
-          <div class="socio-initial">P</div>
-          <span class="socio-name">Pilates Studio Barracas</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Pilates Urquiza" data-letter="P">
-        <div class="socio-placeholder">
-          <div class="socio-initial">P</div>
-          <span class="socio-name">Pilates Urquiza</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Pillpi Espacio Corporal" data-letter="P">
-        <img src="logos/pillpi_espacio_corporal.png" alt="Pillpi Espacio Corporal" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Piuké" data-letter="P">
-        <img src="logos/piuke.png" alt="Piuké" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Plena Pilates" data-letter="P">
-        <img src="logos/plena_pilates.jpg" alt="Plena Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Pura Vida Yoga Y Pilates" data-letter="P">
-        <img src="logos/pura_vida_yoga_y_pilates.png" alt="Pura Vida Yoga Y Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Raisa Pilates" data-letter="R">
-        <img src="logos/raisa_pilates.png" alt="Raisa Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Romanza.ba" data-letter="R">
-        <div class="socio-placeholder">
-          <div class="socio-initial">R</div>
-          <span class="socio-name">Romanza.ba</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Studio Recoleta Pilates" data-letter="S">
-        <img src="logos/studio_recoleta_pilates.png" alt="Studio Recoleta Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Tan Tiem Pilates" data-letter="T">
-        <div class="socio-placeholder">
-          <div class="socio-initial">T</div>
-          <span class="socio-name">Tan Tiem Pilates</span>
-        </div>
-      </div>
-      <div class="socio-logo-card" data-name="Tempo Libero Pilates" data-letter="T">
-        <img src="logos/tempo_libero_pilates.webp" alt="Tempo Libero Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Teseo Pilates Funcional" data-letter="T">
-        <img src="logos/teseo_pilates_funcional.jpg" alt="Teseo Pilates Funcional" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Toulouse Pilates" data-letter="T">
-        <img src="logos/toulouse_pilates.jpg" alt="Toulouse Pilates" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Tu Espacio" data-letter="T">
-        <img src="logos/tu_espacio.jpg" alt="Tu Espacio" loading="lazy" />
-      </div>
-      <div class="socio-logo-card" data-name="Wellness Atelier Pilates & Bienestar" data-letter="W">
-        <div class="socio-placeholder">
-          <div class="socio-initial">W</div>
-          <span class="socio-name">Wellness Atelier Pilates & Bienestar</span>
-        </div>
-      </div>
+      <div class="socio-logo-card" data-name="Aluminé estudio de pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/9ac155a7-eb23-41af-9cb0-e66d2139c34b/logo.jpeg" alt="Aluminé estudio de pilates" loading="lazy" />
+        <span class="socio-name">Aluminé estudio de pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Ame Pilates Body Ballet" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/40167607-ca8f-4c45-9d5b-68444b2c41e8/logo.png" alt="Ame Pilates Body Ballet" loading="lazy" />
+        <span class="socio-name">Ame Pilates Body Ballet</span>
+      </div>
+      <div class="socio-logo-card" data-name="Ayres Estudio de Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/8359d7d0-c3fc-42cc-9ab6-27776bc042a9/logo.jpeg" alt="Ayres Estudio de Pilates" loading="lazy" />
+        <span class="socio-name">Ayres Estudio de Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Bae Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/621bbf69-e724-499e-931e-ddd8e11c97cd/logo.jpeg" alt="Bae Pilates" loading="lazy" />
+        <span class="socio-name">Bae Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Bienestar en Movimiento" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/f3f17d48-b718-4766-82b0-de31c7f11784/logo.png" alt="Bienestar en Movimiento" loading="lazy" />
+        <span class="socio-name">Bienestar en Movimiento</span>
+      </div>
+      <div class="socio-logo-card" data-name="Bienestar y Equilibrio Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/d341778f-04dd-4422-b00c-e6e7028bfc0f/logo.jpg" alt="Bienestar y Equilibrio Pilates" loading="lazy" />
+        <span class="socio-name">Bienestar y Equilibrio Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Bive Pilates" data-letter="A-F">
+        <img src="https://www.pilates.org.ar/logos/bive_pilates.jpg" alt="Bive Pilates" loading="lazy" />
+        <span class="socio-name">Bive Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Body Life Pilates" data-letter="A-F">
+        <img src="https://www.pilates.org.ar/logos/body_life_pilates.jpg" alt="Body Life Pilates" loading="lazy" />
+        <span class="socio-name">Body Life Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Casa de Movimiento" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/ada7cc1c-38d2-49e3-86c4-0368f0a700de/logo.jpeg" alt="Casa de Movimiento" loading="lazy" />
+        <span class="socio-name">Casa de Movimiento</span>
+      </div>
+      <div class="socio-logo-card" data-name="Casa Porasy" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/08d35070-caee-45fb-903e-65da53c03760/logo.jpg" alt="Casa Porasy" loading="lazy" />
+        <span class="socio-name">Casa Porasy</span>
+      </div>
+      <div class="socio-logo-card" data-name="Centropilates BA" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/adc191a1-6702-42e6-a9e3-dfe4c3873008/logo.JPEG" alt="Centropilates BA" loading="lazy" />
+        <span class="socio-name">Centropilates BA</span>
+      </div>
+      <div class="socio-logo-card" data-name="Cinesia Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/d26c7905-b814-4f88-b527-aebf07d2ca51/logo.webp" alt="Cinesia Pilates" loading="lazy" />
+        <span class="socio-name">Cinesia Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Club Palermo Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/58225158-eb44-4a2d-acd3-d51413deb1cc/logo.jpg" alt="Club Palermo Pilates" loading="lazy" />
+        <span class="socio-name">Club Palermo Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Concepto Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/3b59d9da-5432-4938-91ef-3c919f3a1743/logo.png" alt="Concepto Pilates" loading="lazy" />
+        <span class="socio-name">Concepto Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Corporal centro de bienestar fisico" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/2cee69bc-2b39-44ca-abc1-befd172044c5/logo.jpg" alt="Corporal centro de bienestar fisico" loading="lazy" />
+        <span class="socio-name">Corporal centro de bienestar fisico</span>
+      </div>
+      <div class="socio-logo-card" data-name="Corpuspilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/6953039f-5259-4a78-827f-3a5a39fd7219/logo.png" alt="Corpuspilates" loading="lazy" />
+        <span class="socio-name">Corpuspilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="CuerpoEspiral-Pilates Personalizado" data-letter="A-F">
+        <img src="https://www.pilates.org.ar/logos/cuerpoespiral_pilates.jpg" alt="CuerpoEspiral-Pilates Personalizado" loading="lazy" />
+        <span class="socio-name">CuerpoEspiral-Pilates Personalizado</span>
+      </div>
+      <div class="socio-logo-card" data-name="Danez Pilates &amp; Funcional" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/881ba446-a4c3-449b-99d6-9601bd884e0f/logo.png" alt="Danez Pilates &amp; Funcional" loading="lazy" />
+        <span class="socio-name">Danez Pilates &amp; Funcional</span>
+      </div>
+      <div class="socio-logo-card" data-name="Delbuono Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/8e359d33-70cd-4b72-b2f8-16de233f8050/logo.jpeg" alt="Delbuono Pilates" loading="lazy" />
+        <span class="socio-name">Delbuono Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Dhara Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/71525486-74a0-420d-8cd9-9f8f2d1c1771/logo.png" alt="Dhara Pilates" loading="lazy" />
+        <span class="socio-name">Dhara Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Dip Fusión" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/8a635098-2222-49b6-a1f2-aa26a0663fd1/logo.png" alt="Dip Fusión" loading="lazy" />
+        <span class="socio-name">Dip Fusión</span>
+      </div>
+      <div class="socio-logo-card" data-name="Dominio Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/b4764b99-b557-4d88-9cc7-5ed6e9f88123/logo.jpeg" alt="Dominio Pilates" loading="lazy" />
+        <span class="socio-name">Dominio Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="DynaMov Pilates" data-letter="A-F">
+        <img src="https://www.pilates.org.ar/logos/dynamov_pilates.jpg" alt="DynaMov Pilates" loading="lazy" />
+        <span class="socio-name">DynaMov Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="El Atelier Pilates" data-letter="A-F">
+        <img src="https://www.pilates.org.ar/logos/el_atelier_pilates.jpg" alt="El Atelier Pilates" loading="lazy" />
+        <span class="socio-name">El Atelier Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Energia Vital Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/16a56a65-fc1c-4b79-b56a-246753de5253/logo.jpg" alt="Energia Vital Pilates" loading="lazy" />
+        <span class="socio-name">Energia Vital Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Esencia, Pilates de autor" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/4fcdf63f-bcbd-4b43-b3c3-b9eec473cd4e/logo.png" alt="Esencia, Pilates de autor" loading="lazy" />
+        <span class="socio-name">Esencia, Pilates de autor</span>
+      </div>
+      <div class="socio-logo-card" data-name="Espacio Balance" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/8989a6ac-b84e-4488-af0d-8cb8cccd840b/logo.jpg" alt="Espacio Balance" loading="lazy" />
+        <span class="socio-name">Espacio Balance</span>
+      </div>
+      <div class="socio-logo-card" data-name="Espacio Luz: Yoga y Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/66895c97-35e5-4025-b019-14491981bc3e/logo.jpg" alt="Espacio Luz: Yoga y Pilates" loading="lazy" />
+        <span class="socio-name">Espacio Luz: Yoga y Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Estudio Core BA Pilates &amp; Barre" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/28825ce6-3c41-4e0b-9f73-c622ef551012/logo.png" alt="Estudio Core BA Pilates &amp; Barre" loading="lazy" />
+        <span class="socio-name">Estudio Core BA Pilates &amp; Barre</span>
+      </div>
+      <div class="socio-logo-card" data-name="Estudio Naapura" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/3cc38389-679e-4749-b713-5b59040ca8f9/logo.png" alt="Estudio Naapura" loading="lazy" />
+        <span class="socio-name">Estudio Naapura</span>
+      </div>
+      <div class="socio-logo-card" data-name="Fabiana Tallarico Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/48cd0a80-4cc9-4e37-92aa-4ef4fd2d39f4/logo.jpg" alt="Fabiana Tallarico Pilates" loading="lazy" />
+        <span class="socio-name">Fabiana Tallarico Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Fluxus Pilates" data-letter="A-F">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/8c407a55-9821-4752-858a-3933b129093e/logo.jpg" alt="Fluxus Pilates" loading="lazy" />
+        <span class="socio-name">Fluxus Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Genki Pilates" data-letter="G-L">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/ccd5be20-c8bf-4ff5-a9e9-c81e6ea74d1e/logo.jpeg" alt="Genki Pilates" loading="lazy" />
+        <span class="socio-name">Genki Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Gloss Fit" data-letter="G-L">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/c1ed6767-d5cc-4345-b278-e64d89beceb0/logo.jpg" alt="Gloss Fit" loading="lazy" />
+        <span class="socio-name">Gloss Fit</span>
+      </div>
+      <div class="socio-logo-card" data-name="Health Studio Pilates" data-letter="G-L">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/fded0810-72bb-4b74-9c6f-2defa4c56a3e/logo.jpeg" alt="Health Studio Pilates" loading="lazy" />
+        <span class="socio-name">Health Studio Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Holistica Yoga &amp; Pilates" data-letter="G-L">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/0ed5e040-de00-4903-a71a-02082c1d19d1/logo.jpeg" alt="Holistica Yoga &amp; Pilates" loading="lazy" />
+        <span class="socio-name">Holistica Yoga &amp; Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Iluminar Pilates&amp;Bienestar" data-letter="G-L">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/f779be51-9112-42a6-b1a8-56c85375f8a7/logo.png" alt="Iluminar Pilates&amp;Bienestar" loading="lazy" />
+        <span class="socio-name">Iluminar Pilates&amp;Bienestar</span>
+      </div>
+      <div class="socio-logo-card" data-name="Inspiración Pilates" data-letter="G-L">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/d332f535-ed7e-4e5a-81a4-714284ebdf60/logo.png" alt="Inspiración Pilates" loading="lazy" />
+        <span class="socio-name">Inspiración Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Índigo Pilates" data-letter="G-L">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/9d2b0d1d-07ff-4b9c-9ca6-d9fa330f80e7/logo.webp" alt="Índigo Pilates" loading="lazy" />
+        <span class="socio-name">Índigo Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Juan Sosa Pilates Estudio" data-letter="G-L">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/da34c0b6-bc3a-4943-bf07-87dd1f08356e/logo.jpeg" alt="Juan Sosa Pilates Estudio" loading="lazy" />
+        <span class="socio-name">Juan Sosa Pilates Estudio</span>
+      </div>
+      <div class="socio-logo-card" data-name="KyNUR Pilates" data-letter="G-L">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/0cda1f20-6b80-40fa-95fd-8c77eefe1f9f/logo.png" alt="KyNUR Pilates" loading="lazy" />
+        <span class="socio-name">KyNUR Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Malvón Pilates" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/564955df-7911-4f7a-8fb2-7b110482c7a0/logo.webp" alt="Malvón Pilates" loading="lazy" />
+        <span class="socio-name">Malvón Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Mimas Pilates" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/ad476d69-847c-41e7-a19d-2f9699fd8d10/logo.png" alt="Mimas Pilates" loading="lazy" />
+        <span class="socio-name">Mimas Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Mixtura" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/ffbaa56f-d21b-40b4-b35c-17b999fca096/logo.png" alt="Mixtura" loading="lazy" />
+        <span class="socio-name">Mixtura</span>
+      </div>
+      <div class="socio-logo-card" data-name="Moon Pilates BA" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/81dfdf63-dfb3-4fb6-839a-ca0ecd9deb6a/logo.png" alt="Moon Pilates BA" loading="lazy" />
+        <span class="socio-name">Moon Pilates BA</span>
+      </div>
+      <div class="socio-logo-card" data-name="MovePilates" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/8957f6ed-f604-43cb-b64c-4ea4550dcaf1/logo.jpeg" alt="MovePilates" loading="lazy" />
+        <span class="socio-name">MovePilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Munay Pilates" data-letter="M-R">
+        <img src="https://www.pilates.org.ar/logos/munay_pilates.jpg" alt="Munay Pilates" loading="lazy" />
+        <span class="socio-name">Munay Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Mundo Pilates Belgrano" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/b5192546-7e4f-46bd-9bc0-e8b7ada5cb64/logo.jpg" alt="Mundo Pilates Belgrano" loading="lazy" />
+        <span class="socio-name">Mundo Pilates Belgrano</span>
+      </div>
+      <div class="socio-logo-card" data-name="Nurifit" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/8dc1dbf8-83a8-4f67-826d-67754a6b695b/logo.jpg" alt="Nurifit" loading="lazy" />
+        <span class="socio-name">Nurifit</span>
+      </div>
+      <div class="socio-logo-card" data-name="Palace Pilates" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/ca6967e1-e527-427e-9781-8ff7afe74df7/logo.png" alt="Palace Pilates" loading="lazy" />
+        <span class="socio-name">Palace Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Palermo Pilates" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/26b4df39-589d-4142-b374-e53732cf1d31/logo.jpg" alt="Palermo Pilates" loading="lazy" />
+        <span class="socio-name">Palermo Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Pilates para vos" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/b5682184-1148-43f2-b1ab-6f4c428c8e0d/logo.png" alt="Pilates para vos" loading="lazy" />
+        <span class="socio-name">Pilates para vos</span>
+      </div>
+      <div class="socio-logo-card" data-name="Pilates Studio Barracas" data-letter="M-R">
+        <div class="socio-initial">P</div>
+        <span class="socio-name">Pilates Studio Barracas</span>
+      </div>
+      <div class="socio-logo-card" data-name="Pilatesbren" data-letter="M-R">
+        <div class="socio-initial">P</div>
+        <span class="socio-name">Pilatesbren</span>
+      </div>
+      <div class="socio-logo-card" data-name="Pillpi Pilates Integral" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/49b34843-b649-4fb1-bb48-f149b62706d3/logo.jpeg" alt="Pillpi Pilates Integral" loading="lazy" />
+        <span class="socio-name">Pillpi Pilates Integral</span>
+      </div>
+      <div class="socio-logo-card" data-name="Piuké Pilates" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/3d32f4e0-a214-4547-a933-ff9dbef7a7da/logo.png" alt="Piuké Pilates" loading="lazy" />
+        <span class="socio-name">Piuké Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Plena Pilates" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/cccb8766-d1d7-4a36-84a4-a1dc193bc865/logo.jpg" alt="Plena Pilates" loading="lazy" />
+        <span class="socio-name">Plena Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Pura Vida Pilates" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/d815f354-876d-4c3f-af1d-19e84dc987e0/logo.jpeg" alt="Pura Vida Pilates" loading="lazy" />
+        <span class="socio-name">Pura Vida Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Raisa Pilates" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/db7e8f22-3d38-4bc9-84ca-118ce35bb863/logo.png" alt="Raisa Pilates" loading="lazy" />
+        <span class="socio-name">Raisa Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Romanza.ba" data-letter="M-R">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/b68af5f5-6c70-48f9-9c3a-fc40e24513ff/logo.jpg" alt="Romanza.ba" loading="lazy" />
+        <span class="socio-name">Romanza.ba</span>
+      </div>
+      <div class="socio-logo-card" data-name="Studio Recoleta Pilates" data-letter="S-Z">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/7141dce5-e1e2-4cdc-b7af-c91f6a7cbb0d/logo.png" alt="Studio Recoleta Pilates" loading="lazy" />
+        <span class="socio-name">Studio Recoleta Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Suru Pilates" data-letter="S-Z">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/f698bffc-3d95-4941-b264-f5ab14c7eac3/logo.jpeg" alt="Suru Pilates" loading="lazy" />
+        <span class="socio-name">Suru Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="TAN TIEM Pilates" data-letter="S-Z">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/238cd612-7519-4575-9867-8df9e4068071/logo.jpeg" alt="TAN TIEM Pilates" loading="lazy" />
+        <span class="socio-name">TAN TIEM Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Tempo Libero Pilates" data-letter="S-Z">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/344bfd41-f447-44bc-b3d9-d0d32d5be1aa/logo.webp" alt="Tempo Libero Pilates" loading="lazy" />
+        <span class="socio-name">Tempo Libero Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Teseo | Pilates Funcional ®" data-letter="S-Z">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/eb7e4296-ada1-46ac-928b-defaa3223c1a/logo.png" alt="Teseo | Pilates Funcional ®" loading="lazy" />
+        <span class="socio-name">Teseo | Pilates Funcional ®</span>
+      </div>
+      <div class="socio-logo-card" data-name="Toulouse Pilates" data-letter="S-Z">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/f8973bd2-ea58-476a-81a3-ed3ac1507d15/logo.jpg" alt="Toulouse Pilates" loading="lazy" />
+        <span class="socio-name">Toulouse Pilates</span>
+      </div>
+      <div class="socio-logo-card" data-name="Tu Espacio Calasanz" data-letter="S-Z">
+        <img src="https://rpxckpqptdgkkwaqtgzz.supabase.co/storage/v1/object/public/logos/1e487f4c-8414-4d82-a207-1ad7b90011e6/logo.jpg" alt="Tu Espacio Calasanz" loading="lazy" />
+        <span class="socio-name">Tu Espacio Calasanz</span>
+      </div>
+      <div class="socio-logo-card" data-name="Wellness Atelier Pilates &amp; Bienestar" data-letter="S-Z">
+        <img src="https://www.pilates.org.ar/logos/wellness_atelier.jpg" alt="Wellness Atelier Pilates &amp; Bienestar" loading="lazy" />
+        <span class="socio-name">Wellness Atelier Pilates &amp; Bienestar</span>
+      </div>
+
+    </div>
 
     </div>
 
@@ -1613,8 +1625,11 @@ const FORMACIONES = [
   }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  /* FILTER — shows/hides cards by first letter range */
-  function getRange(letter) {
+  /* FILTER — muestra u oculta tarjetas por rango de inicial.
+     data-letter puede venir ya como rango ("A-F") o como inicial suelta ("C"). */
+  function getRange(valor) {
+    if (/^[A-Z]-[A-Z]$/.test(valor)) return valor;
+    const letter = (valor.match(/[A-Z0-9]/) || ['Z'])[0];
     if (letter <= 'F') return 'A-F';
     if (letter <= 'L') return 'G-L';
     if (letter <= 'R') return 'M-R';
@@ -1643,77 +1658,72 @@ const FORMACIONES = [
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Grilla de socios híbrida: logos frescos de la base reemplazan a los históricos por nombre
+// Grilla de socios: se reconstruye entera desde la vista directorio_publico.
+// Antes esto emparejaba cada socio con una tarjeta historica por parecido de
+// nombre, y dos estudios parecidos se pisaban entre si (Club Palermo Pilates
+// contra Palermo Pilates, por ejemplo): uno de los dos desaparecia de la home.
+// Ahora la base es la unica fuente: no hay emparejado y no hay deriva.
 (async () => {
+  const grid = document.getElementById('sociosGrid');
+  if (!grid) return;
   try {
     const sbSocios = supabase.createClient(
       'https://rpxckpqptdgkkwaqtgzz.supabase.co',
       'sb_publishable_QqQ4vWOitcfzNREsG3SoHA_rJAkTMDQ'
     );
-    const { data } = await sbSocios
-      .from('estudios')
-      .select('nombre, logo_url, instagram, web')
-      .eq('aprobado', true)
-      .eq('activo', true);
-    if (!data || !data.length) return;
+    const { data, error } = await sbSocios
+      .from('directorio_publico')
+      .select('nombre, logo_url, instagram, web');
+    if (error || !data || !data.length) return;   // la grilla estatica queda tal cual
 
-    const norm = s => (s || '')
-      .toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/\b(pilates|estudio|estudios|espacio|studio|de|el|la)\b/g, '')
-      .replace(/[^a-z0-9]/g, '');
-    const mismo = (a, b) => { a = norm(a); b = norm(b); return a && b && (a.includes(b) || b.includes(a)); };
+    const sinTildes = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const rango = n => {
+      const c = (sinTildes(n).toUpperCase().match(/[A-Z0-9]/) || ['Z'])[0];
+      if (c <= 'F') return 'A-F';
+      if (c <= 'L') return 'G-L';
+      if (c <= 'R') return 'M-R';
+      return 'S-Z';
+    };
+    const inicial = n => (sinTildes(n).toUpperCase().match(/[A-Z0-9]/) || ['?'])[0];
+    const esc = s => String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    const grid = document.getElementById('sociosGrid');
-    if (!grid) return;
-
-    const linkSocio = e => {
+    const link = e => {
       const web = (e.web || '').trim();
-      if (web) return web.match(/^https?:\/\//) ? web : 'https://' + web;
+      if (web) return /^https?:\/\//i.test(web) ? web : 'https://' + web;
       const ig = (e.instagram || '').replace(/^@/, '').trim();
-      if (ig) return 'https://instagram.com/' + ig;
+      if (ig && /^[A-Za-z0-9._]+$/.test(ig)) return 'https://instagram.com/' + ig;
       return null;
     };
-    const contenidoCard = (e, letra) => {
-      const inner = e.logo_url
-        ? `<img src="${e.logo_url}" alt="${e.nombre}" loading="lazy" />`
-        : `<div class="socio-placeholder"><div class="socio-initial">${letra}</div><span class="socio-name">${e.nombre}</span></div>`;
-      const url = linkSocio(e);
+
+    const activo = document.querySelector('.filter-btn.active');
+    const filtro = activo ? activo.dataset.filter : 'all';
+
+    const ordenados = data
+      .filter(e => (e.nombre || '').trim())
+      .sort((a, b) => sinTildes(a.nombre).toLowerCase()
+        .localeCompare(sinTildes(b.nombre).toLowerCase(), 'es'));
+
+    grid.innerHTML = ordenados.map(e => {
+      const n = e.nombre.trim();
+      const r = rango(n);
+      const interior = e.logo_url
+        ? `<img src="${esc(e.logo_url)}" alt="${esc(n)}" loading="lazy" />`
+        : `<div class="socio-initial">${esc(inicial(n))}</div>`;
+      const url = link(e);
+      const cuerpo = `${interior}<span class="socio-name">${esc(n)}</span>`;
+      const oculto = (filtro !== 'all' && r !== filtro) ? ' style="display:none"' : '';
       return url
-        ? `<a href="${url}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit" title="${e.nombre}">${inner}</a>`
-        : inner;
-    };
+        ? `<a class="socio-logo-card" href="${esc(url)}" target="_blank" rel="noopener"
+             data-name="${esc(n)}" data-letter="${r}" title="${esc(n)}"${oculto}>${cuerpo}</a>`
+        : `<div class="socio-logo-card" data-name="${esc(n)}" data-letter="${r}"${oculto}>${cuerpo}</div>`;
+    }).join('');
 
-    data.forEach(e => {
-      if (!e.nombre) return;
-      const cards = Array.from(grid.querySelectorAll('.socio-logo-card'));
-      const letra = e.nombre.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').charAt(0).toUpperCase();
-      const match = cards.find(c => mismo(c.dataset.name, e.nombre));
-
-      if (match) {
-        match.dataset.name = e.nombre;
-        match.dataset.letter = letra;
-        match.innerHTML = contenidoCard(e, letra);
-      } else {
-        const card = document.createElement('div');
-        card.className = 'socio-logo-card';
-        card.dataset.name = e.nombre;
-        card.dataset.letter = letra;
-        card.innerHTML = contenidoCard(e, letra);
-        const siguiente = cards.find(c => (c.dataset.name || '').localeCompare(e.nombre, 'es') > 0);
-        grid.insertBefore(card, siguiente || null);
-      }
-    });
-
-    // Estudios dados de baja: se quitan de la grilla aunque tengan tarjeta histórica
-    const { data: bajas } = await sbSocios.from('socios_baja').select('nombre');
-    (bajas || []).forEach(b => {
-      grid.querySelectorAll('.socio-logo-card').forEach(c => {
-        if (mismo(c.dataset.name, b.nombre)) c.remove();
-      });
-    });
+    const contador = document.getElementById('sociosCount');
+    if (contador) contador.textContent = ordenados.length;
   } catch (err) {
-    // si la base no responde, la grilla histórica queda tal cual
+    // si la base no responde, queda la grilla estatica del HTML
   }
 })();
 </script>
