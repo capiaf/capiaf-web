@@ -591,7 +591,7 @@
       </div>
       <div id="bloqueMatafuegoVto" style="display:none">
         <label>Próximo vencimiento de la carga *</label>
-        <input type="date" id="fMatafuego" />
+        <input type="month" id="fMatafuego" />
       </div>
 
     </div>
@@ -708,7 +708,7 @@
         </div>
         <div id="bloqueSedeMatafuegoVto" style="display:none">
           <label>Próximo vencimiento de la carga *</label>
-          <input type="date" id="sedeMatafuego" />
+          <input type="month" id="sedeMatafuego" />
         </div>
         <div>
           <label>Calle</label>
@@ -791,6 +791,13 @@ const SUPABASE_URL = 'https://rpxckpqptdgkkwaqtgzz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_QqQ4vWOitcfzNREsG3SoHA_rJAkTMDQ';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Los matafuegos vencen por mes y ano, no por dia: el input es type=month
+// y en la base se guarda el dia 1 de ese mes.
+const vtoAMes  = (d) => d ? String(d).slice(0, 7) : '';
+const mesAVto  = (m) => m ? m + '-01' : null;
+const fmtVto   = (d) => d ? String(d).slice(0, 7).split('-').reverse().join('/') : '';
+
 
 let currentUser = null;
 let estudioId = null;
@@ -1011,7 +1018,7 @@ async function loadEstudio() {
     document.getElementById('fAgc').value            = data.agc || '';
     document.getElementById('fComision').value       = data.comision_directiva ? 'si' : 'no';
     document.getElementById('fWeb').value            = data.web || '';
-    document.getElementById('fMatafuego').value      = data.matafuego_vto || '';
+    document.getElementById('fMatafuego').value      = vtoAMes(data.matafuego_vto);
     document.getElementById('fMatafuegoServicio').value = data.matafuego_servicio === true ? 'si' : data.matafuego_servicio === false ? 'no' : '';
     aplicarMatafuego(document.getElementById('fMatafuegoServicio').value);
     document.getElementById('fMostrarMapa').checked  = data.mostrar_mapa !== false;
@@ -1084,7 +1091,7 @@ async function saveDatos() {
     matafuego_servicio: document.getElementById('fMatafuegoServicio').value === 'si' ? true
                       : document.getElementById('fMatafuegoServicio').value === 'no' ? false : null,
     matafuego_vto: document.getElementById('fMatafuegoServicio').value === 'si'
-                     ? (document.getElementById('fMatafuego').value || null) : null,
+                     ? mesAVto(document.getElementById('fMatafuego').value) : null,
     mostrar_mapa: document.getElementById('fMostrarMapa').checked,
     tipo:        document.getElementById('fTipo').value,
     responsable:     document.getElementById('fResponsable').value.trim(),
@@ -1514,7 +1521,7 @@ function renderSedes() {
             <option value="no"${s.matafuego_servicio === false ? ' selected' : ''}>No</option>
           </select>
           ${s.matafuego_servicio === true ? `Vto.:
-          <input type="date" value="${s.matafuego_vto || ''}" style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto"
+          <input type="month" value="${vtoAMes(s.matafuego_vto)}" style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto"
                  onchange="setVtoSede('${s.id}', this.value)" />
           ${s.matafuego_vto ? '' : '<span style="color:var(--error);font-weight:600">falta la fecha</span>'}` : ''}
           ${(s.matafuego_servicio === null || s.matafuego_servicio === undefined) ? '<span style="color:var(--error);font-weight:600">sin responder</span>' : ''}
@@ -1607,11 +1614,12 @@ async function setServicioSede(id, valor) {
 }
 
 async function setVtoSede(id, valor) {
-  const { data, error } = await sb.from('sedes').update({ matafuego_vto: valor || null }).eq('id', id).select();
+  const vto = mesAVto(valor);
+  const { data, error } = await sb.from('sedes').update({ matafuego_vto: vto }).eq('id', id).select();
   const ok = !error && data && data.length > 0;
   if (ok) {
     const s = sedes.find(x => x.id === id);
-    if (s) s.matafuego_vto = valor || null;
+    if (s) s.matafuego_vto = vto;
   }
   setPinStatus('obleaSedeStatus', ok ? '✓ Vencimiento guardado' : 'No se pudo guardar el vencimiento.', ok ? 'ok' : 'err');
 }
@@ -1652,7 +1660,7 @@ async function addSede() {
   if (servSede === 'si' && !document.getElementById('sedeMatafuego').value)
     return showSaveMsg('sedeMsg', 'Cargá el próximo vencimiento de la carga del matafuego de esta sede.', 'err');
   sede.matafuego_servicio = servSede === 'si';
-  sede.matafuego_vto = servSede === 'si' ? (document.getElementById('sedeMatafuego').value || null) : null;
+  sede.matafuego_vto = servSede === 'si' ? mesAVto(document.getElementById('sedeMatafuego').value) : null;
   sede.mostrar_mapa = document.getElementById('sedeMostrarMapa').checked;
   const sc = coordsDe('sede');
   if (sc.lat) { sede.lat = sc.lat; sede.lng = sc.lng; }
@@ -2302,7 +2310,7 @@ async function aprobar(id, valor) {
       <div><label>Servicio de matafuegos</label><select id="mMatafuegoServicio" onchange="document.getElementById('mMatafuego').disabled = this.value !== 'si'">
         <option value="">Sin responder</option><option value="si">Sí</option><option value="no">No</option>
       </select></div>
-      <div><label>Vto. carga matafuego</label><input type="date" id="mMatafuego" /></div>
+      <div><label>Vto. carga matafuego</label><input type="month" id="mMatafuego" /></div>
       <div><label>Mostrar en el mapa público</label>
         <select id="mMostrarMapa">
           <option value="true">Sí</option>
@@ -2368,7 +2376,7 @@ function abrirFicha(id) {
   document.getElementById('mTelefono').value    = e.telefono || '';
   document.getElementById('mInstagram').value   = e.instagram || '';
   document.getElementById('mWeb').value            = e.web || '';
-  document.getElementById('mMatafuego').value      = e.matafuego_vto || '';
+  document.getElementById('mMatafuego').value      = vtoAMes(e.matafuego_vto);
   document.getElementById('mMatafuegoServicio').value = e.matafuego_servicio === true ? 'si' : e.matafuego_servicio === false ? 'no' : '';
   document.getElementById('mMatafuego').disabled   = e.matafuego_servicio !== true;
   document.getElementById('mMostrarMapa').value    = e.mostrar_mapa === false ? 'false' : 'true';
@@ -2422,7 +2430,7 @@ function abrirFicha(id) {
   sedesDiv.innerHTML = (e.sedes && e.sedes.length)
     ? e.sedes.map(s => `
         <div class="ficha-sede">
-          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) + (s.razon_social ? ' · ' + esc(s.razon_social) : '') : ' · SIN CUIT'}${s.matafuego_servicio === true ? (s.matafuego_vto ? ' · matafuego vence ' + s.matafuego_vto.split('-').reverse().join('/') : ' · matafuego SIN FECHA') : s.matafuego_servicio === false ? ' · sin servicio de matafuegos' : ' · matafuego SIN RESPONDER'}</span>
+          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) + (s.razon_social ? ' · ' + esc(s.razon_social) : '') : ' · SIN CUIT'}${s.matafuego_servicio === true ? (s.matafuego_vto ? ' · matafuego vence ' + fmtVto(s.matafuego_vto) : ' · matafuego SIN FECHA') : s.matafuego_servicio === false ? ' · sin servicio de matafuegos' : ' · matafuego SIN RESPONDER'}</span>
           <button type="button" class="btn-editar" onclick="fichaUbicar('sede','${s.id}')">📍 Pin</button>
         </div>`).join('')
     : '<p class="map-hint" style="margin:0">Sin sedes adicionales.</p>';
@@ -2515,7 +2523,7 @@ async function guardarFicha() {
     matafuego_servicio: document.getElementById('mMatafuegoServicio').value === 'si' ? true
                       : document.getElementById('mMatafuegoServicio').value === 'no' ? false : null,
     matafuego_vto: document.getElementById('mMatafuegoServicio').value === 'si'
-                     ? (document.getElementById('mMatafuego').value || null) : null,
+                     ? mesAVto(document.getElementById('mMatafuego').value) : null,
     mostrar_mapa: document.getElementById('mMostrarMapa').value === 'true',
     descripcion: document.getElementById('mDescripcion').value.trim(),
     direccion:   document.getElementById('mDireccion').value.trim(),
@@ -2684,7 +2692,7 @@ function sinBeneficio(r) { return r.cubierta !== true; }
 function motivoPago(r) {
   if (r.cubierta === true) return 'Incluida en la cuota';
   if (r.elegible_desde && r.vencimiento < r.elegible_desde)
-    return 'beneficio desde ' + r.elegible_desde.split('-').reverse().join('/');
+    return 'beneficio desde ' + fmtVto(r.elegible_desde);
   return 'esta sede ya usó la incluida del año';
 }
 
@@ -2727,7 +2735,7 @@ function renderRecargas() {
         <td>${esc(r.nro_socio || '—')}</td>
         <td><strong>${esc(r.estudio_nombre || '')}</strong></td>
         <td><div class="row-sub">${esc(r.sede_nombre || '')}<br>${esc(r.direccion || '')}${r.barrio ? ', ' + esc(r.barrio) : ''}</div></td>
-        <td>${r.vencimiento.split('-').reverse().join('/')}${atrasada ? '<div class="row-falta">atrasada</div>' : ''}</td>
+        <td>${fmtVto(r.vencimiento)}${atrasada ? '<div class="row-falta">atrasada</div>' : ''}</td>
         <td>${MF_LBL[r.estado] || r.estado}</td>
         <td>${sinBeneficio(r)
               ? `<span class="tag" style="background:#efecf7;color:#6b5b95">Abona el cliente</span><div class="row-sub">${motivoPago(r)}</div>` +

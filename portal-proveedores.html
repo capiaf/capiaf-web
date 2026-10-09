@@ -178,6 +178,14 @@ let recargas = [], pedidos = [], filtro = 'todos', seccion = 'recargas', proveed
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
   ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const fdate = (d) => d ? d.split('-').reverse().join('/') : '';
+// El vencimiento es por mes y ano; la fecha de recarga si es un dia exacto.
+const fmtVto = (d) => d ? String(d).slice(0, 7).split('-').reverse().join('/') : '';
+// Recargar corre el vencimiento al mismo mes del ano siguiente
+const proxVto = (fechaRecarga) => {
+  if (!fechaRecarga) return '';
+  const [a, m] = fechaRecarga.split('-');
+  return `${m}/${Number(a) + 1}`;
+};
 const hoyMes = () => new Date().toISOString().slice(0, 7);
 
 function aviso(id, texto, clase) {
@@ -371,10 +379,11 @@ function render() {
             : ' <span class="chip capiaf">Abona CAPIAF</span>') : ''}</div>
         <div class="dir">${esc(r.sede_nombre || '')} — ${esc(r.direccion || '')}${r.barrio ? ', ' + esc(r.barrio) : ''}</div>
         <div class="meta">
-          <span>Vence: <strong>${fdate(r.vencimiento)}</strong></span>
+          <span>Vence: <strong>${fmtVto(r.vencimiento)}</strong></span>
           <span>Contacto: ${esc(r.contacto || '—')}</span>
           <span>Tel: ${tel}</span>
-          ${r.fecha_recarga ? `<span>Recargado el ${fdate(r.fecha_recarga)}</span>` : ''}
+          ${r.fecha_recarga ? `<span>Recargado el <strong>${fdate(r.fecha_recarga)}</strong></span>
+            <span>Próximo vencimiento: <strong>${proxVto(r.fecha_recarga)}</strong></span>` : ''}
           ${r.factura_nro ? `<span>Factura ${esc(r.factura_nro)}</span>` : ''}
         </div>
         ${fuera ? `<div class="nota-benef">${motivoPago(r)} Esta la abona el estudio, con el descuento acordado con CAPIAF.</div>` : ''}
