@@ -582,6 +582,15 @@
         <input type="text" id="fBarrio" placeholder="Ej: Palermo Hollywood" />
       </div>
       <div>
+        <label>Entre calles *</label>
+        <input type="text" id="fEntreCalles" placeholder="Ej: Charcas y Güemes" />
+        <small class="map-hint">Las dos esquinas de tu cuadra. Es el dato que usa la ambulancia para llegar.</small>
+      </div>
+      <div>
+        <label>Código postal *</label>
+        <input type="text" id="fCp" placeholder="Ej: 1425" />
+      </div>
+      <div>
         <label>¿Vas a usar el servicio de recarga de matafuegos de CAPIAF? *</label>
         <select id="fMatafuegoServicio">
           <option value="">Elegí una opción</option>
@@ -697,6 +706,14 @@
         <div>
           <label>Barrio</label>
           <input type="text" id="sedeBarrio" placeholder="Ej: Belgrano" />
+        </div>
+        <div>
+          <label>Entre calles</label>
+          <input type="text" id="sedeEntreCalles" placeholder="Ej: Juramento y Mendoza" />
+        </div>
+        <div>
+          <label>Código postal</label>
+          <input type="text" id="sedeCp" placeholder="Ej: 1428" />
         </div>
         <div>
           <label>¿Vas a usar el servicio de recarga de matafuegos en esta sede? *</label>
@@ -1002,6 +1019,8 @@ async function loadEstudio() {
     document.getElementById('fDireccion').value   = data.direccion   || '';
     document.getElementById('fNumero').value      = data.numero      || '';
     document.getElementById('fBarrio').value      = data.barrio      || '';
+    document.getElementById('fEntreCalles').value = data.entre_calles || '';
+    document.getElementById('fCp').value          = data.cp          || '';
 
     const badge = document.getElementById('statusBadge');
     if (data.aprobado) {
@@ -1101,6 +1120,8 @@ async function saveDatos() {
     numero:      document.getElementById('fNumero').value.trim(),
     piso:        document.getElementById('fPiso').value.trim(),
     barrio:      document.getElementById('fBarrio').value.trim(),
+    entre_calles: document.getElementById('fEntreCalles').value.trim(),
+    cp:          document.getElementById('fCp').value.trim(),
     matafuego_servicio: document.getElementById('fMatafuegoServicio').value === 'si' ? true
                       : document.getElementById('fMatafuegoServicio').value === 'no' ? false : null,
     matafuego_vto: document.getElementById('fMatafuegoServicio').value === 'si'
@@ -1132,6 +1153,8 @@ async function saveDatos() {
     ['fDireccion', datos.direccion, 'Calle'],
     ['fNumero', datos.numero, 'Número'],
     ['fBarrio', datos.barrio, 'Barrio'],
+    ['fEntreCalles', datos.entre_calles, 'Entre calles'],
+    ['fCp', datos.cp, 'Código postal'],
     ['fMatafuegoServicio', document.getElementById('fMatafuegoServicio').value, 'Servicio de recarga de matafuegos'],
   ];
   if (document.getElementById('fMatafuegoServicio').value === 'si' && !datos.matafuego_vto) {
@@ -1694,6 +1717,8 @@ async function addSede() {
     direccion:  document.getElementById('sedeDireccion').value.trim(),
     numero:     document.getElementById('sedeNumero').value.trim(),
     barrio:     document.getElementById('sedeBarrio').value.trim(),
+    entre_calles: document.getElementById('sedeEntreCalles').value.trim(),
+    cp:           document.getElementById('sedeCp').value.trim(),
     razon_social: document.getElementById('sedeRazon').value.trim() || null,
     cuit:         normCuit(document.getElementById('sedeCuit').value) || null,
   };
@@ -1716,7 +1741,7 @@ async function addSede() {
   sedes.push(data);
   renderSedes();
   document.getElementById('sedeForm').classList.remove('open');
-  ['sedeNombre','sedeBarrio','sedeDireccion','sedeNumero','sedeRazon','sedeCuit','sedeMatafuego','sedeMatafuegoServicio'].forEach(id => document.getElementById(id).value = '');
+  ['sedeNombre','sedeBarrio','sedeEntreCalles','sedeCp','sedeDireccion','sedeNumero','sedeRazon','sedeCuit','sedeMatafuego','sedeMatafuegoServicio'].forEach(id => document.getElementById(id).value = '');
   aplicarMatafuegoSede('');
   document.getElementById('sedeMostrarMapa').checked = true;
   document.getElementById('mapSede').classList.remove('visible');
@@ -1975,6 +2000,8 @@ function camposFaltantesDet(e) {
   add(!e.direccion,       'Calle',                     'fDireccion');
   add(!e.numero,          'Número',                    'fNumero');
   add(!e.barrio,          'Barrio',                    'fBarrio');
+  add(!e.entre_calles,    'Entre calles',              'fEntreCalles');
+  add(!e.cp,              'Código postal',             'fCp');
   add(!e.lat,             'Ubicación en el mapa',      'mapPrincipalAncla');
   add(!(e.dni_url || (e.dni_frente_url && e.dni_dorso_url)), 'Foto del DNI (frente y dorso)', 'fDniFrente');
   add(e.agc === 'si' && !e.oblea_url, 'Oblea de habilitación', 'fOblea');
@@ -1989,6 +2016,8 @@ function camposFaltantesDet(e) {
   add(sinCuit > 0, `CUIT y titular de ${sinCuit} sede${sinCuit > 1 ? 's' : ''} adicional${sinCuit > 1 ? 'es' : ''}`, 'sedesList');
   const sinPin = sedes.filter(s => !s.lat).length;
   add(sinPin > 0, `Ubicación en el mapa de ${sinPin} sede${sinPin > 1 ? 's' : ''} adicional${sinPin > 1 ? 'es' : ''}`, 'sedesList');
+  const sinCalles = sedes.filter(s => !s.entre_calles || !s.cp).length;
+  add(sinCalles > 0, `Entre calles y código postal de ${sinCalles} sede${sinCalles > 1 ? 's' : ''} adicional${sinCalles > 1 ? 'es' : ''}`, 'sedesList');
   const sinServ = sedes.filter(s => s.matafuego_servicio === null || s.matafuego_servicio === undefined).length;
   add(sinServ > 0, `Servicio de matafuegos de ${sinServ} sede${sinServ > 1 ? 's' : ''} adicional${sinServ > 1 ? 'es' : ''}`, 'sedesList');
   const sinVto = sedes.filter(s => s.matafuego_servicio === true && !s.matafuego_vto).length;
@@ -2850,19 +2879,27 @@ function exportRecargas() {
 }
 
 // ── EXPORTS PARAMEDIC / CUOTAS ──
+// Columnas en el orden que las pide Paramedic: CUIT, razón social (nombre y
+// apellido del titular), nombre de fantasía, domicilio con entre calles y
+// barrio, y código postal.
 function filasDomicilios(e) {
-  const base = { 'N° socio': e.nro_socio || '', 'Estudio': e.nombre || '', 'Teléfono': e.telefono || '', 'Email': e.email || '' };
-  const filas = [{ ...base, 'Sede': 'Sede principal',
-    'Razón social': e.razon_social || '⚠ FALTA',
-    'CUIT': e.cuit ? fmtCuit(e.cuit) : '⚠ FALTA',
-    'Dirección': `${e.direccion || ''} ${e.numero || ''}${e.piso ? ' ' + e.piso : ''}`.trim(), 'Barrio': e.barrio || '' }];
+  const base = { 'N° socio': e.nro_socio || '', 'Teléfono': e.telefono || '', 'Email': e.email || '' };
+  const fila = (d, sede) => ({
+    'N° socio': base['N° socio'],
+    'CUIT': d.cuit ? fmtCuit(d.cuit) : '⚠ FALTA',
+    'Razón social': d.razon_social || '⚠ FALTA',
+    'Nombre de fantasía': e.nombre || '⚠ FALTA',
+    'Sede': sede,
+    'Dirección': `${d.direccion || ''} ${d.numero || ''}${d.piso ? ' ' + d.piso : ''}`.trim() || '⚠ FALTA',
+    'Entre calles': d.entre_calles || '⚠ FALTA',
+    'Barrio': d.barrio || '⚠ FALTA',
+    'Código postal': d.cp || '⚠ FALTA',
+    'Teléfono': base['Teléfono'], 'Email': base['Email'],
+  });
   // Cada sede se certifica con SU propio CUIT. Si falta, se marca: heredar el del
   // estudio hacía que Paramedic emitiera el certificado a nombre equivocado.
-  for (const s of (e.sedes || [])) filas.push({ ...base, 'Sede': s.nombre || 'Sede',
-    'Razón social': s.razon_social || '⚠ FALTA',
-    'CUIT': s.cuit ? fmtCuit(s.cuit) : '⚠ FALTA',
-    'Dirección': `${s.direccion || ''} ${s.numero || ''}`.trim(), 'Barrio': s.barrio || '' });
-  return filas;
+  return [fila(e, 'Sede principal'),
+          ...(e.sedes || []).map(s => fila(s, s.nombre || 'Sede'))];
 }
 function descargarXlsx(filas, hoja, nombre) {
   if (!filas.length) return alert('No hay datos para exportar.');
