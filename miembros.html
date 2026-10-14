@@ -1565,8 +1565,25 @@ function renderSedes() {
   list.innerHTML = sedes.map(s => `
     <div class="sede-item">
       <div class="sede-item-info">
-        <strong>${s.nombre || 'Sede'} ${s.lat ? '📍' : ''}</strong>
-        <small>${s.direccion || ''} ${s.numero || ''} — ${s.barrio || ''}</small>
+        <strong>${esc(s.nombre || 'Sede')} ${s.lat ? '📍' : ''}</strong>
+        <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem;flex-wrap:wrap">Nombre:
+          <input type="text" value="${esc(s.nombre || '')}" placeholder="Ej: Sede Belgrano"
+                 style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:140px"
+                 onchange="setDatoSede('${s.id}', 'nombre', this.value)" />
+        </small>
+        <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem;flex-wrap:wrap">Calle:
+          <input type="text" value="${esc(s.direccion || '')}" placeholder="Ej: Juramento"
+                 style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:140px"
+                 onchange="setDatoSede('${s.id}', 'direccion', this.value)" />
+          N°:
+          <input type="text" value="${esc(s.numero || '')}" placeholder="1475"
+                 style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:70px"
+                 onchange="setDatoSede('${s.id}', 'numero', this.value)" />
+          Barrio:
+          <input type="text" value="${esc(s.barrio || '')}" placeholder="Ej: Belgrano"
+                 style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:120px"
+                 onchange="setDatoSede('${s.id}', 'barrio', this.value)" />
+        </small>
         <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem;flex-wrap:wrap">Titular:
           <input type="text" value="${esc(s.razon_social || '')}" placeholder="Nombre o razón social"
                  style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:150px"
@@ -1684,8 +1701,16 @@ async function setDatoSede(id, campo, valor) {
   if (ok) {
     const s = sedes.find(x => x.id === id);
     if (s) s[campo] = v || null;
+    // El nombre se muestra tambien en el titulo de la fila, asi que ese si
+    // necesita redibujar. Los demas no, para no hacer saltar el foco.
+    if (campo === 'nombre') renderSedes();
   }
-  setPinStatus('obleaSedeStatus', ok ? '✓ Guardado' : 'No se pudo guardar.', ok ? 'ok' : 'err');
+  const mueveElPin = campo === 'direccion' || campo === 'numero' || campo === 'barrio';
+  setPinStatus('obleaSedeStatus',
+    !ok ? 'No se pudo guardar.'
+        : mueveElPin ? '✓ Guardado. Si cambiaste el domicilio, corregí también el pin con "📍 Ubicar".'
+                     : '✓ Guardado',
+    ok ? 'ok' : 'err');
 }
 
 async function setServicioSede(id, valor) {
@@ -2394,6 +2419,8 @@ async function aprobar(id, valor) {
       <div><label>Número</label><input type="text" id="mNumero" /></div>
       <div><label>Piso / Depto</label><input type="text" id="mPiso" /></div>
       <div><label>Barrio</label><input type="text" id="mBarrio" /></div>
+      <div><label>Entre calles</label><input type="text" id="mEntreCalles" placeholder="Ej: Charcas y Güemes" /></div>
+      <div><label>Código postal</label><input type="text" id="mCp" inputmode="numeric" placeholder="1425" /></div>
       <div><label>Habilitado por AGC</label>
         <select id="mAgc">
           <option value="">Sin responder</option>
@@ -2480,6 +2507,8 @@ function abrirFicha(id) {
   document.getElementById('mNumero').value      = e.numero || '';
   document.getElementById('mPiso').value        = e.piso || '';
   document.getElementById('mBarrio').value      = e.barrio || '';
+  document.getElementById('mEntreCalles').value = e.entre_calles || '';
+  document.getElementById('mCp').value          = e.cp || '';
   document.getElementById('mActivo').value      = e.activo === false ? 'false' : 'true';
   document.getElementById('mTipo').value        = e.tipo || 'individual';
   document.getElementById('mNroSocio').value       = e.nro_socio || '';
@@ -2522,10 +2551,34 @@ function abrirFicha(id) {
   })();
 
   const sedesDiv = document.getElementById('fichaSedes');
+  const inpSede = (s, campo, ph, ancho) =>
+    `<input type="text" value="${esc(s[campo] || '')}" placeholder="${ph}"
+            style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:${ancho}"
+            onchange="setDatoSedeFicha('${s.id}', '${campo}', this.value)" />`;
   sedesDiv.innerHTML = (e.sedes && e.sedes.length)
     ? e.sedes.map(s => `
-        <div class="ficha-sede">
-          <span>${s.nombre || 'Sede'} — ${s.direccion || ''} ${s.numero || ''}${s.barrio ? ', ' + s.barrio : ''} ${s.lat ? '· 📍' : ''}${s.cuit ? ' · CUIT ' + fmtCuit(s.cuit) + (s.razon_social ? ' · ' + esc(s.razon_social) : '') : ' · SIN CUIT'}${s.matafuego_servicio === true ? (s.matafuego_vto ? ' · matafuego vence ' + fmtVto(s.matafuego_vto) : ' · matafuego SIN FECHA') : s.matafuego_servicio === false ? ' · sin servicio de matafuegos' : ' · matafuego SIN RESPONDER'}</span>
+        <div class="ficha-sede" style="flex-wrap:wrap;align-items:flex-start;gap:.4rem">
+          <div style="flex:1 1 100%;display:flex;flex-direction:column;gap:.3rem">
+            <span style="font-weight:600">${esc(s.nombre || 'Sede')} ${s.lat ? '· 📍' : '· SIN PIN'}${s.matafuego_servicio === true ? (s.matafuego_vto ? ' · matafuego vence ' + fmtVto(s.matafuego_vto) : ' · matafuego SIN FECHA') : s.matafuego_servicio === false ? ' · sin servicio de matafuegos' : ' · matafuego SIN RESPONDER'}</span>
+            <small style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">Nombre:
+              ${inpSede(s, 'nombre', 'Sede Belgrano', '130px')} Calle:
+              ${inpSede(s, 'direccion', 'Juramento', '130px')} N°:
+              ${inpSede(s, 'numero', '1475', '65px')} Barrio:
+              ${inpSede(s, 'barrio', 'Belgrano', '110px')}
+            </small>
+            <small style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">Entre calles:
+              ${inpSede(s, 'entre_calles', 'Charcas y Güemes', '160px')} CP:
+              ${inpSede(s, 'cp', '1425', '65px')}
+              ${(s.entre_calles && s.cp) ? '' : '<span style="color:var(--error);font-weight:600">falta para Paramedic</span>'}
+            </small>
+            <small style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">Titular:
+              ${inpSede(s, 'razon_social', 'Nombre o razón social', '160px')} CUIT:
+              <input type="text" value="${fmtCuit(s.cuit)}" placeholder="20-12345678-3" inputmode="numeric"
+                     style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:120px"
+                     onchange="setDatoSedeFicha('${s.id}', 'cuit', this.value)" />
+              ${(s.cuit && s.razon_social) ? '' : '<span style="color:var(--error);font-weight:600">falta para Paramedic</span>'}
+            </small>
+          </div>
           <button type="button" class="btn-editar" onclick="fichaUbicar('sede','${s.id}')">📍 Pin</button>
         </div>`).join('')
     : '<p class="map-hint" style="margin:0">Sin sedes adicionales.</p>';
@@ -2602,6 +2655,31 @@ async function fichaGuardarPin() {
   setPinStatus('pinStatusFicha', ok ? '✅ Pin guardado' : 'No se pudo guardar el pin.', ok ? 'ok' : 'err');
 }
 
+// Guarda un campo de una sede desde la ficha del panel de administracion.
+// El admin tiene politica ALL sobre sedes, asi que escribe directo.
+async function setDatoSedeFicha(id, campo, valor) {
+  let v = (valor || '').trim();
+  if (campo === 'cuit') {
+    v = normCuit(v);
+    if (v && !cuitValido(v)) return setPinStatus('pinStatusFicha', 'El CUIT de la sede no es válido.', 'err');
+  }
+  const { data, error } = await sb.from('sedes').update({ [campo]: v || null }).eq('id', id).select();
+  const ok = !error && data && data.length > 0;
+  if (ok) {
+    // Mantenemos al dia la copia en memoria para que al reabrir la ficha
+    // se vea lo guardado sin recargar todo el padron.
+    const est = allEstudios.find(x => x.id === fichaId);
+    const s = est && (est.sedes || []).find(x => x.id === id);
+    if (s) s[campo] = v || null;
+  }
+  const mueveElPin = campo === 'direccion' || campo === 'numero' || campo === 'barrio';
+  setPinStatus('pinStatusFicha',
+    !ok ? 'No se pudo guardar el dato de la sede.'
+        : mueveElPin ? '✅ Guardado. Si cambió el domicilio, corregí el pin de esa sede.'
+                     : '✅ Guardado',
+    ok ? 'ok' : 'err');
+}
+
 function cerrarFicha() {
   document.getElementById('fichaModal').classList.remove('open');
   fichaId = null;
@@ -2625,6 +2703,8 @@ async function guardarFicha() {
     numero:      document.getElementById('mNumero').value.trim(),
     piso:        document.getElementById('mPiso').value.trim(),
     barrio:      document.getElementById('mBarrio').value.trim(),
+    entre_calles: document.getElementById('mEntreCalles').value.trim() || null,
+    cp:          document.getElementById('mCp').value.trim() || null,
     activo:      document.getElementById('mActivo').value === 'true',
     tipo:        document.getElementById('mTipo').value,
     nro_socio:       document.getElementById('mNroSocio').value.trim(),
