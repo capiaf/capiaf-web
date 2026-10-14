@@ -1577,6 +1577,16 @@ function renderSedes() {
                  onchange="setTitularSede('${s.id}', 'cuit', this.value)" />
           ${(s.cuit && s.razon_social) ? '' : '<span style="color:var(--error);font-weight:600">obligatorio para la cobertura</span>'}
         </small>
+        <small style="display:flex;align-items:center;gap:.4rem;margin-top:.25rem;flex-wrap:wrap">Entre calles:
+          <input type="text" value="${esc(s.entre_calles || '')}" placeholder="Ej: Charcas y Güemes"
+                 style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:170px"
+                 onchange="setDatoSede('${s.id}', 'entre_calles', this.value)" />
+          CP:
+          <input type="text" value="${esc(s.cp || '')}" placeholder="1425" inputmode="numeric"
+                 style="margin:0;padding:.25rem .5rem;font-size:.75rem;width:auto;min-width:70px"
+                 onchange="setDatoSede('${s.id}', 'cp', this.value)" />
+          ${(s.entre_calles && s.cp) ? '' : '<span style="color:var(--error);font-weight:600">los pide la cobertura de emergencias</span>'}
+        </small>
         <label class="check-linea" style="margin-top:.2rem">
           <input type="checkbox" ${s.mostrar_mapa === false ? '' : 'checked'} onchange="setMostrarSede('${s.id}', this.checked)" />
           <span style="font-size:.75rem">Mostrar esta sede en el mapa público</span>
@@ -1665,6 +1675,17 @@ async function setTitularSede(id, campo, valor) {
     renderSedes();
   }
   setPinStatus('obleaSedeStatus', ok ? '✓ Datos de la sede guardados' : 'No se pudo guardar.', ok ? 'ok' : 'err');
+}
+
+async function setDatoSede(id, campo, valor) {
+  const v = (valor || '').trim();
+  const { data, error } = await sb.from('sedes').update({ [campo]: v || null }).eq('id', id).select();
+  const ok = !error && data && data.length > 0;
+  if (ok) {
+    const s = sedes.find(x => x.id === id);
+    if (s) s[campo] = v || null;
+  }
+  setPinStatus('obleaSedeStatus', ok ? '✓ Guardado' : 'No se pudo guardar.', ok ? 'ok' : 'err');
 }
 
 async function setServicioSede(id, valor) {
