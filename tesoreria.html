@@ -361,6 +361,7 @@ function htmlInforme(R) {
         <div class="sec"><h4>Socios</h4><table class="tb">
           ${fila('Activos al inicio', [num(R.socIni)])}${fila('Altas', [num(R.altas)])}${fila('Bajas', [num(R.bajas)])}
           ${fila('Activos al cierre', [num(R.socFin)], true)}${fila('Pagaron la cuota del mes', [num(R.alDia)])}
+          ${R.suscripcion != null ? fila('Pagaron por suscripción MP', [`${num(R.suscripcion)}${R.alDia ? ' (' + Math.round(R.suscripcion / R.alDia * 100) + '%)' : ''}`]) : ''}
           ${fila('Con 1 cuota vencida impaga', [num(R.mora1)])}${fila('Con 2 o más cuotas vencidas', [num(R.mora2)])}</table></div>
       </div>
       <div class="inds">${inds.map(([l, v, s, a]) => `<div class="ind${a ? ' alerta' : ''}"><small>${l}</small><b>${v}</b><span>${esc(s)}</span></div>`).join('')}</div>

@@ -219,6 +219,10 @@
     const altas = actFin.filter(k => !actIni.includes(k)), bajas = actIni.filter(k => !actFin.includes(k));
     const mora1 = actFin.filter(k => eFin[k].venc.length === 1), mora2 = actFin.filter(k => eFin[k].venc.length >= 2);
     const pagaron = actFin.filter(k => eFin[k].pagoMes);
+    // Socios cuya cuota del mes entró por suscripción automática de MP
+    const esSusc = r => /suscrip/.test(norm(r['Método de Pago']));
+    const suscriptos = new Set(cq.filter(r => r.per === P && esSusc(r)).map(r => String(r.DNI)));
+    const nSusc = actFin.filter(k => suscriptos.has(String(k))).length;
     const aCobrar = sum(actFin.flatMap(k => eFin[k].pend.map(p => vigente(CONFIG.cuota, p) || 0)));
     const adelantadas = sum(cq.filter(r => r.per > P).map(r => r.Importe));
 
@@ -257,6 +261,7 @@
       saldoIni, saldoFin, fondos: f, fondosCompletos, totalFondos, conc, rendCalc,
       aCobrar, adelantadas, aPagar: Number(manual.a_pagar) || 0,
       socIni: actIni.length, altas: altas.length, bajas: bajas.length, socFin: n, alDia: pagaron.length,
+      suscripcion: nSusc,
       mora1: mora1.length, mora2: mora2.length, sedesPm: n + sedesAd,
       cobranza: n ? pagaron.length / n : null,
       margen: n ? (cobradoCuotas - egrMes['Paramedic'] - egrMes['Matafuegos (Domer)']) / n : null,
