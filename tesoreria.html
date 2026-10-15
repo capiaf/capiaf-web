@@ -300,9 +300,13 @@ $('btnGenerar').addEventListener('click', () => {
   $('informe').innerHTML = htmlInforme(ultimo);
   pintarControles(ultimo.controles);
   $('acciones').style.display = 'flex';
-  $('btnGuardar').disabled = !(ultimo.fondosCompletos && ultimo.saldoFin != null);
-  $('btnGuardar').title = $('btnGuardar').disabled ? 'Para guardar el cierre hacen falta los extractos, el saldo de MP y el cierre del mes anterior.' : '';
-  $('estado').textContent = '';
+  const faltan = [];
+  if (ultimo.saldoFin == null) faltan.push('el cierre del mes anterior');
+  if (ultimo.fondos.galicia == null) faltan.push('el resumen de cuenta Galicia');
+  if (ultimo.fondos.fci == null) faltan.push('el extracto de inversiones');
+  if (ultimo.fondos.mp_disp == null) faltan.push('el saldo disponible de Mercado Pago (si es cero, escribí 0)');
+  $('btnGuardar').disabled = faltan.length > 0;
+  $('estado').textContent = faltan.length ? 'Para guardar el cierre falta: ' + faltan.join(', ') + '.' : '';
 });
 
 function pintarControles(ctrl) {
