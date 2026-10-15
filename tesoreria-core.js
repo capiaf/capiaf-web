@@ -140,7 +140,20 @@
       egresos.filter(r => r.Fecha >= desde).forEach(r => { o[r.linea] += r.Importe; });
       return o;
     };
-    const ingMes = ingresos(ini), ingAcu = ingresos(iniAnio), egrMes = egr(ini), egrAcu = egr(iniAnio);
+    const ingMes = ingresos(ini), egrMes = egr(ini);
+    // Acumulado anual: cierre anterior + mes (alcanza con exportar solo el mes)
+    const prevAcum = prev && prev.acum && prev.acum.anio === anio && mes > 1 ? prev.acum : null;
+    const desdeExp = d => d.length ? new Date(Math.min(...d.map(r => r.Fecha))) : null;
+    let ingAcu, egrAcu;
+    if (prevAcum) {
+      ingAcu = {}; LINEAS_ING.forEach(k => ingAcu[k] = (prevAcum.ing[k] || 0) + ingMes[k]);
+      egrAcu = {}; LINEAS_EGR.forEach(k => egrAcu[k] = (prevAcum.egr[k] || 0) + egrMes[k]);
+    } else {
+      ingAcu = ingresos(iniAnio); egrAcu = egr(iniAnio);
+      const dp = desdeExp(pagos);
+      if (mes > 1 && dp && dp > new Date(anio, 0, 31))
+        controles.push({ nivel: 'aviso', txt: 'El cierre anterior no tiene acumulado guardado y el exporte no arranca en enero: el acumulado anual está incompleto.' });
+    }
     const totIng = sum(Object.values(ingMes)), totEgr = sum(Object.values(egrMes));
 
     // Saldo económico: arrastra el cierre anterior con los movimientos de Siguefit del mes
@@ -181,8 +194,15 @@
 
     // Socios (desde los pagos de cuota)
     const cq = pagos.filter(r => r.esCuota);
+    // Historial de cuotas pagadas por CUIT: lo guardado en el cierre anterior + los pagos del exporte
+    const prevSocios = (prev && prev.socios) || {};
+    if (!prev || !prev.socios) {
+      const dp = desdeExp(cq);
+      if (dp && dp > new Date(anio, 0, 31)) controles.push({ nivel: 'aviso', txt: 'El cierre anterior no tiene el historial de socios guardado y el exporte no arranca en enero: altas, bajas y morosidad pueden salir mal.' });
+    }
     const estado = (pHasta, corte) => {
       const g = {};
+      Object.entries(prevSocios).forEach(([cuit, v]) => { g[cuit] = { ps: new Set(v.p), nombre: v.n }; });
       cq.filter(r => r.Fecha <= corte).forEach(r => { (g[r.DNI] = g[r.DNI] || { ps: new Set(), nombre: r.Cliente }).ps.add(r.per); });
       const out = {};
       Object.entries(g).forEach(([cuit, v]) => {
@@ -212,7 +232,8 @@
     });
     const dupC = {}; cq.forEach(r => { const k = r.DNI + '|' + r.per; (dupC[k] = dupC[k] || []).push(r); });
     Object.values(dupC).filter(a => a.length > 1).forEach(a => controles.push({ nivel: 'aviso', txt: `Cuota ${perStr(a[0].per)} registrada ${a.length} veces: ${a[0].Cliente}` }));
-    const primera = {}; cq.forEach(r => { primera[r.DNI] = Math.min(primera[r.DNI] ?? Infinity, r.per); });
+    const primera = {}; Object.entries(prevSocios).forEach(([c, v]) => { primera[c] = Math.min(...v.p); });
+    cq.forEach(r => { primera[r.DNI] = Math.min(primera[r.DNI] ?? Infinity, r.per); });
     cq.filter(r => enMes(r.Fecha)).forEach(r => {
       const v = vigente(CONFIG.cuota, r.per);
       if (!v) return;
@@ -242,6 +263,11 @@
       objetivo: vigente(CONFIG.objetivoMargen, P),
       paramedicActivo: P >= per(...CONFIG.paramedicDesde.split('-').map(Number)),
       observaciones: (manual.observaciones || []).filter(Boolean).slice(0, 3),
+      acum: { anio, ing: ingAcu, egr: egrAcu },
+      socios: (() => { const s = {}, g = {};
+        Object.entries(prevSocios).forEach(([c, v]) => { g[c] = { ps: new Set(v.p), n: v.n }; });
+        cq.forEach(r => { (g[r.DNI] = g[r.DNI] || { ps: new Set(), n: r.Cliente }).ps.add(r.per); });
+        Object.entries(g).forEach(([c, v]) => { s[c] = { n: v.n, p: [...v.ps].sort((a, b) => a - b) }; }); return s; })(),
       controles,
     };
   }

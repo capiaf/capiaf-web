@@ -288,7 +288,7 @@ function habilitar() { $('btnGenerar').disabled = !(datos.pagos && datos.egresos
 $('btnGenerar').addEventListener('click', () => {
   const [anio, mes] = $('mes').value.split('-').map(Number);
   const prevRow = cierres.find(c => c.periodo === periodoPrev($('mes').value));
-  const prev = prevRow ? { saldo_fin: Number(prevRow.saldo_fin), fondos: prevRow.fondos } : null;
+  const prev = prevRow ? { saldo_fin: Number(prevRow.saldo_fin), fondos: prevRow.fondos, acum: prevRow.acum, socios: prevRow.socios } : null;
   const manual = {
     mp_disp: parseMonto($('mpDisp').value), mp_acred: parseMonto($('mpAcred').value) || 0,
     a_pagar: parseMonto($('aPagar').value) || 0, sedes_adicionales: parseMonto($('sedesAd').value) || 0,
@@ -387,10 +387,10 @@ $('btnGuardar').addEventListener('click', async () => {
   if (existe) msg += '\n\nYa hay un cierre guardado para este mes: se va a reemplazar.';
   if (errores) msg += `\n\nHay ${errores} control(es) en rojo sin resolver.`;
   if (!confirm(msg)) return;
-  const { controles, ...informe } = ultimo;
+  const { controles, acum, socios, ...informe } = ultimo;
   const { error } = await sb.from('tesoreria_cierres').upsert({
     periodo: ultimo.periodo, saldo_fin: ultimo.saldoFin, fondos: ultimo.fondos,
-    informe, controles, updated_at: new Date().toISOString(),
+    informe: Object.assign({}, informe, { acum }), acum, socios, controles, updated_at: new Date().toISOString(),
   });
   if (error) { $('estado').textContent = 'No se pudo guardar: ' + error.message; return; }
   $('estado').textContent = `Cierre de ${ultimo.titulo} guardado.`;
