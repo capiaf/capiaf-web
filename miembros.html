@@ -1006,7 +1006,7 @@ async function onLogin(user) {
 async function loadEstudio() {
   // Si CAPIAF precargó la ficha de este estudio (mismo mail, sin usuario), la reclama antes de crear una nueva
   try { await sb.rpc('reclamar_ficha'); } catch (_) {}
-  const { data: rows } = await sb.from('estudios').select('*, sedes(cuit, razon_social, lat, matafuego_servicio, matafuego_vto)').eq('user_id', currentUser.id).order('created_at', { ascending: true });
+  const { data: rows } = await sb.from('estudios').select('*, sedes(*)').eq('user_id', currentUser.id).order('created_at', { ascending: true });
   const data = rows && rows.length ? rows[0] : null;
 
   if (data) {
@@ -1386,7 +1386,7 @@ function pintarChecklist(e) {
 
 async function refrescarChecklist() {
   if (!estudioId) return;
-  const { data } = await sb.from('estudios').select('*, sedes(cuit, razon_social, lat, matafuego_servicio, matafuego_vto)').eq('id', estudioId).limit(1);
+  const { data } = await sb.from('estudios').select('*, sedes(*)').eq('id', estudioId).limit(1);
   if (data && data[0]) pintarChecklist(data[0]);
 }
 
@@ -1690,6 +1690,7 @@ async function setTitularSede(id, campo, valor) {
     const s = sedes.find(x => x.id === id);
     if (s) s[campo] = v || null;
     renderSedes();
+    refrescarChecklist();
   }
   setPinStatus('obleaSedeStatus', ok ? '✓ Datos de la sede guardados' : 'No se pudo guardar.', ok ? 'ok' : 'err');
 }
@@ -1704,6 +1705,7 @@ async function setDatoSede(id, campo, valor) {
     // El nombre se muestra tambien en el titulo de la fila, asi que ese si
     // necesita redibujar. Los demas no, para no hacer saltar el foco.
     if (campo === 'nombre') renderSedes();
+    refrescarChecklist();
   }
   const mueveElPin = campo === 'direccion' || campo === 'numero' || campo === 'barrio';
   setPinStatus('obleaSedeStatus',
@@ -1723,6 +1725,7 @@ async function setServicioSede(id, valor) {
     const s = sedes.find(x => x.id === id);
     if (s) { s.matafuego_servicio = usa; if (usa !== true) s.matafuego_vto = null; }
     renderSedes();
+    refrescarChecklist();
   }
   setPinStatus('obleaSedeStatus', ok ? '✓ Guardado' : 'No se pudo guardar.', ok ? 'ok' : 'err');
 }
@@ -1734,6 +1737,7 @@ async function setVtoSede(id, valor) {
   if (ok) {
     const s = sedes.find(x => x.id === id);
     if (s) s.matafuego_vto = vto;
+    refrescarChecklist();
   }
   setPinStatus('obleaSedeStatus', ok ? '✓ Vencimiento guardado' : 'No se pudo guardar el vencimiento.', ok ? 'ok' : 'err');
 }
