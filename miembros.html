@@ -1468,17 +1468,22 @@ async function loadRecargas() {
   cont.innerHTML = lista.map(r => {
     const mes = r.vencimiento.slice(0, 7);
     const hecha = r.estado === 'recargado' || r.estado === 'pagado';
-    const vencida = !hecha && mes <  hoyMes;
-    const enFecha = !hecha && mes === hoyMes;
-    const color = hecha ? 'var(--ok)' : vencida ? 'var(--error)' : enFecha ? '#b7791f' : 'var(--mid)';
-    const estado = hecha ? 'Recargada' : vencida ? 'Vencida — el proveedor la tiene en su lista'
+    const rechazada = r.estado === 'rechazado';
+    const vencida = !hecha && !rechazada && mes <  hoyMes;
+    const enFecha = !hecha && !rechazada && mes === hoyMes;
+    const color = rechazada ? 'var(--mid)' : hecha ? 'var(--ok)'
+                : vencida ? 'var(--error)' : enFecha ? '#b7791f' : 'var(--mid)';
+    const estado = rechazada ? 'No vas a usar el servicio en esta sede'
+                 : hecha ? 'Recargada' : vencida ? 'Vencida — el proveedor la tiene en su lista'
                  : enFecha ? 'Vence este mes — el proveedor se va a comunicar' : 'Al día';
     return `<div class="sede-item">
       <div class="sede-item-info">
         <strong>${esc(r.sede_nombre || '')}</strong>
         <small>Vence ${fmtVto(r.vencimiento)} · <span style="color:${color};font-weight:600">${estado}</span></small>
         ${hecha ? `<small>Recargada el ${r.fecha_recarga ? r.fecha_recarga.split('-').reverse().join('/') : '—'}</small>` : ''}
-        <small>${r.cubierta ? 'Incluida en tu cuota.' : 'La abonás vos, con el descuento de la Cámara.'}</small>
+        <small>${rechazada
+          ? 'Quedó registrado que no vas a usar el servicio acá. Si cambiás de idea, activalo en <strong>Mi ficha</strong>.'
+          : (r.cubierta ? 'Incluida en tu cuota.' : 'La abonás vos, con el descuento de la Cámara.')}</small>
       </div>
     </div>`;
   }).join('');
@@ -2286,6 +2291,7 @@ async function aprobar(id, valor) {
           <option value="pendiente">Por recargar</option>
           <option value="recargado">Recargados (a facturar)</option>
           <option value="pagado">Facturados</option>
+          <option value="rechazado">Rechazadas por el estudio</option>
           <option value="no_corresponde">No corresponde</option>
         </select>
         <select id="mfPaga" onchange="renderRecargas()" style="width:auto">
@@ -2753,7 +2759,8 @@ async function guardarFicha() {
 
 // ── MATAFUEGOS: RECARGAS ──
 let recargas = [], pedidosAdmin = [], recargasCargadas = false;
-const MF_LBL = { pendiente:'Por recargar', recargado:'Recargado', pagado:'Facturado', no_corresponde:'No corresponde' };
+const MF_LBL = { pendiente:'Por recargar', recargado:'Recargado', pagado:'Facturado',
+                 no_corresponde:'No corresponde', rechazado:'Rechazada por el estudio' };
 
 async function cargarRecargas() {
   const mes = document.getElementById('mfMes');

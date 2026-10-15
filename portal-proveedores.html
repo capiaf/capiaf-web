@@ -73,6 +73,7 @@
     .item.recargado  { border-left-color:var(--salvia); }
         .item.pagado     { border-left-color:var(--ok); }
     .item.sinbenef   { border-left-color:#9b8bbf; background:#faf9fd; }
+    .item.rechazado  { border-left-color:#8a8f98; background:#f7f8f9; opacity:.85; }
     .chip.sinbenef   { background:#efecf7; color:#6b5b95; }
     .chip.capiaf     { background:#eef4f1; color:var(--pino); border:1px solid #cfe0d7; }
     .nota-benef { font-size:.78rem; color:#6b5b95; margin-top:.35rem; }
@@ -98,6 +99,7 @@
     .chip.vence     { background:#fdf6ec; color:var(--alerta); }
     .chip.recargado { background:#eef4f1; color:var(--pino); }
     .chip.pagado    { background:#eafaf1; color:var(--ok); }
+    .chip.rechazado { background:#eceef0; color:#5a6069; }
 
     .vacio { background:var(--white); border:1px dashed var(--border); border-radius:var(--radius);
              padding:2.5rem 1.5rem; text-align:center; color:var(--mid); font-size:.9rem; }
@@ -155,6 +157,7 @@
     <button class="btn-sec" id="fPendiente" aria-pressed="false" onclick="setFiltro('pendiente')">Por recargar</button>
     <button class="btn-sec" id="fRecargado" aria-pressed="false" onclick="setFiltro('recargado')">Recargados</button>
     <button class="btn-sec" id="fAtraso"    aria-pressed="false" onclick="setFiltro('atraso')">Atrasados</button>
+    <button class="btn-sec" id="fRechazado" aria-pressed="false" onclick="setFiltro('rechazado')">Rechazadas</button>
   </div>
 
   <div class="msg" id="panelMsg"></div>
@@ -317,7 +320,7 @@ async function marcarComprado(id) {
 
 function setFiltro(f) {
   filtro = f;
-  ['todos','pendiente','recargado','atraso'].forEach(k => {
+  ['todos','pendiente','recargado','atraso','rechazado'].forEach(k => {
     const b = document.getElementById('f' + k.charAt(0).toUpperCase() + k.slice(1));
     if (b) b.setAttribute('aria-pressed', String(k === f));
   });
@@ -357,7 +360,8 @@ function render() {
   document.getElementById('cPag').textContent  = delMes.filter(r => r.estado === 'pagado').length;
 
   let filas;
-  if (filtro === 'atraso')          filas = atrasados;
+  if (filtro === 'rechazado')       filas = recargas.filter(r => r.estado === 'rechazado');
+  else if (filtro === 'atraso')     filas = atrasados;
   else if (filtro === 'pendiente')  filas = [...atrasados, ...delMes].filter(r => r.estado === 'pendiente');
   else if (filtro === 'recargado')  filas = [...atrasados, ...delMes].filter(r => r.estado === 'recargado');
   else                              filas = [...atrasados, ...delMes];
@@ -376,7 +380,8 @@ function render() {
     const chip = vista;
     const etiqueta = { vencido:'Vencido', vence:'Vence este mes', pendiente:'Por recargar',
                        recargado:'Recargado', pagado:'Facturado',
-                       no_corresponde:'No corresponde' }[vista] || vista;
+                       no_corresponde:'No corresponde',
+                       rechazado:'Rechazada por el estudio' }[vista] || vista;
     const tel = r.telefono ? `<a class="tel" href="tel:${esc(r.telefono)}">${esc(r.telefono)}</a>` : '—';
     return `
     <div class="item ${clase}">
@@ -399,12 +404,30 @@ function render() {
       </div>
       <div class="acciones">
         ${r.estado === 'pendiente'
-          ? `<button class="btn" onclick="abrirForm('${r.id}')">Marcar recargado</button>`
+          ? `<button class="btn" onclick="abrirForm('${r.id}')">Marcar recargado</button>
+             <button class="btn-sec" onclick="abrirRechazo('${r.id}')">Rechazar</button>`
           : ''}
         ${r.estado === 'recargado'
           ? `<button class="btn-sec" onclick="abrirForm('${r.id}')">Corregir fecha</button>
              <button class="btn-sec" onclick="deshacer('${r.id}')">Deshacer</button>`
           : ''}
+        ${r.estado === 'rechazado'
+          ? `<button class="btn-sec" onclick="deshacerRechazo('${r.id}')">Deshacer rechazo</button>`
+          : ''}
+      </div>
+
+      <div class="form-recarga" id="rech-${r.id}" style="display:none">
+        <div class="obs">
+          <label for="motivo-${r.id}">¿Por qué la rechaza? (opcional, queda registrado)</label>
+          <input type="text" id="motivo-${r.id}" placeholder="Ya recargó con otro, no lo usa, cerró…" />
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <div style="display:flex;gap:.5rem">
+            <button class="btn" onclick="confirmarRechazo('${r.id}')">Confirmar rechazo</button>
+            <button class="btn-sec" onclick="cerrarRechazo('${r.id}')">Cancelar</button>
+          </div>
+        </div>
       </div>
 
       <div class="form-recarga" id="form-${r.id}" style="display:none">
@@ -431,7 +454,7 @@ function render() {
 const hoyISO = () => new Date().toISOString().slice(0, 10);
 
 function abrirForm(id) {
-  document.querySelectorAll('[id^="form-"]').forEach(f => { f.style.display = 'none'; });
+  document.querySelectorAll('[id^="form-"],[id^="rech-"]').forEach(f => { f.style.display = 'none'; });
   const f = document.getElementById('form-' + id);
   f.style.display = 'flex';
   document.getElementById('fecha-' + id).focus();
@@ -454,6 +477,38 @@ async function guardarRecarga(id, yaEstaba) {
   if (error) return aviso('panelMsg', 'No se pudo guardar: ' + error.message, 'err');
 
   aviso('panelMsg', yaEstaba ? 'Fecha corregida.' : 'Recarga registrada. El próximo vencimiento se movió un año.', 'ok');
+  await cargar();
+}
+
+function abrirRechazo(id) {
+  document.querySelectorAll('[id^="form-"],[id^="rech-"]').forEach(f => { f.style.display = 'none'; });
+  const f = document.getElementById('rech-' + id);
+  f.style.display = 'flex';
+  document.getElementById('motivo-' + id).focus();
+}
+
+function cerrarRechazo(id) { document.getElementById('rech-' + id).style.display = 'none'; }
+
+async function confirmarRechazo(id) {
+  const r = recargas.find(x => x.id === id);
+  if (!r) return;
+  const motivo = document.getElementById('motivo-' + id).value.trim() || null;
+  if (!confirm(`¿Confirmás que ${r.estudio_nombre} — ${r.sede_nombre} no va a usar el servicio?\n\n` +
+               'Sale de tu listado y deja de ofrecerse en ese domicilio hasta que el estudio lo vuelva a pedir.')) return;
+  const { error } = await sb.rpc('rechazar_recarga', { p_id: id, p_motivo: motivo });
+  if (error) return aviso('panelMsg', 'No se pudo registrar el rechazo: ' + error.message, 'err');
+  aviso('panelMsg', 'Rechazo registrado. Ese domicilio sale del listado.', 'ok');
+  await cargar();
+}
+
+async function deshacerRechazo(id) {
+  const r = recargas.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`¿Deshacer el rechazo de ${r.estudio_nombre} — ${r.sede_nombre}?\n\n` +
+               'Vuelve a quedar pendiente de recarga.')) return;
+  const { error } = await sb.rpc('deshacer_rechazo', { p_id: id });
+  if (error) return aviso('panelMsg', 'No se pudo deshacer: ' + error.message, 'err');
+  aviso('panelMsg', 'Listo, volvió a quedar pendiente.', 'ok');
   await cargar();
 }
 
