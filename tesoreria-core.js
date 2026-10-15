@@ -242,7 +242,7 @@
     });
     [...new Set(egresos.filter(r => r.Fecha >= iniAnio && !CONFIG.egresos[norm(r['Categoría de Egreso'])]).map(r => r['Categoría de Egreso']))]
       .forEach(c => controles.push({ nivel: 'aviso', txt: `Categoría de egreso sin mapear (va a Otros egresos): "${c}"` }));
-    Object.entries(CONFIG.medioEsperado).forEach(([l, med]) => egresos.filter(r => r.Fecha >= iniAnio && r.linea === l && r['Medio de pago'] !== med)
+    Object.entries(CONFIG.medioEsperado).forEach(([l, med]) => egresos.filter(r => r.Fecha >= iniAnio && r.linea === l && !norm(r['Medio de pago']).replace(/\s/g, '').includes(norm(med).replace(/\s/g, '')))
       .forEach(r => controles.push({ nivel: 'aviso', txt: `"${l}" del ${r.Fecha.toLocaleDateString('es-AR')} cargado con medio "${r['Medio de pago']}" (se esperaba "${med}")` })));
     CONFIG.egresosRecurrentes.forEach(l => { if (!egrMes[l]) controles.push({ nivel: 'aviso', txt: `Sin "${l}" registrado en el mes. ¿Falta cargarlo?` }); });
     mora1.concat(mora2).forEach(k => controles.push({ nivel: 'info', txt: `Adeuda ${eFin[k].venc.length} cuota(s) vencida(s): ${eFin[k].nombre} (${eFin[k].venc.map(perStr).join(', ')})` }));
